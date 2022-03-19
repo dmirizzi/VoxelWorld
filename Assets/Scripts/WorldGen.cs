@@ -2,6 +2,16 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+public enum VoxelFace
+{
+    Top,
+    Bottom,
+    Front,
+    Back,
+    Left,
+    Right
+}
+
 public enum VoxelType
 {
     Empty = 0,
@@ -12,6 +22,12 @@ public enum VoxelType
 
 public static class VoxelInfo
 {
+    public const int TextureTileSize = 16;
+
+    public const int TextureAtlasWidth = 64;
+
+    public const int TextureAtlasHeight = 16;
+
     public static bool IsSolid(VoxelType voxelType)
     {
         switch(voxelType)
@@ -25,17 +41,53 @@ public static class VoxelInfo
                 throw new System.ArgumentException($"Invalid voxel type {voxelType}");
         }
     }
+
+    public static Vector2 GetAtlasUVOffsetForVoxel(VoxelType voxelType, VoxelFace face)
+    {
+        var tilePosX = 0;
+        var tilePosY = 0;
+
+        switch(voxelType)
+        {
+            case VoxelType.Empty: throw new System.ArgumentException("No texture for empty voxel!");
+            case VoxelType.Grass:
+                if(face == VoxelFace.Top)
+                {
+                    tilePosX = 1;
+                    tilePosY = 0;
+                }
+                else if(face == VoxelFace.Bottom)
+                {
+                    tilePosX = 2;
+                    tilePosY = 0;
+                }
+                else 
+                {
+                    tilePosX = 0;
+                    tilePosY = 0;
+                }
+            break;
+            case VoxelType.Dirt:
+                tilePosX = 2;
+                tilePosY = 0;
+            break;
+            case VoxelType.Water:
+                tilePosX = 3;
+                tilePosY = 0;
+            break;
+        }
+
+        return new Vector2(
+            (float)TextureTileSize / TextureAtlasWidth * tilePosX,
+            (float)TextureTileSize / TextureAtlasHeight * tilePosY
+        );
+    }
 }
 
 
 public class WorldGen : MonoBehaviour
 {
-    public Material GrassSideMaterial;
-    public Material GrassTopMaterial;
-
-    public Material WaterMaterial;
-
-    public Material DirtMaterial;
+    public Material TextureAtlasMaterial;
 
     public const int ChunkSize = 32;
     public const float VoxelSize = 1f;
@@ -159,48 +211,46 @@ public class WorldGen : MonoBehaviour
                              new Vector3(x, y + VoxelSize, z + VoxelSize)
                         };
 
-                        var uv = new Vector2[]
-                        {
-                            new Vector2(0f, 0f),
-                            new Vector2(1f, 0f),
-                            new Vector2(0f, -1f),
-                            new Vector2(1f, -1f)
-                        };
-
                         var vertices = new List<Vector3>();
                         var voxelPos = chunkVoxelPos + new Vector3Int(x, y, z);
                         if(!VoxelInfo.IsSolid(GetVoxel(voxelPos + Vector3Int.down)))
                         {
+                            var uv = GetUVsForTile((VoxelType)chunkData[x, y, z], VoxelFace.Bottom);
                             vertices.AddRange(new Vector3[]{ v[0], v[1], v[2], v[3] });
                             normals.AddRange(Enumerable.Repeat(Vector3.down, 4));
                             uvs.AddRange(new Vector2[]{ uv[0], uv[1], uv[3], uv[2] });
                         }        
                         if(!VoxelInfo.IsSolid(GetVoxel(voxelPos + Vector3Int.up)))          
                         {
+                            var uv = GetUVsForTile((VoxelType)chunkData[x, y, z], VoxelFace.Top);
                             vertices.AddRange(new Vector3[]{ v[5], v[4], v[7], v[6] });                        
                             normals.AddRange(Enumerable.Repeat(Vector3.up, 4));
                             uvs.AddRange(new Vector2[]{ uv[3], uv[2], uv[0], uv[1] });
                         }
                         if(!VoxelInfo.IsSolid(GetVoxel(voxelPos + Vector3Int.back)))        
                         {
+                            var uv = GetUVsForTile((VoxelType)chunkData[x, y, z], VoxelFace.Back);
                             vertices.AddRange(new Vector3[]{ v[0], v[4], v[5], v[1] });
                             normals.AddRange(Enumerable.Repeat(Vector3.back, 4));
                             uvs.AddRange(new Vector2[]{ uv[2], uv[0], uv[1], uv[3] });
                         }
                         if(!VoxelInfo.IsSolid(GetVoxel(voxelPos + Vector3Int.forward)))     
                         {
+                            var uv = GetUVsForTile((VoxelType)chunkData[x, y, z], VoxelFace.Front);
                             vertices.AddRange(new Vector3[]{ v[3], v[2], v[6], v[7] });
                             normals.AddRange(Enumerable.Repeat(Vector3.forward, 4));
                             uvs.AddRange(new Vector2[]{ uv[3], uv[2], uv[0], uv[1] });
                         }
                         if(!VoxelInfo.IsSolid(GetVoxel(voxelPos + Vector3Int.left)))        
                         {
+                            var uv = GetUVsForTile((VoxelType)chunkData[x, y, z], VoxelFace.Left);
                             vertices.AddRange(new Vector3[]{ v[4], v[0], v[3], v[7] });
                             normals.AddRange(Enumerable.Repeat(Vector3.left, 4));
                             uvs.AddRange(new Vector2[]{ uv[1], uv[3], uv[2], uv[0] });
                         }
                         if(!VoxelInfo.IsSolid(GetVoxel(voxelPos + Vector3Int.right)))       
                         {
+                            var uv = GetUVsForTile((VoxelType)chunkData[x, y, z], VoxelFace.Right);
                             vertices.AddRange(new Vector3[]{ v[5], v[6], v[2], v[1] });
                             normals.AddRange(Enumerable.Repeat(Vector3.right, 4));
                             uvs.AddRange(new Vector2[]{ uv[0], uv[1], uv[3], uv[2] });
@@ -230,17 +280,31 @@ public class WorldGen : MonoBehaviour
             mesh.Optimize();
 
             chunkGameObj.transform.position = chunkVoxelPos;
-            chunkGameObj.GetComponent<Renderer>().material = GrassSideMaterial;
+            chunkGameObj.GetComponent<Renderer>().material = TextureAtlasMaterial;
         }
-
     }
 
+    private Vector2[] GetUVsForTile(VoxelType voxelType, VoxelFace face)
+    {
+        var uvOffset = VoxelInfo.GetAtlasUVOffsetForVoxel(voxelType, face);
+        var uvTileSize = new Vector2(
+            VoxelInfo.TextureTileSize * 1.0f / VoxelInfo.TextureAtlasWidth,
+            VoxelInfo.TextureTileSize * 1.0f / VoxelInfo.TextureAtlasHeight
+        );
+        return new Vector2[]
+        {
+            uvOffset + new Vector2(0f, 0f),
+            uvOffset + new Vector2(uvTileSize.x, 0f),
+            uvOffset + new Vector2(0f, -uvTileSize.y),
+            uvOffset + new Vector2(uvTileSize.x, -uvTileSize.y)
+        };
+    }
 
     void Start()
     {
-        for(int x = 0; x < 32; ++x)
+        for(int x = 0; x < 1000; ++x)
         {
-            for(int z = 0; z < 32; ++z)
+            for(int z = 0; z < 1000; ++z)
             {
                 SetVoxel(x, 0, z, VoxelType.Grass);
             }

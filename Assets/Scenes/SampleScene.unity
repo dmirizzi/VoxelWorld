@@ -330,8 +330,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd7752677d893154daacd60bfda846e4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GrassSideMaterial: {fileID: 2100000, guid: 6e6a47add580f6c45af095683ebf7d7e, type: 2}
-  GrassTopMaterial: {fileID: 2100000, guid: 0c22f920658b6f44ba9ba67a8d5bfb91, type: 2}
+  TextureAtlasMaterial: {fileID: 2100000, guid: 6a17a558c43edbd48ad88dc22c7ebfbb, type: 2}
 --- !u!4 &2062042007
 Transform:
   m_ObjectHideFlags: 0
