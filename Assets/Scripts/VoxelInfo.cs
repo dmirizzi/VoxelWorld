@@ -20,8 +20,9 @@ public enum VoxelFace
 
 public static class VoxelInfo
 {
-    public const int ChunkSize = 8;
+    public const int ChunkSize = 16;
 
+    // Do not change this. Voxels are not scaleable, this is just for code readability.
     public const float VoxelSize = 1f;
 
     public const int TextureTileSize = 16;

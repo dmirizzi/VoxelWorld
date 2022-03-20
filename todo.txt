@@ -3,6 +3,8 @@
 [x] Separate game object per chunk for transparent voxels
 [x] Add/Remove voxels
 [x] Set multiple voxels in sphere shape
+[x] WorldGen.GetUVsForTile: Pregenerate UVs once for all tiles
 
-[ ] WorldGen.GetUVsForTile: Pregenerate UVs once for all tiles
+
+[ ] Simple critter randomly "navigating" around voxel world
 [ ] Water simulation
