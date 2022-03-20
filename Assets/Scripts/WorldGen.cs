@@ -103,6 +103,7 @@ public class WorldGen : MonoBehaviour
     {
         var chunk = GetChunkFromVoxelPosition(x, y, z, true);
         var chunkLocalPos = GlobalToChunkLocalVoxelPos(new Vector3Int(x, y, z));
+        Debug.Log($"Setting voxel @ {x},{y},{z} -> chunk {chunk} -> chunkLocal {chunkLocalPos}");
         chunk[chunkLocalPos.x, chunkLocalPos.y, chunkLocalPos.z] = (byte)type;
     }
 
@@ -124,6 +125,7 @@ public class WorldGen : MonoBehaviour
 
     private byte[,,] GetChunkFromVoxelPosition(int x, int y, int z, bool create)
     {
+
         var voxelPos = new Vector3Int(x, y, z);
         var chunkPos = VoxelToChunkPos(voxelPos);
 
@@ -145,22 +147,30 @@ public class WorldGen : MonoBehaviour
     private Vector3Int GlobalToChunkLocalVoxelPos(Vector3Int voxelPos)
     {
         var x = voxelPos.x % ChunkSize;
-        if(x < 0) x += ChunkSize;
+        if(x != 0 && voxelPos.x < 0) x += ChunkSize;
         var y = voxelPos.y % ChunkSize;
-        if(y < 0) y += ChunkSize;
+        if(y != 0 && voxelPos.y < 0) y += ChunkSize;
         var z = voxelPos.z % ChunkSize;
-        if(z < 0) z += ChunkSize;
+        if(z != 0 && voxelPos.z < 0) z += ChunkSize;
 
         return new Vector3Int(x, y, z);
     }
 
     private Vector3Int VoxelToChunkPos(Vector3Int voxelPos)
     {
-        var x = (int)voxelPos.x / ChunkSize;
+        var x = (int)voxelPos.x;
+        if(voxelPos.x < 0) x += 1;
+        x /= ChunkSize;
         if(voxelPos.x < 0) x -= 1;
-        var y = (int)voxelPos.y / ChunkSize;
+
+        var y = (int)voxelPos.y;
+        if(voxelPos.y < 0) y += 1;
+        y /= ChunkSize;
         if(voxelPos.y < 0) y -= 1;
-        var z = (int)voxelPos.z / ChunkSize;
+
+        var z = (int)voxelPos.z;
+        if(voxelPos.z < 0) z += 1;
+        z /= ChunkSize;
         if(voxelPos.z < 0) z -= 1;
 
         return new Vector3Int(x, y, z);
@@ -180,7 +190,7 @@ public class WorldGen : MonoBehaviour
         foreach(var chunkPos in _chunks.Keys)
         {
             var chunkData = _chunks[chunkPos];
-            var chunkGameObj = new GameObject($"Chunk[{chunkPos.x}|{chunkPos.y}|{chunkPos.x}]");
+            var chunkGameObj = new GameObject($"Chunk[{chunkPos.x}|{chunkPos.y}|{chunkPos.z}]");
 
             chunkGameObj.AddComponent<MeshRenderer>();
             var mesh = chunkGameObj.AddComponent<MeshFilter>().mesh;
@@ -302,33 +312,45 @@ public class WorldGen : MonoBehaviour
 
     void Start()
     {
-        for(int x = 0; x < 1000; ++x)
+        var seed = Random.Range(0, 1000);
+
+        for(int x = 0; x < 64; ++x)
         {
-            for(int z = 0; z < 1000; ++z)
+            for(int z = 0; z < 64; ++z)
             {
-                SetVoxel(x, 0, z, VoxelType.Grass);
+                var height = Mathf.Min(0, (int)(Mathf.PerlinNoise(seed + x / 20.0f, seed + z / 20.0f) * 16) - 3);
+
+                bool isWater = height < 0;
+                if(isWater) height = 0;
+
+                for(int y = -16; y <= height; ++y)
+                {
+                    if(isWater)
+                    {
+                        if(y == -16)
+                        {
+                            SetVoxel(x, y, z, VoxelType.Dirt);
+                        }
+                        else
+                        {
+                            SetVoxel(x, y, z, VoxelType.Water);
+                        }
+                    }
+                    else
+                    {
+                        if(y < height)
+                        {
+                            SetVoxel(x, y, z, VoxelType.Dirt);
+                        }
+                        else
+                        {
+                            SetVoxel(x, y, z, VoxelType.Grass);
+                        }
+                    }                    
+                }
             }
         }
         Build();
-
-        /*
-        for(int x = 0; x < 30; ++x)
-        {
-            for(int z = 0; z < 30; ++z)
-            {
-                var waterTile = Random.Range(0f, 1f) <= 0.2f;
-
-                if(waterTile)
-                {
-                    CreateCube(new Vector3Int(x, 0, z), WaterMaterial, WaterMaterial, 0.075f);
-                    CreateCube(new Vector3Int(x, -1, z), DirtMaterial, DirtMaterial);
-                }
-                else
-                {
-                    CreateCube(new Vector3Int(x, 0, z), GrassSideMaterial, GrassTopMaterial);
-                }
-            }
-        }*/
     }
 
     // Update is called once per frame
