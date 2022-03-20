@@ -2,7 +2,7 @@
 [x] Texture Atlas
 [x] Separate game object per chunk for transparent voxels
 [x] Add/Remove voxels
+[x] Set multiple voxels in sphere shape
 
 [ ] WorldGen.GetUVsForTile: Pregenerate UVs once for all tiles
-[ ] Set multiple voxels as primitives (cube, sphere)
 [ ] Water simulation

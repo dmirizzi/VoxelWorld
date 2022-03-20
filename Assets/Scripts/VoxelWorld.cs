@@ -38,6 +38,34 @@ public class VoxelWorld
         }
     }
 
+    public void SetVoxelSphere(Vector3Int center, int radius, VoxelType voxelType, bool rebuild)
+    {
+        var sqrRadius = radius * radius;
+
+        for(int z = center.z - radius; z < center.z + radius; ++z)
+        {
+            for(int y = center.y - radius; y < center.y + radius; ++y)
+            {
+                for(int x = center.x - radius; x < center.x + radius; ++x)
+                {
+                    var dx = (x - center.x) * (x - center.x);
+                    var dy = (y - center.y) * (y - center.y);
+                    var dz = (z - center.z) * (z - center.z);
+
+                    if(dx + dy + dz < sqrRadius)
+                    {
+                        SetVoxel(x, y, z, voxelType);
+                    }
+                }
+            }
+        }
+
+        if(rebuild)
+        {
+            Build();
+        }
+    }
+
     public VoxelType GetVoxel(int x, int y, int z)
     {
         var chunkLocalPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(new Vector3Int(x, y, z));

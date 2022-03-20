@@ -17,16 +17,16 @@ public class WorldGenerator : MonoBehaviour
 
         var seed = UnityEngine.Random.Range(0, 1000);
 
-        for(int x = 0; x < 64; ++x)
+        for(int x = 0; x < 128; ++x)
         {
-            for(int z = 0; z < 64; ++z)
+            for(int z = 0; z < 128; ++z)
             {
                 var height = Mathf.Min(0, (int)(Mathf.PerlinNoise(seed + x / 20.0f, seed + z / 20.0f) * 16) - 3);
 
                 bool isWater = height < 0;
                 if(isWater) height = 0;
 
-                for(int y = -16; y <= height; ++y)
+                for(int y = -64; y <= height; ++y)
                 {
                     if(isWater)
                     {
@@ -61,14 +61,18 @@ public class WorldGenerator : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if((DateTime.Now - lastDrop).Milliseconds >= 5)
+        if((DateTime.Now - lastDrop).Milliseconds >= 50)
         {
             lastDrop = DateTime.Now;
-            var x = UnityEngine.Random.Range(0, 64);
-            var z = UnityEngine.Random.Range(0, 64);
+            var x = UnityEngine.Random.Range(0, 128);
+            var z = UnityEngine.Random.Range(0, 128);
             
             var highestPoint = _world.GetHighestPoint(x, z);
-            _world.SetVoxel(x, highestPoint.Value, z, VoxelType.Empty, true);
+            if(highestPoint.HasValue)
+            {
+                //_world.SetVoxel(x, highestPoint.Value, z, VoxelType.Empty, true);
+                _world.SetVoxelSphere(new Vector3Int(x, highestPoint.Value, z), 5, VoxelType.Empty, true);
+            }
         }
     }
 }
