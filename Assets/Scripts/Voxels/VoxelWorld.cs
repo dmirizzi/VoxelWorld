@@ -82,6 +82,28 @@ public class VoxelWorld
         return GetVoxel(voxelPos.x, voxelPos.y, voxelPos.z);
     }
 
+    public (Vector3Int, Vector3Int) GetWorldBoundaries()
+    {
+        Vector3Int minBound = new Vector3Int(int.MaxValue, int.MaxValue, int.MaxValue);
+        Vector3Int maxBound = new Vector3Int(int.MinValue, int.MinValue, int.MinValue);
+
+        foreach(var chunkPos in _chunks.Keys)
+        {
+            minBound.x = Mathf.Min(minBound.x, chunkPos.x);
+            minBound.y = Mathf.Min(minBound.y, chunkPos.y);
+            minBound.z = Mathf.Min(minBound.z, chunkPos.z);
+            maxBound.x = Mathf.Max(maxBound.x, chunkPos.x);
+            maxBound.y = Mathf.Max(maxBound.y, chunkPos.y);
+            maxBound.z = Mathf.Max(maxBound.z, chunkPos.z);
+        }
+
+        minBound = VoxelPosConverter.ChunkToBaseVoxelPos(minBound);
+        maxBound = VoxelPosConverter.ChunkToBaseVoxelPos(maxBound) 
+                    + new Vector3Int(VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize);
+
+        return (minBound, maxBound);
+    }
+
     public void Build()
     {
         foreach(var chunkPos in _changedChunks)
@@ -101,7 +123,7 @@ public class VoxelWorld
         _changedChunks.Clear();
     }
 
-    public int? GetHighestPoint(int x, int z)
+    public int? GetHighestVoxelPos(int x, int z)
     {
         var voxelXZPos = new Vector3Int(x, 0, z);
         var chunkXZPos = VoxelPosConverter.VoxelToChunkPos(voxelXZPos);

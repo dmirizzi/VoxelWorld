@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics;
-using System.Linq;
 using UnityEngine;
 
 public class WorldGenerator : MonoBehaviour
@@ -9,20 +8,22 @@ public class WorldGenerator : MonoBehaviour
 
     public Material TextureAtlasTransparentMaterial;
 
-    private VoxelWorld _world;
+    public bool WorldGenerated { get; private set; }
+
+    public VoxelWorld VoxelWorld { get; private set; }
 
     // Start is called before the first frame update
     void Start()
     {
-        _world = new VoxelWorld(TextureAtlasMaterial, TextureAtlasTransparentMaterial);
+        VoxelWorld = new VoxelWorld(TextureAtlasMaterial, TextureAtlasTransparentMaterial);
 
         var seed = UnityEngine.Random.Range(0, 1000);
 
-        for(int x = 0; x < 128; ++x)
+        for(int x = 0; x < 64; ++x)
         {
-            for(int z = 0; z < 128; ++z)
+            for(int z = 0; z < 64; ++z)
             {
-                var height = Mathf.Min(0, (int)(Mathf.PerlinNoise(seed + x / 20.0f, seed + z / 20.0f) * 16) - 3);
+                var height = Mathf.Min(16, (int)(Mathf.PerlinNoise(seed + x / 20.0f, seed + z / 20.0f) * 32) - 3);
 
                 bool isWater = height < 0;
                 if(isWater) height = 0;
@@ -33,22 +34,22 @@ public class WorldGenerator : MonoBehaviour
                     {
                         if(y == -64)
                         {
-                            _world.SetVoxel(x, y, z, VoxelType.Dirt);
+                            VoxelWorld.SetVoxel(x, y, z, VoxelType.Dirt);
                         }
                         else
                         {
-                            _world.SetVoxel(x, y, z, VoxelType.Water);
+                            VoxelWorld.SetVoxel(x, y, z, VoxelType.Water);
                         }
                     }
                     else
                     {
                         if(y < height)
                         {
-                            _world.SetVoxel(x, y, z, VoxelType.Dirt);
+                            VoxelWorld.SetVoxel(x, y, z, VoxelType.Dirt);
                         }
                         else
                         {
-                            _world.SetVoxel(x, y, z, VoxelType.Grass);
+                            VoxelWorld.SetVoxel(x, y, z, VoxelType.Grass);
                         }
                     }                    
                 }
@@ -56,9 +57,11 @@ public class WorldGenerator : MonoBehaviour
         }
         var sw = new Stopwatch();
         sw.Start();
-        _world.Build();
+        VoxelWorld.Build();
         sw.Stop();
         UnityEngine.Debug.Log($"Built world in {sw.Elapsed.TotalSeconds}s");
+
+        WorldGenerated = true;
     }
 
     private DateTime lastDrop = DateTime.Now;

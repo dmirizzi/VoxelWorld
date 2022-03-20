@@ -2,6 +2,33 @@ using UnityEngine;
 
 public static class VoxelPosConverter
 {
+    public static Vector3Int GetVoxelPosFromWorldPos(Vector3 worldPos)
+    {
+        return new Vector3Int(
+            (int)worldPos.x,
+            (int)worldPos.y,
+            (int)worldPos.z
+        );
+    }
+
+    public static Vector3 GetVoxelCenterWorldPos(Vector3Int globalVoxelPos)
+    {
+        return new Vector3(
+            globalVoxelPos.x + VoxelInfo.VoxelSize * 0.5f,
+            globalVoxelPos.y + VoxelInfo.VoxelSize * 0.5f,
+            globalVoxelPos.z + VoxelInfo.VoxelSize * 0.5f
+        );
+    }
+
+    public static Vector3 GetVoxelTopCenterSurfaceWorldPos(Vector3Int globalVoxelPos)
+    {
+        return new Vector3(
+            globalVoxelPos.x + VoxelInfo.VoxelSize * 0.5f,
+            globalVoxelPos.y + VoxelInfo.VoxelSize,
+            globalVoxelPos.z + VoxelInfo.VoxelSize * 0.5f
+        );
+    }
+
     public static Vector3Int ChunkLocalVoxelPosToGlobal(Vector3Int localVoxelPos, Vector3Int chunkPos)
     {
         return ChunkToBaseVoxelPos(chunkPos) + localVoxelPos;
