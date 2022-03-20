@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
 
@@ -30,7 +31,7 @@ public class WorldGenerator : MonoBehaviour
                 {
                     if(isWater)
                     {
-                        if(y == -16)
+                        if(y == -64)
                         {
                             _world.SetVoxel(x, y, z, VoxelType.Dirt);
                         }
@@ -53,7 +54,11 @@ public class WorldGenerator : MonoBehaviour
                 }
             }
         }
+        var sw = new Stopwatch();
+        sw.Start();
         _world.Build();
+        sw.Stop();
+        UnityEngine.Debug.Log($"Built world in {sw.Elapsed.TotalSeconds}s");
     }
 
     private DateTime lastDrop = DateTime.Now;
@@ -61,7 +66,8 @@ public class WorldGenerator : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if((DateTime.Now - lastDrop).Milliseconds >= 50)
+        /*
+        if((DateTime.Now - lastDrop).Milliseconds >= 10)
         {
             lastDrop = DateTime.Now;
             var x = UnityEngine.Random.Range(0, 128);
@@ -74,5 +80,6 @@ public class WorldGenerator : MonoBehaviour
                 _world.SetVoxelSphere(new Vector3Int(x, highestPoint.Value, z), 5, VoxelType.Empty, true);
             }
         }
+        */
     }
 }

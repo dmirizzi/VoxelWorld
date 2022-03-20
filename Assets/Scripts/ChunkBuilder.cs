@@ -2,9 +2,78 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 public class ChunkBuilder
 {
+    private struct VoxelFaceData
+    {
+        public VoxelFaceData(VoxelFace voxelFace, Vector3Int intDirection, Vector3 floatDirection, int[] vertexIndices, int[] uvIndices)
+        {
+            VoxelFace = voxelFace;
+            Direction = intDirection;
+            VertexIndices = vertexIndices;
+            UVIndices = uvIndices;
+            Normals = Enumerable.Repeat(floatDirection, 4).ToArray();
+        }
+
+        public VoxelFace VoxelFace;
+
+        public Vector3Int Direction;
+
+    public Vector3[] Normals;
+
+        public int[] VertexIndices;
+
+        public int[] UVIndices;
+    }
+    
+    private VoxelFaceData[] _voxelFaceData = new VoxelFaceData[]
+    {
+        new VoxelFaceData( 
+            VoxelFace.Bottom, 
+            Vector3Int.down, 
+            Vector3.down,
+            new int[] { 0, 1, 2, 3 },
+            new int[] { 0, 1, 3, 2 } 
+        ),
+        new VoxelFaceData( 
+            VoxelFace.Top, 
+            Vector3Int.up, 
+            Vector3.up,
+            new int[] { 5, 4, 7, 6 },
+            new int[] { 3, 2, 0, 1 } 
+        ),
+        new VoxelFaceData( 
+            VoxelFace.Front, 
+            Vector3Int.back, 
+            Vector3.back,
+            new int[] { 0, 4, 5, 1 },
+            new int[] { 2, 0, 1, 3 } 
+        ),
+        new VoxelFaceData( 
+            VoxelFace.Back, 
+            Vector3Int.forward, 
+            Vector3.forward,
+            new int[] { 3, 2, 6, 7 },
+            new int[] { 3, 2, 0, 1 } 
+        ),
+        new VoxelFaceData( 
+            VoxelFace.Left, 
+            Vector3Int.left, 
+            Vector3.left,
+            new int[] { 4, 0, 3, 7 },
+            new int[] { 1, 3, 2, 0 } 
+        ),
+        new VoxelFaceData( 
+            VoxelFace.Right, 
+            Vector3Int.right, 
+            Vector3.right,
+            new int[] { 5, 6, 2, 1 },
+            new int[] { 0, 1, 3, 2 } 
+        )
+    };
+
     private VoxelWorld _world;
     private readonly Material _textureAtlasMaterial;
     private readonly Material _textureAtlasTransparentMaterial;
@@ -38,6 +107,7 @@ public class ChunkBuilder
 
         var chunkVoxelPos = VoxelPosConverter.ChunkToBaseVoxelPos(chunkPos);
 
+        Profiler.BeginSample("GenerateChunk");
         for(int x = 0; x < VoxelInfo.ChunkSize; ++x)
         {
             for(int y = 0; y < VoxelInfo.ChunkSize; ++y)
@@ -49,6 +119,7 @@ public class ChunkBuilder
 
                     bool isTransparent = !VoxelInfo.IsSolid((VoxelType)chunkData[x, y, z]);
 
+                    // Select which chunk to add mesh to - either solid or transparent
                     var vertices = isTransparent ? chunkVerticesTp : chunkVertices;
                     var normals = isTransparent ? chunkNormalsTp : chunkNormals;
                     var uvs = isTransparent ? chunkUVsTp : chunkUVs;
@@ -60,7 +131,7 @@ public class ChunkBuilder
                         VoxelInfo.GetVoxelHeightOffset(voxelType)
                         : 0.0f;
 
-                    var v = new List<Vector3>()
+                    var voxelCornerVertices = new Vector3[]
                     {
                             new Vector3(x, y, z),
                             new Vector3(x + VoxelInfo.VoxelSize, y, z),
@@ -74,48 +145,24 @@ public class ChunkBuilder
                     };
 
                     var voxelVertices = new List<Vector3>();
+                    for(int i = 0; i < _voxelFaceData.Length; ++i)
+                    {
+                        var faceData = _voxelFaceData[i];
+                        if(VoxelSideVisible(voxelType, voxelPos, faceData.Direction))
+                        {
+                            voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[0]]);
+                            voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[1]]);
+                            voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[2]]);
+                            voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[3]]);
 
-                    if(VoxelSideVisible(voxelType, voxelPos, Vector3Int.down))
-                    {
-                        var uv = GetUVsForTile((VoxelType)chunkData[x, y, z], VoxelFace.Bottom);
-                        voxelVertices.AddRange(new Vector3[]{ v[0], v[1], v[2], v[3] });
-                        normals.AddRange(Enumerable.Repeat(Vector3.down, 4));
-                        uvs.AddRange(new Vector2[]{ uv[0], uv[1], uv[3], uv[2] });
-                    }        
-                    if(VoxelSideVisible(voxelType, voxelPos, Vector3Int.up))          
-                    {
-                        var uv = GetUVsForTile((VoxelType)chunkData[x, y, z], VoxelFace.Top);
-                        voxelVertices.AddRange(new Vector3[]{ v[5], v[4], v[7], v[6] });                        
-                        normals.AddRange(Enumerable.Repeat(Vector3.up, 4));
-                        uvs.AddRange(new Vector2[]{ uv[3], uv[2], uv[0], uv[1] });
-                    }
-                    if(VoxelSideVisible(voxelType, voxelPos, Vector3Int.back))        
-                    {
-                        var uv = GetUVsForTile((VoxelType)chunkData[x, y, z], VoxelFace.Front);
-                        voxelVertices.AddRange(new Vector3[]{ v[0], v[4], v[5], v[1] });
-                        normals.AddRange(Enumerable.Repeat(Vector3.back, 4));
-                        uvs.AddRange(new Vector2[]{ uv[2], uv[0], uv[1], uv[3] });
-                    }
-                    if(VoxelSideVisible(voxelType, voxelPos, Vector3Int.forward))     
-                    {
-                        var uv = GetUVsForTile((VoxelType)chunkData[x, y, z], VoxelFace.Back);
-                        voxelVertices.AddRange(new Vector3[]{ v[3], v[2], v[6], v[7] });
-                        normals.AddRange(Enumerable.Repeat(Vector3.forward, 4));
-                        uvs.AddRange(new Vector2[]{ uv[3], uv[2], uv[0], uv[1] });
-                    }
-                    if(VoxelSideVisible(voxelType, voxelPos, Vector3Int.left))        
-                    {
-                        var uv = GetUVsForTile((VoxelType)chunkData[x, y, z], VoxelFace.Left);
-                        voxelVertices.AddRange(new Vector3[]{ v[4], v[0], v[3], v[7] });
-                        normals.AddRange(Enumerable.Repeat(Vector3.left, 4));
-                        uvs.AddRange(new Vector2[]{ uv[1], uv[3], uv[2], uv[0] });
-                    }
-                    if(VoxelSideVisible(voxelType, voxelPos, Vector3Int.right))       
-                    {
-                        var uv = GetUVsForTile((VoxelType)chunkData[x, y, z], VoxelFace.Right);
-                        voxelVertices.AddRange(new Vector3[]{ v[5], v[6], v[2], v[1] });
-                        normals.AddRange(Enumerable.Repeat(Vector3.right, 4));
-                        uvs.AddRange(new Vector2[]{ uv[0], uv[1], uv[3], uv[2] });
+                            normals.AddRange(faceData.Normals);
+
+                            var uv = GetUVsForVoxelType((VoxelType)chunkData[x, y, z], faceData.VoxelFace);
+                            uvs.Add(uv[faceData.UVIndices[0]]);
+                            uvs.Add(uv[faceData.UVIndices[1]]);
+                            uvs.Add(uv[faceData.UVIndices[2]]);
+                            uvs.Add(uv[faceData.UVIndices[3]]);
+                        }
                     }
 
                     int vertexBaseIdx = vertices.Count;
@@ -154,6 +201,8 @@ public class ChunkBuilder
         chunkTpGameObj.transform.position = chunkVoxelPos;
         chunkTpGameObj.GetComponent<Renderer>().material = _textureAtlasTransparentMaterial;
 
+        Profiler.EndSample();
+
         return new GameObject[] {
             chunkGameObj,
             chunkTpGameObj
@@ -176,19 +225,30 @@ public class ChunkBuilder
         }
     }
 
-    private Vector2[] GetUVsForTile(VoxelType voxelType, VoxelFace face)
-    {        
-        var uvOffset = VoxelInfo.GetAtlasUVOffsetForVoxel(voxelType, face);
-        var uvTileSize = new Vector2(
-            VoxelInfo.TextureTileSize * 1.0f / VoxelInfo.TextureAtlasWidth,
-            VoxelInfo.TextureTileSize * 1.0f / VoxelInfo.TextureAtlasHeight
-        );
-        return new Vector2[]
+    private Dictionary<(VoxelType, VoxelFace), Vector2[]> _tileUVCache = new Dictionary<(VoxelType, VoxelFace), Vector2[]>();
+
+    private Vector2[] GetUVsForVoxelType(VoxelType voxelType, VoxelFace face)
+    {       
+        if(!_tileUVCache.ContainsKey((voxelType, face)))
         {
-            uvOffset + new Vector2(0f, 0f),
-            uvOffset + new Vector2(uvTileSize.x, 0f),
-            uvOffset + new Vector2(0f, -uvTileSize.y),
-            uvOffset + new Vector2(uvTileSize.x, -uvTileSize.y)
-        };
+
+            var uvOffset = VoxelInfo.GetAtlasUVOffsetForVoxel(voxelType, face);
+            var uvTileSize = new Vector2(
+                VoxelInfo.TextureTileSize * 1.0f / VoxelInfo.TextureAtlasWidth,
+                VoxelInfo.TextureTileSize * 1.0f / VoxelInfo.TextureAtlasHeight
+            );
+
+            var uvs = new Vector2[]
+            {
+                uvOffset + new Vector2(0f, 0f),
+                uvOffset + new Vector2(uvTileSize.x, 0f),
+                uvOffset + new Vector2(0f, -uvTileSize.y),
+                uvOffset + new Vector2(uvTileSize.x, -uvTileSize.y)
+            };
+
+            _tileUVCache[(voxelType, face)] = uvs;
+        }
+
+        return _tileUVCache[(voxelType, face)];
     }
 }
