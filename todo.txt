@@ -1,3 +1,4 @@
 [x] Chunks
 [x] Texture Atlas
 [x] Separate game object per chunk for transparent voxels
+[ ] WorldGen.GetUVsForTile: Pregenerate UVs once for all tiles

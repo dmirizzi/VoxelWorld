@@ -2,106 +2,11 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public enum VoxelFace
-{
-    Top,
-    Bottom,
-    Front,
-    Back,
-    Left,
-    Right
-}
-
-public enum VoxelType
-{
-    Empty = 0,
-    Grass = 1,
-    Dirt = 2,
-    Water = 3
-}
-
-public static class VoxelInfo
-{
-    public const int TextureTileSize = 16;
-
-    public const int TextureAtlasWidth = 64;
-
-    public const int TextureAtlasHeight = 16;
-
-    public static bool IsSolid(VoxelType voxelType)
-    {
-        switch(voxelType)
-        {
-            case VoxelType.Empty:       return false;
-            case VoxelType.Grass:       return true;
-            case VoxelType.Dirt:        return true;
-            case VoxelType.Water:       return false;
-
-            default: 
-                throw new System.ArgumentException($"Invalid voxel type {voxelType}");
-        }
-    }
-
-    public static float GetVoxelHeightOffset(VoxelType voxelType)
-    {
-        switch(voxelType)
-        {
-            case VoxelType.Water:       return 0.075f;
-            default:                    return 0.0f;
-        }
-    }
-
-    public static Vector2 GetAtlasUVOffsetForVoxel(VoxelType voxelType, VoxelFace face)
-    {
-        var tilePosX = 0;
-        var tilePosY = 0;
-
-        switch(voxelType)
-        {
-            case VoxelType.Empty: throw new System.ArgumentException("No texture for empty voxel!");
-            case VoxelType.Grass:
-                if(face == VoxelFace.Top)
-                {
-                    tilePosX = 1;
-                    tilePosY = 0;
-                }
-                else if(face == VoxelFace.Bottom)
-                {
-                    tilePosX = 2;
-                    tilePosY = 0;
-                }
-                else 
-                {
-                    tilePosX = 0;
-                    tilePosY = 0;
-                }
-            break;
-            case VoxelType.Dirt:
-                tilePosX = 2;
-                tilePosY = 0;
-            break;
-            case VoxelType.Water:
-                tilePosX = 3;
-                tilePosY = 0;
-            break;
-        }
-
-        return new Vector2(
-            (float)TextureTileSize / TextureAtlasWidth * tilePosX,
-            (float)TextureTileSize / TextureAtlasHeight * tilePosY
-        );
-    }
-}
-
-
 public class WorldGen : MonoBehaviour
 {
     public Material TextureAtlasMaterial;
 
     public Material TextureAtlasTransparentMaterial;
-
-    public const int ChunkSize = 32;
-    public const float VoxelSize = 1f;
 
     private Dictionary<Vector3Int, byte[,,]> _chunks;
 
@@ -123,6 +28,7 @@ public class WorldGen : MonoBehaviour
         var chunkData = GetChunkFromVoxelPosition(x, y, z, false);
         if(chunkData == null)
         {
+            Debug.Log($"No chunk @ {x},{y},{z}");
             return VoxelType.Empty;
         }
         return (VoxelType)chunkData[chunkLocalPos.x, chunkLocalPos.y, chunkLocalPos.z];
@@ -143,7 +49,7 @@ public class WorldGen : MonoBehaviour
         {
             if(create)
             {
-                _chunks.Add(chunkPos, new byte[ChunkSize, ChunkSize, ChunkSize]);
+                _chunks.Add(chunkPos, new byte[VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize]);
             }
             else
             {
@@ -156,12 +62,12 @@ public class WorldGen : MonoBehaviour
 
     private Vector3Int GlobalToChunkLocalVoxelPos(Vector3Int voxelPos)
     {
-        var x = voxelPos.x % ChunkSize;
-        if(x != 0 && voxelPos.x < 0) x += ChunkSize;
-        var y = voxelPos.y % ChunkSize;
-        if(y != 0 && voxelPos.y < 0) y += ChunkSize;
-        var z = voxelPos.z % ChunkSize;
-        if(z != 0 && voxelPos.z < 0) z += ChunkSize;
+        var x = voxelPos.x % VoxelInfo.ChunkSize;
+        if(x != 0 && voxelPos.x < 0) x += VoxelInfo.ChunkSize;
+        var y = voxelPos.y % VoxelInfo.ChunkSize;
+        if(y != 0 && voxelPos.y < 0) y += VoxelInfo.ChunkSize;
+        var z = voxelPos.z % VoxelInfo.ChunkSize;
+        if(z != 0 && voxelPos.z < 0) z += VoxelInfo.ChunkSize;
 
         return new Vector3Int(x, y, z);
     }
@@ -170,17 +76,17 @@ public class WorldGen : MonoBehaviour
     {
         var x = (int)voxelPos.x;
         if(voxelPos.x < 0) x += 1;
-        x /= ChunkSize;
+        x /= VoxelInfo.ChunkSize;
         if(voxelPos.x < 0) x -= 1;
 
         var y = (int)voxelPos.y;
         if(voxelPos.y < 0) y += 1;
-        y /= ChunkSize;
+        y /= VoxelInfo.ChunkSize;
         if(voxelPos.y < 0) y -= 1;
 
         var z = (int)voxelPos.z;
         if(voxelPos.z < 0) z += 1;
-        z /= ChunkSize;
+        z /= VoxelInfo.ChunkSize;
         if(voxelPos.z < 0) z -= 1;
 
         return new Vector3Int(x, y, z);
@@ -189,9 +95,9 @@ public class WorldGen : MonoBehaviour
     private Vector3Int ChunkToBaseVoxelPos(Vector3Int chunkPos)
     {
         return new Vector3Int(
-            chunkPos.x * ChunkSize,
-            chunkPos.y * ChunkSize,
-            chunkPos.z * ChunkSize
+            chunkPos.x * VoxelInfo.ChunkSize,
+            chunkPos.y * VoxelInfo.ChunkSize,
+            chunkPos.z * VoxelInfo.ChunkSize
         );
     }
 
@@ -237,15 +143,15 @@ public class WorldGen : MonoBehaviour
 
             var chunkVoxelPos = ChunkToBaseVoxelPos(chunkPos);
 
-            for(int x = 0; x < ChunkSize; ++x)
+            for(int x = 0; x < VoxelInfo.ChunkSize; ++x)
             {
-                for(int y = 0; y < ChunkSize; ++y)
+                for(int y = 0; y < VoxelInfo.ChunkSize; ++y)
                 {
-                    for(int z = 0; z < ChunkSize; ++z)
+                    for(int z = 0; z < VoxelInfo.ChunkSize; ++z)
                     {
                         var voxelType = (VoxelType)chunkData[x, y, z];
-
                         if(voxelType == VoxelType.Empty) continue;
+
                         bool isTransparent = !VoxelInfo.IsSolid((VoxelType)chunkData[x, y, z]);
 
                         var vertices = isTransparent ? chunkVerticesTp : chunkVertices;
@@ -253,23 +159,26 @@ public class WorldGen : MonoBehaviour
                         var uvs = isTransparent ? chunkUVsTp : chunkUVs;
                         var triangles = isTransparent ? chunkTrianglesTp : chunkTriangles;
 
-                        var heightOffset = VoxelInfo.GetVoxelHeightOffset(voxelType);
+                        var voxelPos = chunkVoxelPos + new Vector3Int(x, y, z);
 
-                        var v = new Vector3[]
+                        var heightOffset = (VoxelType)GetVoxel(voxelPos + Vector3Int.up) != voxelType ?
+                            VoxelInfo.GetVoxelHeightOffset(voxelType)
+                            : 0.0f;
+
+                        var v = new List<Vector3>()
                         {
                              new Vector3(x, y, z),
-                             new Vector3(x + VoxelSize, y, z),
-                             new Vector3(x + VoxelSize, y, z + VoxelSize),
-                             new Vector3(x, y, z + VoxelSize),
+                             new Vector3(x + VoxelInfo.VoxelSize, y, z),
+                             new Vector3(x + VoxelInfo.VoxelSize, y, z + VoxelInfo.VoxelSize),
+                             new Vector3(x, y, z + VoxelInfo.VoxelSize),
 
-                             new Vector3(x, y + VoxelSize - heightOffset, z),
-                             new Vector3(x + VoxelSize, y + VoxelSize - heightOffset, z),
-                             new Vector3(x + VoxelSize, y + VoxelSize - heightOffset, z + VoxelSize),
-                             new Vector3(x, y + VoxelSize - heightOffset, z + VoxelSize)
+                             new Vector3(x, y + VoxelInfo.VoxelSize - heightOffset, z),
+                             new Vector3(x + VoxelInfo.VoxelSize, y + VoxelInfo.VoxelSize - heightOffset, z),
+                             new Vector3(x + VoxelInfo.VoxelSize, y + VoxelInfo.VoxelSize - heightOffset, z + VoxelInfo.VoxelSize),
+                             new Vector3(x, y + VoxelInfo.VoxelSize - heightOffset, z + VoxelInfo.VoxelSize)
                         };
 
                         var voxelVertices = new List<Vector3>();
-                        var voxelPos = chunkVoxelPos + new Vector3Int(x, y, z);
 
                         if(VoxelSideVisible(voxelType, voxelPos, Vector3Int.down))
                         {
@@ -353,7 +262,7 @@ public class WorldGen : MonoBehaviour
     }
 
     private Vector2[] GetUVsForTile(VoxelType voxelType, VoxelFace face)
-    {
+    {        
         var uvOffset = VoxelInfo.GetAtlasUVOffsetForVoxel(voxelType, face);
         var uvTileSize = new Vector2(
             VoxelInfo.TextureTileSize * 1.0f / VoxelInfo.TextureAtlasWidth,
