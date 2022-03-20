@@ -106,8 +106,7 @@ public class ChunkBuilder
         var chunkTrianglesTp = new List<int>();
 
         var chunkVoxelPos = VoxelPosConverter.ChunkToBaseVoxelPos(chunkPos);
-
-        Profiler.BeginSample("GenerateChunk");
+        
         for(int x = 0; x < VoxelInfo.ChunkSize; ++x)
         {
             for(int y = 0; y < VoxelInfo.ChunkSize; ++y)
@@ -200,8 +199,6 @@ public class ChunkBuilder
 
         chunkTpGameObj.transform.position = chunkVoxelPos;
         chunkTpGameObj.GetComponent<Renderer>().material = _textureAtlasTransparentMaterial;
-
-        Profiler.EndSample();
 
         return new GameObject[] {
             chunkGameObj,
