@@ -20,8 +20,8 @@ public enum VoxelFace
 
 public static class VoxelInfo
 {
-    public const int ChunkSize = 32;
-    
+    public const int ChunkSize = 8;
+
     public const float VoxelSize = 1f;
 
     public const int TextureTileSize = 16;

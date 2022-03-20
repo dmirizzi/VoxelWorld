@@ -310,7 +310,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2062042007}
-  - component: {fileID: 2062042006}
+  - component: {fileID: 2062042008}
   m_Layer: 0
   m_Name: WorldGen
   m_TagString: Untagged
@@ -318,20 +318,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &2062042006
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2062042005}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dd7752677d893154daacd60bfda846e4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  TextureAtlasMaterial: {fileID: 2100000, guid: 6a17a558c43edbd48ad88dc22c7ebfbb, type: 2}
-  TextureAtlasTransparentMaterial: {fileID: 2100000, guid: 04ba753517627944294dae244e380400, type: 2}
 --- !u!4 &2062042007
 Transform:
   m_ObjectHideFlags: 0
@@ -347,3 +333,17 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2062042008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2062042005}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d579a22e09cf424db8b3da88262f13f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  TextureAtlasMaterial: {fileID: 2100000, guid: 6a17a558c43edbd48ad88dc22c7ebfbb, type: 2}
+  TextureAtlasTransparentMaterial: {fileID: 2100000, guid: 04ba753517627944294dae244e380400, type: 2}
