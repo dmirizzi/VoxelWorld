@@ -331,6 +331,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   TextureAtlasMaterial: {fileID: 2100000, guid: 6a17a558c43edbd48ad88dc22c7ebfbb, type: 2}
+  TextureAtlasTransparentMaterial: {fileID: 2100000, guid: 04ba753517627944294dae244e380400, type: 2}
 --- !u!4 &2062042007
 Transform:
   m_ObjectHideFlags: 0

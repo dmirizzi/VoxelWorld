@@ -1,0 +1,3 @@
+[x] Chunks
+[x] Texture Atlas
+[x] Separate game object per chunk for transparent voxels
