@@ -189,6 +189,7 @@ public class ChunkBuilder
 
         chunkGameObj.transform.position = chunkVoxelPos;
         chunkGameObj.GetComponent<Renderer>().material = _textureAtlasMaterial;
+        GenerateMeshCollider(chunkGameObj);
 
         meshTp.Clear();
         meshTp.vertices = chunkVerticesTp.ToArray();
@@ -199,11 +200,17 @@ public class ChunkBuilder
 
         chunkTpGameObj.transform.position = chunkVoxelPos;
         chunkTpGameObj.GetComponent<Renderer>().material = _textureAtlasTransparentMaterial;
+        GenerateMeshCollider(chunkTpGameObj);
 
         return new GameObject[] {
             chunkGameObj,
             chunkTpGameObj
         };
+    }
+
+    private void GenerateMeshCollider(GameObject chunkObject)
+    {
+        var collider = chunkObject.AddComponent<MeshCollider>();
     }
 
     private bool VoxelSideVisible(VoxelType voxelType, Vector3Int voxelPos, Vector3Int direction)

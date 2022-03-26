@@ -5,12 +5,13 @@
 [x] Set multiple voxels in sphere shape
 [x] WorldGen.GetUVsForTile: Pregenerate UVs once for all tiles
 [x] Torch
+    [ ] Torch base object not affected by torch light
 
 [ ] Blob
     [x] Randomly moving around voxel world
-    [ ] Correct jumping on levels above or below blob
+    [ ] Correct jumping on levels above or below blob -> add rigidbody & jump via impulse
 
-[ ] FPS Camera Controller
+[ ] Player obj w/ FPS Camera Controller
 
 [ ] Day/Night System
     [ ] Sun rise/set

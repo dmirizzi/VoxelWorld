@@ -72,7 +72,20 @@ public class WorldGenerator : MonoBehaviour
             Instantiate(TorchPrefab, worldPos, Quaternion.identity);
         }
 
+        // Place the player
+        PlacePlayer();        
+
         WorldGenerated = true;
+    }
+
+    private void PlacePlayer()
+    {
+        var pos = VoxelWorld.GetRandomSolidSurfaceVoxel();
+        var worldPos = VoxelPosConverter.GetVoxelTopCenterSurfaceWorldPos(pos) + Vector3.up;
+
+        GameObject.Find("Player").transform.position = worldPos + Vector3.up;
+
+        UnityEngine.Debug.Log($"Placing player @ {GameObject.Find("Player").transform.position}");
     }
 
     private DateTime lastDrop = DateTime.Now;

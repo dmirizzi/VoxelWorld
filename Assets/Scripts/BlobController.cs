@@ -59,8 +59,6 @@ public class BlobController : MonoBehaviour
                     if(CurrentActionState == BlobActionState.FindingDestination)
                     {
                         CurrentActionState = BlobActionState.Turning;
-                        if(Destination != null) Debug.Log($"Facing towards {Destination.Value}");
-
                     }
 
                     if(CurrentActionState == BlobActionState.Turning)
@@ -69,7 +67,6 @@ public class BlobController : MonoBehaviour
                         {
                             _jumpOffPoint = transform.position;
                             CurrentActionState = BlobActionState.Jumping;
-                            Debug.Log($"Jumping towards destination {Destination.Value}");
                         }
                     }
 
@@ -77,7 +74,6 @@ public class BlobController : MonoBehaviour
                     {
                         if(JumpTowardsTarget())
                         {
-                            Debug.Log($"Reached destination {Destination.Value}");
                             CurrentActionState = BlobActionState.Idle;
                             Destination = null;
                         }
@@ -143,13 +139,9 @@ public class BlobController : MonoBehaviour
             return;
         }
 
-        Debug.Log($"Current Voxel Pos = {VoxelPosConverter.GetVoxelPosFromWorldPos(transform.position)}");
-
         var voxelPos = VoxelPosConverter.GetVoxelPosFromWorldPos(transform.position) + randomOffset;
 
         var y = _worldGen.VoxelWorld.GetHighestVoxelPos(voxelPos.x, voxelPos.z);
-
-        Debug.Log($"Highest voxel @ {voxelPos} -> {(y.HasValue ? y.Value : -123)}");
 
         if(y.HasValue)
         {
