@@ -4,9 +4,18 @@
 [x] Add/Remove voxels
 [x] Set multiple voxels in sphere shape
 [x] WorldGen.GetUVsForTile: Pregenerate UVs once for all tiles
+[x] Torch
 
 [ ] Blob
     [x] Randomly moving around voxel world
     [ ] Correct jumping on levels above or below blob
+
+[ ] FPS Camera Controller
+
+[ ] Day/Night System
+    [ ] Sun rise/set
+    [ ] Moon
+    [ ] Control via scene skybox / hue
+    [ ] Control via skybox light intensity
 
 [ ] Water simulation

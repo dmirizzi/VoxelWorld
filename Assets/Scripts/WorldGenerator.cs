@@ -8,6 +8,8 @@ public class WorldGenerator : MonoBehaviour
 
     public Material TextureAtlasTransparentMaterial;
 
+    public GameObject TorchPrefab;
+
     public bool WorldGenerated { get; private set; }
 
     public VoxelWorld VoxelWorld { get; private set; }
@@ -60,6 +62,15 @@ public class WorldGenerator : MonoBehaviour
         VoxelWorld.Build();
         sw.Stop();
         UnityEngine.Debug.Log($"Built world in {sw.Elapsed.TotalSeconds}s");
+
+        // Generate some torches
+        int numTorches = 100;
+        for(int i = 0; i < numTorches; ++i)
+        {
+            var pos = VoxelWorld.GetRandomSolidSurfaceVoxel();
+            var worldPos = VoxelPosConverter.GetVoxelTopCenterSurfaceWorldPos(pos) + Vector3.up * 0.35f;
+            Instantiate(TorchPrefab, worldPos, Quaternion.identity);
+        }
 
         WorldGenerated = true;
     }

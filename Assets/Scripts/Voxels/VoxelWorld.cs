@@ -104,6 +104,22 @@ public class VoxelWorld
         return (minBound, maxBound);
     }
 
+    public Vector3Int GetRandomSolidSurfaceVoxel()
+    {
+        var bounds = GetWorldBoundaries();
+
+        while(true)
+        {
+            var x = Random.Range(bounds.Item1.x, bounds.Item2.x);
+            var z = Random.Range(bounds.Item1.z, bounds.Item2.z);
+            var y = GetHighestVoxelPos(x, z);
+            if(y.HasValue)
+            {
+                return new Vector3Int(x, y.Value, z);
+            }
+        }
+    }
+
     public void Build()
     {
         foreach(var chunkPos in _changedChunks)
