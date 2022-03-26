@@ -4,24 +4,23 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    public bool Grounded;
-
     public float Sensitivity = 1.5f;
 
     public float WalkingSpeed = 5f;
 
-    public float JumpForce = 5f;
+    public float JumpForce = 1f;
 
-    private Rigidbody _rigidBody;
-
-    private CapsuleCollider _collider;
+    public float GravityFactor = 3f;
 
     private Transform _cameraTransform;
 
+    private CharacterController _controller;
+
+    private Vector3 _velocity;
+
     void Start()
     {
-        _rigidBody = GetComponent<Rigidbody>();
-        _collider = GetComponent<CapsuleCollider>();
+        _controller = GetComponent<CharacterController>();
         _cameraTransform = GameObject.Find("Main Camera").transform;
     }
 
@@ -43,20 +42,26 @@ public class PlayerController : MonoBehaviour
         var right = Input.GetAxis("Horizontal");
         var forwardXZ = new Vector3(_cameraTransform.forward.x, 0, _cameraTransform.forward.z);
         var rightXZ = new Vector3(_cameraTransform.right.x, 0, _cameraTransform.right.z);
-        var oldVelocityY = _rigidBody.velocity.y;
+        _controller.Move((forwardXZ * forward + rightXZ * right) * WalkingSpeed * Time.deltaTime);
 
-        _rigidBody.velocity = (forwardXZ * forward + rightXZ * right) * WalkingSpeed + Vector3.up * oldVelocityY;
-
-        // Jumping
-        Grounded = IsGrounded();
-        if(Input.GetButtonDown("Jump") && IsGrounded())
+        // Jumping / Falling
+        if(IsGrounded())
         {
-            _rigidBody.AddForce(Vector3.up * JumpForce, ForceMode.Impulse);
+            _velocity = Vector3.zero;
+            if(Input.GetButtonDown("Jump"))
+            {
+                _velocity = Vector3.up * JumpForce;
+            }
         }
+        else
+        {
+            _velocity += Physics.gravity * Time.deltaTime * GravityFactor;
+        }
+        _controller.Move(_velocity * Time.deltaTime);
     }
 
     private bool IsGrounded()
     {
-        return Physics.Raycast(transform.position, Vector3.down, _collider.bounds.size.y / 2 + 0.1f);
+        return Physics.Raycast(transform.position, Vector3.down, _controller.bounds.size.y / 2 + 0.1f);
     }
 }
