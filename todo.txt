@@ -11,7 +11,7 @@
     [x] Randomly moving around voxel world
     [ ] Correct jumping on levels above or below blob -> add rigidbody & jump via impulse
 
-[ ] Player obj w/ FPS Camera Controller
+[x] Player obj w/ FPS Camera Controller
 
 [ ] Day/Night System
     [ ] Sun rise/set
