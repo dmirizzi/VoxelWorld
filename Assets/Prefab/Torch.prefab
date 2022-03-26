@@ -206,6 +206,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e9020dd3aa9ad9499acfff3e6c830b0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  BaseIntensity: 0.8
+  FlickeringIntensityFraction: 0.4
+  FlickeringFrequencyFactor: 8
 --- !u!1 &5510100728198951800
 GameObject:
   m_ObjectHideFlags: 0
