@@ -6,12 +6,23 @@
 [x] WorldGen.GetUVsForTile: Pregenerate UVs once for all tiles
 [x] Torch
     [ ] Torch base object not affected by torch light
+    [ ] Integrate torches into chunk infrastructure
+
+[ ] Chunk occlusion culling?
+    https://tomcc.github.io/2014/08/31/visibility-1.html
+
+[ ] Optimize mesh generation to merge adjoining voxel faces with same Texture
+    -> Does that work with texture atlas UVs?
+
+[ ] Lighting is different between chunks / no smooth lighting transition between chunks
 
 [ ] Blob
     [x] Randomly moving around voxel world
     [ ] Correct jumping on levels above or below blob -> add rigidbody & jump via impulse
 
 [x] Player obj w/ FPS Camera Controller
+
+[ ] Cave generator
 
 [ ] Day/Night System
     [ ] Sun rise/set

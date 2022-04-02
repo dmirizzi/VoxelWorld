@@ -21,11 +21,12 @@ public class WorldGenerator : MonoBehaviour
 
         var seed = UnityEngine.Random.Range(0, 1000);
 
-        for(int x = 0; x < 64; ++x)
+        for(int x = -128; x < 128; ++x)
         {
-            for(int z = 0; z < 64; ++z)
+            for(int z = -128; z < 128; ++z)
             {
                 var height = Mathf.Min(16, (int)(Mathf.PerlinNoise(seed + x / 20.0f, seed + z / 20.0f) * 32) - 3);
+                //var height = 0;
 
                 bool isWater = height < 0;
                 if(isWater) height = 0;

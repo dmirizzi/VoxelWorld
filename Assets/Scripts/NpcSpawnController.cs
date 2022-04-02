@@ -6,9 +6,10 @@ public class NpcSpawnController : MonoBehaviour
 
     private WorldGenerator _worldGen;
 
+    public int TargetNumberBlobs { get; set; }
+
     public int NumBlobs { get; private set; }
 
-    // Start is called before the first frame update
     void Start()
     {
         _worldGen = GameObject.FindObjectsOfType<WorldGenerator>()[0];
@@ -30,10 +31,9 @@ public class NpcSpawnController : MonoBehaviour
         }
     }
 
-    // Update is called once per frame
     void Update()
     {
-        if(NumBlobs < 100 && _worldGen.WorldGenerated)
+        if(NumBlobs < TargetNumberBlobs && _worldGen.WorldGenerated)
         {
             var pos = VoxelPosConverter.GetVoxelTopCenterSurfaceWorldPos(GetRandomSolidSurfaceVoxel());
             pos += Vector3.up * (BlobPrefab.GetComponent<Renderer>().bounds.size.y / 2);
