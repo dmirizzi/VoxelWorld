@@ -27,15 +27,21 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        //Cursor.lockState = CursorLockMode.Locked;
+        //Cursor.visible = false;
 
         // Mouse Look
         var mx = Input.GetAxis("Mouse X") * Sensitivity;
         var my = Input.GetAxis("Mouse Y") * Sensitivity;
-        _cameraTransform.rotation *= Quaternion.Euler(-my, mx, 0f);
+        _cameraTransform.rotation *= Quaternion.Euler(-my, 0f, 0f);
+        transform.rotation *= Quaternion.Euler(0f, mx, 0f);
+
+        // Avoid rotation on z-axis
         var angles = _cameraTransform.rotation.eulerAngles;
         _cameraTransform.rotation = Quaternion.Euler(angles.x, angles.y, 0);
+
+        angles = transform.rotation.eulerAngles;
+        transform.rotation = Quaternion.Euler(0, angles.y, 0);
 
         // Movement
         var forward = Input.GetAxis("Vertical");

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
 
@@ -14,16 +15,38 @@ public class WorldGenerator : MonoBehaviour
 
     public VoxelWorld VoxelWorld { get; private set; }
 
+    private List<GameObject> _generatedObjects = new List<GameObject>();
+
     // Start is called before the first frame update
     void Start()
     {
         VoxelWorld = new VoxelWorld(TextureAtlasMaterial, TextureAtlasTransparentMaterial);
 
+        GenerateWorld();
+
+        WorldGenerated = true;
+    }
+
+    private void ClearWorld()
+    {
+        foreach(var obj in _generatedObjects)
+        {
+            Destroy(obj);
+        }
+        _generatedObjects.Clear();
+
+        VoxelWorld.Clear();
+    }
+
+    private void GenerateTerrain(int size)
+    {
+        size /= 2;
+
         var seed = UnityEngine.Random.Range(0, 1000);
 
-        for(int x = -128; x < 128; ++x)
+        for(int x = -size; x < size; ++x)
         {
-            for(int z = -128; z < 128; ++z)
+            for(int z = -size; z < size; ++z)
             {
                 var height = Mathf.Min(16, (int)(Mathf.PerlinNoise(seed + x / 20.0f, seed + z / 20.0f) * 32) - 3);
                 //var height = 0;
@@ -58,25 +81,156 @@ public class WorldGenerator : MonoBehaviour
                 }
             }
         }
-        var sw = new Stopwatch();
-        sw.Start();
-        VoxelWorld.Build();
-        sw.Stop();
-        UnityEngine.Debug.Log($"Built world in {sw.Elapsed.TotalSeconds}s");
+    }
 
-        // Generate some torches
-        int numTorches = 100;
-        for(int i = 0; i < numTorches; ++i)
+    private void GenerateCave(Vector3Int position, Vector3Int size, int iterations, int birthNeighbors, int deathNeighbors, float emptyChance)
+    {
+        if(size.x == 0 || size.y == 0 || size.z == 0)
         {
-            var pos = VoxelWorld.GetRandomSolidSurfaceVoxel();
-            var worldPos = VoxelPosConverter.GetVoxelTopCenterSurfaceWorldPos(pos) + Vector3.up * 0.35f;
-            Instantiate(TorchPrefab, worldPos, Quaternion.identity);
+            return;
         }
 
-        // Place the player
-        PlacePlayer();        
+        bool[,,] cells = new bool[size.x, size.y, size.z];
 
-        WorldGenerated = true;
+        Func<bool[,,], int, int, int, int> getNeighbors = (cells, x, y, z) => 
+        {
+            int neighbors = 0;
+            for(int dx = x - 1; dx <= x + 1; ++dx)
+            {
+                for(int dy = y - 1; dy <= y + 1; ++dy)
+                {
+                    for(int dz = z - 1; dz <= z + 1; ++dz)
+                    {
+                        if(dx >= 0 && dx < size.x && dy >= 0 && dy < size.y && dz >= 0 && dz < size.z)
+                        {
+                            if(dx != x || dy != y || dz != z)
+                            {
+                                if(cells[dx, dy, dz])
+                                {
+                                    neighbors++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return neighbors;
+        };
+
+        // Randomize cave area
+        for(int x = 0; x < size.x; ++x)
+        {
+            for(int y = 0; y < size.y; ++y)
+            {
+                for(int z = 0; z < size.z; ++z)
+                {
+                    if(UnityEngine.Random.Range(0f, 1f) <= emptyChance)
+                    {
+                        cells[x, y, z] = false;
+                    }
+                    else
+                    {
+                        cells[x, y, z] = true;
+                    }
+                }                
+            }
+        }
+
+        // Run cellular automata
+        var oldCells = new bool[size.x, size.y, size.z];
+        for(int i = 0; i < iterations; ++i)
+        {
+            Buffer.BlockCopy(cells, 0, oldCells, 0, size.x * size.y * size.z * sizeof(bool));
+
+            for(int x = 0; x < size.x; ++x)
+            {
+                for(int y = 0; y < size.y; ++y)
+                {
+                    for(int z = 0; z < size.z; ++z)
+                    {
+                        var neighbors = getNeighbors(oldCells, x, y, z);
+
+                        if(!cells[x, y, z])
+                        {
+                            if(neighbors >= birthNeighbors)
+                            {
+                                cells[x, y, z] = true; 
+                            }
+                        }
+                        else
+                        {
+                            if(neighbors <= deathNeighbors)
+                            {
+                                cells[x, y, z] = false;
+                            }
+                        }
+                    }                
+                }
+            }
+        }
+
+        for(int x = 0; x < size.x; ++x)
+        {
+            for(int y = 0; y < size.y; ++y)
+            {
+                for(int z = 0; z < size.z; ++z)
+                {
+                    if(cells[x, y, z])
+                    {
+                        VoxelWorld.SetVoxel(
+                            position.x + x, 
+                            position.y - y, 
+                            position.z + z, 
+                            VoxelType.Empty );
+                    }
+                }                
+            }
+        }
+    }
+
+    private (int, bool[,,]) FloodFill(bool[,,] cells, Vector3Int size, Vector3Int point)
+    {
+        bool[,,] output = new bool[size.x, size.y, size.z];
+
+        var stack = new Stack<Vector3Int>();
+        stack.Push(point);
+
+        int numCells = 0;
+
+        while(stack.Count > 0)
+        {
+            var currentPoint = stack.Pop();
+            if(!cells[currentPoint.x, currentPoint.y, currentPoint.z] && !output[currentPoint.x, currentPoint.y, currentPoint.z])
+            {
+                output[currentPoint.x, currentPoint.y, currentPoint.z] = true;
+                numCells++;
+
+                for(int x = currentPoint.x - 1; x < currentPoint.x + 1; ++x)
+                {
+                    for(int y = currentPoint.y - 1; y < currentPoint.y + 1; ++y)
+                    {
+                        for(int z = currentPoint.z - 1; z < currentPoint.z + 1; ++z)
+                        {
+                            if(x >= 0 && x < size.x && y >= 0 && y < size.y && z >= 0 && z < size.z)
+                            {
+                                if(x != currentPoint.x || y != currentPoint.y || z != currentPoint.z)
+                                {
+                                    stack.Push(new Vector3Int(x, y, z));
+                                }
+                            }    
+                        }            
+                    }
+                }
+            }
+        }
+
+        return (numCells, output);
+    }
+
+    private void PlaceTorch(Vector3Int voxelPos)
+    {
+        var worldPos = VoxelPosConverter.GetVoxelTopCenterSurfaceWorldPos(voxelPos) + Vector3.up * 0.35f;
+        _generatedObjects.Add(Instantiate(TorchPrefab, worldPos, Quaternion.identity));
     }
 
     private void PlacePlayer()
@@ -84,12 +238,75 @@ public class WorldGenerator : MonoBehaviour
         var pos = VoxelWorld.GetRandomSolidSurfaceVoxel();
         var worldPos = VoxelPosConverter.GetVoxelTopCenterSurfaceWorldPos(pos) + Vector3.up;
 
-        GameObject.Find("Player").transform.position = worldPos + Vector3.up;
+        var playerController = GameObject.Find("Player").GetComponent<CharacterController>();
+        playerController.enabled = false;
+        playerController.transform.position = worldPos + Vector3.up * 10;
+        playerController.enabled = true;
 
         UnityEngine.Debug.Log($"Placing player @ {GameObject.Find("Player").transform.position}");
     }
 
     private DateTime lastDrop = DateTime.Now;
+
+    private int _birthNeighbors = 13;
+    private int _deathNeighbors = 12;
+    private int _iterations = 30;
+    private float _emptyChance = .54f;
+
+    void OnGUI()
+    {
+        GUI.Label(new Rect(10, 10, 140, 50), $"BirthNeighbors({_birthNeighbors})");
+        _birthNeighbors = (int)GUI.HorizontalSlider(new Rect(150, 10, 250, 50), _birthNeighbors, 0, 26);
+        GUI.Label(new Rect(10, 70, 140, 50), $"DeathNeighbors({_deathNeighbors})");
+        _deathNeighbors = (int)GUI.HorizontalSlider(new Rect(150, 70, 250, 50), _deathNeighbors, 0, 26);
+        GUI.Label(new Rect(10, 130, 140, 50), $"Iterations({_iterations})");
+        _iterations  = (int)GUI.HorizontalSlider(new Rect(150, 130, 250, 50), _iterations, 1, 100);
+        GUI.Label(new Rect(10, 190, 140, 50), $"EmptyChance({_emptyChance})");
+        _emptyChance = GUI.HorizontalSlider(new Rect(150, 190, 250, 50), _emptyChance, 0f, 1.0f);
+
+        if(GUI.Button(new Rect(10, 250, 250, 50), "Generate World") )
+        {
+            GenerateWorld();
+        }
+    }
+
+    private void GenerateWorld()
+    {
+        var sw = new Stopwatch();
+        sw.Start();
+
+        ClearWorld();
+
+        GenerateTerrain(128);
+
+        GenerateCave(
+            new Vector3Int(0, 0, 0),
+            new Vector3Int(
+                UnityEngine.Random.Range(32, 128), 
+                UnityEngine.Random.Range(32, 128), 
+                UnityEngine.Random.Range(32, 128)
+            ),
+            _iterations,
+            _birthNeighbors,
+            _deathNeighbors,
+            _emptyChance
+        );
+
+        VoxelWorld.Build();
+
+        int numTorches = 100;
+        for(int i = 0; i < numTorches; ++i)
+        {
+            var pos = VoxelWorld.GetRandomSolidSurfaceVoxel();
+            PlaceTorch(pos);
+        }
+
+        PlacePlayer();
+
+
+        sw.Stop();
+        UnityEngine.Debug.Log($"Generated world in {sw.Elapsed.TotalSeconds} sec");
+    }
 
     // Update is called once per frame
     void Update()

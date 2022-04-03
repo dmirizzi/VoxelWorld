@@ -126,6 +126,7 @@ public class VoxelWorld
         {
             if(!_chunks.ContainsKey(chunkPos)) continue;
 
+            // Delete existing chunk to regenerate it
             if(_chunkGameObjects.ContainsKey(chunkPos))
             {
                 foreach(var chunkGameObject in _chunkGameObjects[chunkPos])
@@ -136,6 +137,21 @@ public class VoxelWorld
 
             _chunkGameObjects[chunkPos] = _chunkBuilder.Build(chunkPos, _chunks[chunkPos]);
         }
+        _changedChunks.Clear();
+    }
+
+    public void Clear()
+    {
+        foreach(var chunk in _chunkGameObjects.Values)
+        {
+            foreach(var obj in chunk)
+            {
+                GameObject.Destroy(obj);
+            }
+        }
+
+        _chunkGameObjects.Clear();
+        _chunks.Clear();
         _changedChunks.Clear();
     }
 

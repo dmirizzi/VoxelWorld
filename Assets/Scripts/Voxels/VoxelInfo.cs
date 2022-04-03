@@ -5,7 +5,8 @@ public enum VoxelType
     Empty = 0,
     Grass = 1,
     Dirt = 2,
-    Water = 3
+    Water = 3,
+    Cobblestone = 4
 }
 
 public enum VoxelFace
@@ -27,7 +28,7 @@ public static class VoxelInfo
 
     public const int TextureTileSize = 16;
 
-    public const int TextureAtlasWidth = 64;
+    public const int TextureAtlasWidth = 80;
 
     public const int TextureAtlasHeight = 16;
 
@@ -35,10 +36,11 @@ public static class VoxelInfo
     {
         switch(voxelType)
         {
-            case VoxelType.Empty:       return false;
-            case VoxelType.Grass:       return true;
-            case VoxelType.Dirt:        return true;
-            case VoxelType.Water:       return false;
+            case VoxelType.Empty:           return false;
+            case VoxelType.Grass:           return true;
+            case VoxelType.Dirt:            return true;
+            case VoxelType.Water:           return false;
+            case VoxelType.Cobblestone:     return true;
 
             default: 
                 throw new System.ArgumentException($"Invalid voxel type {voxelType}");
@@ -85,6 +87,10 @@ public static class VoxelInfo
             break;
             case VoxelType.Water:
                 tilePosX = 3;
+                tilePosY = 0;
+            break;
+            case VoxelType.Cobblestone:
+                tilePosX = 4;
                 tilePosY = 0;
             break;
         }
