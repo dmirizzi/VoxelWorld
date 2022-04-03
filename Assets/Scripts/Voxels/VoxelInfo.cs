@@ -28,9 +28,9 @@ public static class VoxelInfo
 
     public const int TextureTileSize = 16;
 
-    public const int TextureAtlasWidth = 80;
+    public const int TextureAtlasWidth = 128;
 
-    public const int TextureAtlasHeight = 16;
+    public const int TextureAtlasHeight = 128;
 
     public static bool IsSolid(VoxelType voxelType)
     {
