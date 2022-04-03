@@ -9,19 +9,14 @@
     [ ] Integrate torches into chunk infrastructure
 [x] Simple cave generator based on cellular automata
 
-[ ] Chunk occlusion culling?
-    https://tomcc.github.io/2014/08/31/visibility-1.html
-
-[ ] Optimize mesh generation to merge adjoining voxel faces with same Texture
-    -> Does that work with texture atlas UVs?
-
-[ ] Lighting is different between chunks / no smooth lighting transition between chunks
+[ ] Custom models as part of voxel infrastructure (e.g. stairs, doors etc.)
+    [ ] One mesh for all?
+    [ ] One mesh for all same models so they can share a texture?
+    [ ] How about special objects such as torches that are not simple models?
 
 [ ] Blob
     [x] Randomly moving around voxel world
     [ ] Correct jumping on levels above or below blob -> add rigidbody & jump via impulse
-
-[x] Player obj w/ FPS Camera Controller
 
 [ ] Place/Remove Block player is looking at
 
@@ -32,3 +27,33 @@
     [ ] Control via skybox light intensity
 
 [ ] Water simulation
+
+[ ] Voxel Property: Collideable (e.g. Water) -> better word than collideable?
+
+----------------------------------------------------------------------------------------------------------------
+    Issues / Bugs
+----------------------------------------------------------------------------------------------------------------
+
+[ ] Lighting is different between chunks / no smooth lighting transition between chunks
+
+----------------------------------------------------------------------------------------------------------------
+    Refactoring
+----------------------------------------------------------------------------------------------------------------
+
+[x] Multithreaded chunk building
+
+[ ] Refactor ChunkBuilder
+
+[ ] Get VoxelInfo from config file (solid, tileXY etc.)
+
+
+----------------------------------------------------------------------------------------------------------------
+    Optimization
+----------------------------------------------------------------------------------------------------------------
+[ ] Chunk occlusion culling?
+    https://tomcc.github.io/2014/08/31/visibility-1.html
+
+[ ] Optimize mesh generation to merge adjoining voxel faces with same Texture
+    -> Does that work with texture atlas UVs?
+
+[x] Player obj w/ FPS Camera Controller

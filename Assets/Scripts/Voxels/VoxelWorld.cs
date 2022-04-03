@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class VoxelWorld
@@ -12,15 +13,27 @@ public class VoxelWorld
 
     private HashSet<Vector3Int> _changedChunks;
 
+    private Material _textureAtlasMaterial;
+
+    private Material _textureAtlasTransparentMaterial;
+
     public VoxelWorld(Material textureAtlasMaterial, Material textureAtlasTransparentMaterial)
     {
         _chunks = new Dictionary<Vector3Int, byte[,,]>();
         _changedChunks = new HashSet<Vector3Int>();
         _chunkBuilder = new ChunkBuilder(this, textureAtlasMaterial, textureAtlasTransparentMaterial);
         _chunkGameObjects = new Dictionary<Vector3Int, GameObject[]>();
+        _textureAtlasMaterial = textureAtlasMaterial;
+        _textureAtlasTransparentMaterial = textureAtlasTransparentMaterial;
     }
 
-    public void SetVoxel(int x, int y, int z, VoxelType type, bool rebuild = false)
+    public void SetVoxelAndRebuild(int x, int y, int z, VoxelType type)
+    {
+        SetVoxel(x, y, z, type);
+        Build();
+    }
+
+    public void SetVoxel(int x, int y, int z, VoxelType type)
     {
         var chunk = GetChunkFromVoxelPosition(x, y, z, true);
         var chunkLocalPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(new Vector3Int(x, y, z));
@@ -30,11 +43,6 @@ public class VoxelWorld
         foreach(var affectedChunk in GetChunksAdjacentToVoxel(new Vector3Int(x, y, z)))
         {
             _changedChunks.Add(affectedChunk);
-        }
-
-        if(rebuild)
-        {
-            Build();
         }
     }
 
@@ -122,6 +130,11 @@ public class VoxelWorld
 
     public void Build()
     {
+        Debug.Log($"Building {_changedChunks.Count} chunks");
+
+        var builders = new List<ChunkBuilder>();
+        var builderTasks = new List<Task>();
+
         foreach(var chunkPos in _changedChunks)
         {
             if(!_chunks.ContainsKey(chunkPos)) continue;
@@ -135,8 +148,20 @@ public class VoxelWorld
                 }
             }
 
-            _chunkGameObjects[chunkPos] = _chunkBuilder.Build(chunkPos, _chunks[chunkPos]);
+            // Queue all builder tasks
+            var chunkBuilder = new ChunkBuilder(this, _textureAtlasMaterial, _textureAtlasTransparentMaterial);
+            builders.Add(chunkBuilder);
+            builderTasks.Add(chunkBuilder.Build(chunkPos, _chunks[chunkPos]));           
         }
+
+        Task.WaitAll(builderTasks.ToArray());
+
+        // GameObjects must be generated on main thread
+        foreach(var builder in builders)
+        {
+            _chunkGameObjects[builder.ChunkPos] = builder.GetChunkGameObjects();
+        }        
+    
         _changedChunks.Clear();
     }
 

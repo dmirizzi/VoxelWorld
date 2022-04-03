@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class WorldGenerator : MonoBehaviour
@@ -277,7 +278,7 @@ public class WorldGenerator : MonoBehaviour
 
         ClearWorld();
 
-        GenerateTerrain(128);
+        GenerateTerrain(512);
 
         GenerateCave(
             new Vector3Int(0, 0, 0),
@@ -315,14 +316,14 @@ public class WorldGenerator : MonoBehaviour
         if((DateTime.Now - lastDrop).Milliseconds >= 10)
         {
             lastDrop = DateTime.Now;
-            var x = UnityEngine.Random.Range(0, 128);
-            var z = UnityEngine.Random.Range(0, 128);
+            var x = UnityEngine.Random.Range(-256, 256);
+            var z = UnityEngine.Random.Range(-256, 256);
             
-            var highestPoint = _world.GetHighestPoint(x, z);
+            var highestPoint = VoxelWorld.GetHighestVoxelPos(x, z);
             if(highestPoint.HasValue)
             {
                 //_world.SetVoxel(x, highestPoint.Value, z, VoxelType.Empty, true);
-                _world.SetVoxelSphere(new Vector3Int(x, highestPoint.Value, z), 5, VoxelType.Empty, true);
+                VoxelWorld.SetVoxelSphere(new Vector3Int(x, highestPoint.Value, z), 5, VoxelType.Empty, true);
             }
         }
         */
