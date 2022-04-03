@@ -48,7 +48,7 @@ public class WorldGenerator : MonoBehaviour
         {
             for(int z = -size; z < size; ++z)
             {
-                var height = Mathf.Min(16, (int)(Mathf.PerlinNoise(seed + x / 20.0f, seed + z / 20.0f) * 32) - 3);
+                var height = Mathf.Min(64, (int)(Mathf.PerlinNoise(seed + x / 20.0f, seed + z / 20.0f) * 32) - 3);
                 //var height = 0;
 
                 bool isWater = height < 0;
