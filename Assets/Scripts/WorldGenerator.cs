@@ -178,9 +178,9 @@ public class WorldGenerator : MonoBehaviour
                     if(cells[x, y, z])
                     {
                         VoxelWorld.SetVoxel(
-                            position.x + x, 
+                            position.x + x - size.x / 2, 
                             position.y - y, 
-                            position.z + z, 
+                            position.z + z - size.z / 2, 
                             VoxelType.Empty );
                     }
                 }                
