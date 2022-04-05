@@ -96,17 +96,17 @@ public class PlayerController : MonoBehaviour
 
     private void HandleMouseLook()
     {
-        // Mouse Look
-        var mx = Input.GetAxis("Mouse X") * Sensitivity;
         var my = Input.GetAxis("Mouse Y") * Sensitivity;
-        _cameraTransform.rotation *= Quaternion.Euler(-my, 0f, 0f);
-        transform.rotation *= Quaternion.Euler(0f, mx, 0f);
+        _cameraTransform.Rotate(Vector3.left, my);        
 
-        // Avoid rotation on z-axis
-        var angles = _cameraTransform.rotation.eulerAngles;
-        _cameraTransform.rotation = Quaternion.Euler(angles.x, angles.y, 0);
-        angles = transform.rotation.eulerAngles;
-        transform.rotation = Quaternion.Euler(0, angles.y, 0);
+        var mx = Input.GetAxis("Mouse X") * Sensitivity;
+        transform.Rotate(Vector3.up, mx);
+
+        // Clamp up/down look to avoid inverting the camera
+        if(_cameraTransform.up.y < 0)
+        {
+            _cameraTransform.Rotate(Vector3.left, -my);
+        }
     }
 
     private void HandleMovement()
