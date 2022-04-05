@@ -225,11 +225,11 @@ public class VoxelWorld
         adjacentChunks.Add(chunkPos);
 
         if(localPos.x == 0) adjacentChunks.Add(chunkPos + Vector3Int.left);
-        if(localPos.x == VoxelInfo.ChunkSize) adjacentChunks.Add(chunkPos + Vector3Int.right);
+        if(localPos.x == VoxelInfo.ChunkSize - 1) adjacentChunks.Add(chunkPos + Vector3Int.right);
         if(localPos.y == 0) adjacentChunks.Add(chunkPos + Vector3Int.down);
-        if(localPos.y == VoxelInfo.ChunkSize) adjacentChunks.Add(chunkPos + Vector3Int.up);
+        if(localPos.y == VoxelInfo.ChunkSize - 1) adjacentChunks.Add(chunkPos + Vector3Int.up);
         if(localPos.z == 0) adjacentChunks.Add(chunkPos + Vector3Int.back);
-        if(localPos.z == VoxelInfo.ChunkSize) adjacentChunks.Add(chunkPos + Vector3Int.forward);
+        if(localPos.z == VoxelInfo.ChunkSize - 1) adjacentChunks.Add(chunkPos + Vector3Int.forward);
 
         return adjacentChunks;
     }

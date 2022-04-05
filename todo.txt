@@ -34,6 +34,8 @@
     Issues / Bugs
 ----------------------------------------------------------------------------------------------------------------
 
+[x] Holes in voxel world when destroying voxels on chunk borders
+
 [ ] Lighting is different between chunks / no smooth lighting transition between chunks
 
 [ ] Center texel correction causes seams between voxels / half-pixels at the border of voxels
