@@ -27,6 +27,12 @@ public class VoxelWorld
         _textureAtlasTransparentMaterial = textureAtlasTransparentMaterial;
     }
 
+    public void SetVoxelAndRebuild(Vector3Int pos, VoxelType type)
+    {
+        SetVoxel(pos.x, pos.y, pos.z, type);
+        Build();
+    }
+
     public void SetVoxelAndRebuild(int x, int y, int z, VoxelType type)
     {
         SetVoxel(x, y, z, type);
@@ -130,8 +136,6 @@ public class VoxelWorld
 
     public void Build()
     {
-        Debug.Log($"Building {_changedChunks.Count} chunks");
-
         var builders = new List<ChunkBuilder>();
         var builderTasks = new List<Task>();
 

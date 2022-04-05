@@ -49,8 +49,8 @@ public class WorldGenerator : MonoBehaviour
         {
             for(int z = -size; z < size; ++z)
             {
-                var height = Mathf.Min(64, (int)(Mathf.PerlinNoise(seed + x / 20.0f, seed + z / 20.0f) * 32) - 3);
-                //var height = 0;
+                //var height = Mathf.Min(64, (int)(Mathf.PerlinNoise(seed + x / 20.0f, seed + z / 20.0f) * 32) - 3);
+                var height = 0;
 
                 bool isWater = height < 0;
                 if(isWater) height = 0;
@@ -278,7 +278,7 @@ public class WorldGenerator : MonoBehaviour
 
         ClearWorld();
 
-        GenerateTerrain(512);
+        GenerateTerrain(32);
 
         GenerateCave(
             new Vector3Int(0, 0, 0),
@@ -295,13 +295,14 @@ public class WorldGenerator : MonoBehaviour
 
         VoxelWorld.Build();
 
+/*
         int numTorches = 100;
         for(int i = 0; i < numTorches; ++i)
         {
             var pos = VoxelWorld.GetRandomSolidSurfaceVoxel();
             PlaceTorch(pos);
         }
-
+*/
         PlacePlayer();
 
 

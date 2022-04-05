@@ -18,7 +18,7 @@
     [x] Randomly moving around voxel world
     [ ] Correct jumping on levels above or below blob -> add rigidbody & jump via impulse
 
-[ ] Place/Remove Block player is looking at
+[x] Place/Remove Block player is looking at
 
 [ ] Day/Night System
     [ ] Sun rise/set
@@ -35,6 +35,8 @@
 ----------------------------------------------------------------------------------------------------------------
 
 [ ] Lighting is different between chunks / no smooth lighting transition between chunks
+
+[ ] Center texel correction causes seams between voxels / half-pixels at the border of voxels
 
 ----------------------------------------------------------------------------------------------------------------
     Refactoring
