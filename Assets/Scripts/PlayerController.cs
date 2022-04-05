@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -41,6 +42,27 @@ public class PlayerController : MonoBehaviour
         _controller.Move(_velocity * Time.deltaTime);
     }
 
+    private bool PlayerIntersectsVoxel(Vector3Int voxelPos)
+    {
+        var voxelSurfaceWorldPos = VoxelPosConverter.GetVoxelTopCenterSurfaceWorldPos(voxelPos);
+
+        var hits = Physics.BoxCastAll(
+            voxelSurfaceWorldPos, 
+            new Vector3(.5f, .5f, 0f),
+            Vector3.down,
+            Quaternion.identity,
+            0.5f
+        );
+        if(hits.Length > 0)
+        {
+            if(hits.Any(h => h.transform.gameObject == gameObject))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void HandleWorldInteractions()
     {
         if(Input.GetButtonDown("Fire1"))
@@ -48,10 +70,13 @@ public class PlayerController : MonoBehaviour
             var world = _worldGen.VoxelWorld;
             if(world != null)
             {
-                var voxelPos = GetTargetedVoxelPos(true);
-                if(voxelPos != null)
+                var voxelPos = GetTargetedVoxelPos(true);                
+                if(voxelPos != null)                
                 {
-                    world.SetVoxelAndRebuild(voxelPos.Value, VoxelType.Cobblestone);
+                    if(!PlayerIntersectsVoxel(voxelPos.Value))
+                    {
+                        world.SetVoxelAndRebuild(voxelPos.Value, VoxelType.Cobblestone);
+                    }                   
                 }
             }
         }
@@ -89,8 +114,8 @@ public class PlayerController : MonoBehaviour
         // Movement
         var forward = Input.GetAxis("Vertical");
         var right = Input.GetAxis("Horizontal");
-        var forwardXZ = new Vector3(_cameraTransform.forward.x, 0, _cameraTransform.forward.z);
-        var rightXZ = new Vector3(_cameraTransform.right.x, 0, _cameraTransform.right.z);
+        var forwardXZ = new Vector3(_cameraTransform.forward.x, 0, _cameraTransform.forward.z).normalized;
+        var rightXZ = new Vector3(_cameraTransform.right.x, 0, _cameraTransform.right.z).normalized;
         _controller.Move((forwardXZ * forward + rightXZ * right) * WalkingSpeed * Time.deltaTime);
     }
 
@@ -114,7 +139,11 @@ public class PlayerController : MonoBehaviour
     {
         _debugLastRay = new Ray(_cameraTransform.position, _cameraTransform.forward);
         _debugLastHit = null;
-        if(Physics.Raycast(_cameraTransform.position, _cameraTransform.forward, out var hitInfo))
+        if(Physics.Raycast(
+            _cameraTransform.position, 
+            _cameraTransform.forward, 
+            out var hitInfo, 
+            LayerMask.GetMask("Voxels")))
         {
             if(hitInfo.distance <= MaxInteractionDistance)
             {
@@ -128,16 +157,36 @@ public class PlayerController : MonoBehaviour
         return null;        
     }
 
+    private float GetIntersectionDepthWithGround()
+    {
+        var intersectionDepth = 0f;
+        var distanceToPlayerBottom = _controller.bounds.size.y / 2f;
+        var hit = Physics.Raycast(transform.position, Vector3.down, out var hitInfo, distanceToPlayerBottom);
+        if(hit)
+        {
+            intersectionDepth = hitInfo.distance - distanceToPlayerBottom;
+        }
+        return intersectionDepth;
+    }
+
     private bool IsGrounded()
     {
-        return Physics.Raycast(transform.position, Vector3.down, _controller.bounds.size.y / 2 + 0.1f);
+        var distanceToPlayerBottom = _controller.bounds.size.y / 2f;
+        return Physics.Raycast(
+            transform.position, 
+            Vector3.down, 
+            distanceToPlayerBottom + 0.1f,
+            LayerMask.GetMask("Voxels"));
     }
 
     private Ray? _debugLastRay;
     private Vector3? _debugLastHit;
 
+    private Vector3? _lastPlacedVoxel;
+
     void OnDrawGizmos()
     {
+        if(_lastPlacedVoxel != null) Gizmos.DrawCube(_lastPlacedVoxel.Value, Vector3.one);
         //if(_debugLastRay != null) Gizmos.DrawRay(_debugLastRay.Value);
         //if(_debugLastHit != null) Gizmos.DrawSphere(_debugLastHit.Value, .15f);
     }

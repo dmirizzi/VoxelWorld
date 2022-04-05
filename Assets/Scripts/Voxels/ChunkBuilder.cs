@@ -45,6 +45,7 @@ public class ChunkBuilder
         chunkGameObj.transform.position = _chunkVoxelPos;
         chunkGameObj.GetComponent<Renderer>().material = _textureAtlasMaterial;
         GenerateMeshCollider(chunkGameObj);
+        chunkGameObj.layer = LayerMask.NameToLayer("Voxels");
 
         var chunkTpGameObj = new GameObject($"ChunkTP[{ChunkPos.x}|{ChunkPos.y}|{ChunkPos.z}]");
         chunkTpGameObj.AddComponent<MeshRenderer>();
@@ -60,6 +61,7 @@ public class ChunkBuilder
         chunkTpGameObj.transform.position = _chunkVoxelPos;
         chunkTpGameObj.GetComponent<Renderer>().material = _textureAtlasTransparentMaterial;
         GenerateMeshCollider(chunkTpGameObj);
+        chunkTpGameObj.layer = LayerMask.NameToLayer("Voxels");
 
         return new GameObject[] {
             chunkGameObj,
