@@ -21,10 +21,12 @@
 [x] Place/Remove Block player is looking at
 
 [ ] Day/Night System
+    [x] Gradient on scene skybox
+    [x] Gradient on main light & intensity
     [ ] Sun rise/set
+    [ ] Additional point light for sun to cast correct shadows on sunrise / sunset
     [ ] Moon
-    [ ] Control via scene skybox / hue
-    [ ] Control via skybox light intensity
+    [ ] Stars
 
 [ ] Water simulation
 

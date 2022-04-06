@@ -295,14 +295,13 @@ public class WorldGenerator : MonoBehaviour
 
         VoxelWorld.Build();
 
-/*
-        int numTorches = 100;
+        int numTorches = 5;
         for(int i = 0; i < numTorches; ++i)
         {
             var pos = VoxelWorld.GetRandomSolidSurfaceVoxel();
             PlaceTorch(pos);
         }
-*/
+
         PlacePlayer();
 
 
