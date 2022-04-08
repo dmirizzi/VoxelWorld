@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.0012722024, g: 0.110229485, b: 0.16455051, a: 1}
+  m_IndirectSpecularColor: {r: 0.58642584, g: 0.821778, b: 0.86962885, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -152,8 +152,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0e1ee2b55d13d246bb0def376892619, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  CurrentTimeSec: 0
-  TimeFactor: 1500
+  CurrentTimeSec: 43000
+  TimeFactor: 100
   SunLightIntensityFactor: 1.5
   SunLight: {fileID: 705507994}
   SkyGradient: {fileID: 2800000, guid: a6bc8036a07d3224fb61b08f5c10bc8e, type: 3}
