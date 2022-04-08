@@ -239,10 +239,14 @@ public class WorldGenerator : MonoBehaviour
         var pos = VoxelWorld.GetRandomSolidSurfaceVoxel();
         var worldPos = VoxelPosConverter.GetVoxelTopCenterSurfaceWorldPos(pos) + Vector3.up;
 
-        var playerController = GameObject.Find("Player").GetComponent<CharacterController>();
-        playerController.enabled = false;
-        playerController.transform.position = worldPos + Vector3.up * 10;
-        playerController.enabled = true;
+        var characterController = GameObject.Find("Player").GetComponent<CharacterController>();
+        characterController.enabled = false;
+        characterController.transform.position = worldPos + Vector3.up * 10;
+        characterController.enabled = true;
+
+        var playerController = GameObject.Find("Player").GetComponent<PlayerController>();
+        var torch = Instantiate(TorchPrefab, worldPos, Quaternion.identity);
+        playerController.HoldObject(torch);        
 
         UnityEngine.Debug.Log($"Placing player @ {GameObject.Find("Player").transform.position}");
     }

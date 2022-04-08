@@ -1,24 +1,65 @@
+----------------------------------------------------------------------------------------------------------------
+VoxelWorld
+----------------------------------------------------------------------------------------------------------------
+
 [x] Chunks
 [x] Texture Atlas
 [x] Separate game object per chunk for transparent voxels
 [x] Add/Remove voxels
 [x] Set multiple voxels in sphere shape
 [x] WorldGen.GetUVsForTile: Pregenerate UVs once for all tiles
-[x] Torch
-    [ ] Torch base object not affected by torch light
-    [ ] Integrate torches into chunk infrastructure
-[x] Simple cave generator based on cellular automata
 
 [ ] Custom models as part of voxel infrastructure (e.g. stairs, doors etc.)
     [ ] One mesh for all?
     [ ] One mesh for all same models so they can share a texture?
     [ ] How about special objects such as torches that are not simple models?
 
+[ ] Water simulation
+
+[ ] Voxel Property: Collideable (e.g. Water) -> better word than collideable?
+
+----------------------------------------------------------------------------------------------------------------
+World Gen
+----------------------------------------------------------------------------------------------------------------
+
+[x] Simple cave generator based on cellular automata
+
+----------------------------------------------------------------------------------------------------------------
+Items / Blocks
+----------------------------------------------------------------------------------------------------------------
+
+[x] Torch
+    [ ] Torch base object not affected by torch light
+    [ ] Integrate torches into chunk infrastructure
+
+----------------------------------------------------------------------------------------------------------------
+NPCs
+----------------------------------------------------------------------------------------------------------------
+
 [ ] Blob
     [x] Randomly moving around voxel world
     [ ] Correct jumping on levels above or below blob -> add rigidbody & jump via impulse
 
+----------------------------------------------------------------------------------------------------------------
+    Item / Inventory system
+----------------------------------------------------------------------------------------------------------------
+
+[ ] Item Base Class?
+
+[ ] Item Containers
+
+----------------------------------------------------------------------------------------------------------------
+Player
+----------------------------------------------------------------------------------------------------------------
+
 [x] Place/Remove Block player is looking at
+[x] Ability to hold items
+[ ] Avoid clipping of held item with other objects -> Stack cameras
+[ ] Item Container as Player Inventory
+
+----------------------------------------------------------------------------------------------------------------
+Misc
+----------------------------------------------------------------------------------------------------------------
 
 [ ] Day/Night System
     [x] Gradient on scene skybox
@@ -27,10 +68,6 @@
     [ ] Additional point light for sun to cast correct shadows on sunrise / sunset
     [ ] Moon
     [ ] Stars
-
-[ ] Water simulation
-
-[ ] Voxel Property: Collideable (e.g. Water) -> better word than collideable?
 
 ----------------------------------------------------------------------------------------------------------------
     Issues / Bugs
@@ -53,7 +90,6 @@
 [ ] Refactor ChunkBuilder
 
 [ ] Get VoxelInfo from config file (solid, tileXY etc.)
-
 
 ----------------------------------------------------------------------------------------------------------------
     Optimization

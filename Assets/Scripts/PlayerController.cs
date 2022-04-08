@@ -21,6 +21,9 @@ public class PlayerController : MonoBehaviour
 
     private WorldGenerator _worldGen;
 
+    private GameObject _objectBeingHeld;
+    private PlayerHoldeable _holdeable;
+
     void Start()
     {
         _controller = GetComponent<CharacterController>();
@@ -38,8 +41,39 @@ public class PlayerController : MonoBehaviour
         HandleMovement();
         HandleJumping();
         HandleWorldInteractions();
+        HandleObjectBeingHeld();
 
         _controller.Move(_velocity * Time.deltaTime);
+    }
+
+    public void HoldObject(GameObject obj)
+    {
+        var holdeable = obj.GetComponent<PlayerHoldeable>();
+        if(holdeable == null)
+        {
+            throw new System.Exception($"Object {obj.name} is not holdeable!");
+        }
+
+        obj.tag = "PlayerHeldItem";
+
+        _objectBeingHeld = obj;
+        _holdeable = holdeable;
+    }
+
+    private void HandleObjectBeingHeld()
+    {
+        if(_objectBeingHeld != null && _holdeable != null)
+        {
+            _objectBeingHeld.transform.position = 
+                _cameraTransform.position +
+                _cameraTransform.right * _holdeable.HoldingOffset.x +
+                _cameraTransform.up * _holdeable.HoldingOffset.y +
+                _cameraTransform.forward * _holdeable.HoldingOffset.z;
+
+            _objectBeingHeld.transform.rotation = 
+                _cameraTransform.rotation *
+                _holdeable.HoldingRotation;
+        }
     }
 
     private bool PlayerIntersectsVoxel(Vector3Int voxelPos)
