@@ -10,8 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 785339548541792730}
   - component: {fileID: 785339548541792729}
+  - component: {fileID: 5583450184508479777}
   m_Layer: 0
-  m_Name: Point Light
+  m_Name: Light
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -45,7 +46,7 @@ Light:
   m_Shape: 0
   m_Color: {r: 1, g: 0.37044638, b: 0, a: 1}
   m_Intensity: 10
-  m_Range: 10
+  m_Range: 30
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -94,6 +95,26 @@ Light:
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+--- !u!114 &5583450184508479777
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 785339548541792731}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Version: 1
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_LightLayerMask: 1
+  m_CustomShadowLayers: 0
+  m_ShadowLayerMask: 1
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
 --- !u!1 &785339548554571999
 GameObject:
   m_ObjectHideFlags: 0
@@ -107,7 +128,6 @@ GameObject:
   - component: {fileID: 785339548554571971}
   - component: {fileID: 785339548554571996}
   - component: {fileID: 4028834841911424721}
-  - component: {fileID: 7686841709139957888}
   m_Layer: 0
   m_Name: Torch
   m_TagString: Untagged
@@ -210,20 +230,6 @@ MonoBehaviour:
   BaseIntensity: 0.8
   FlickeringIntensityFraction: 0.4
   FlickeringFrequencyFactor: 8
---- !u!114 &7686841709139957888
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 785339548554571999}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 93f4f70a375382d40aa46db40f9ab748, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  HoldingOffset: {x: 0.8, y: -0.4, z: 1.2}
-  HoldingRotation: {x: 0, y: 0, z: 0.08715588, w: -0.99619466}
 --- !u!1 &5510100728198951800
 GameObject:
   m_ObjectHideFlags: 0

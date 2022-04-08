@@ -22,7 +22,7 @@ public class PlayerController : MonoBehaviour
     private WorldGenerator _worldGen;
 
     private GameObject _objectBeingHeld;
-    private PlayerHoldeable _holdeable;
+    private IPlayerHoldable _holdeable;
 
     void Start()
     {
@@ -43,23 +43,51 @@ public class PlayerController : MonoBehaviour
         HandleWorldInteractions();
         HandleObjectBeingHeld();
 
+        if(Input.GetKeyDown(KeyCode.Alpha1))
+        {
+
+        }
+
         _controller.Move(_velocity * Time.deltaTime);
     }
 
     public void HoldObject(GameObject obj)
     {
-        var holdeable = obj.GetComponent<PlayerHoldeable>();
+        if(_holdeable != null && _objectBeingHeld != null)
+        {
+            RemoveHeldObject();
+        }
+
+        var holdeable = obj.GetComponent<IPlayerHoldable>();
         if(holdeable == null)
         {
             throw new System.Exception($"Object {obj.name} is not holdeable!");
         }
 
-        obj.tag = "PlayerHeldItem";
+        // Set GameObject and all its child objects to the "PlayerHeldItem" layer
+        // so they will only be drawn on the overlay camera
+        obj.layer = LayerMask.NameToLayer("PlayerHeldItem");
+        foreach(var trans in obj.GetComponentsInChildren<Transform>(true))
+        {
+            trans.gameObject.layer = LayerMask.NameToLayer("PlayerHeldItem");
+        }
 
         _objectBeingHeld = obj;
         _holdeable = holdeable;
+
+        holdeable.OnHold(gameObject);
     }
 
+    public void RemoveHeldObject()
+    {
+        if(_holdeable != null && _objectBeingHeld != null)
+        {
+            _holdeable.OnRemove(gameObject);
+            _holdeable = null;
+            _objectBeingHeld = null;
+        }
+    }
+    
     private void HandleObjectBeingHeld()
     {
         if(_objectBeingHeld != null && _holdeable != null)
