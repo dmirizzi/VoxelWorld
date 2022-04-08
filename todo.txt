@@ -54,7 +54,7 @@ Player
 
 [x] Place/Remove Block player is looking at
 [x] Ability to hold items
-[ ] Avoid clipping of held item with other objects -> Stack cameras
+[x] Avoid clipping of held item with other objects -> Stack cameras
 [ ] Item Container as Player Inventory
 
 ----------------------------------------------------------------------------------------------------------------
