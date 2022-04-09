@@ -12,12 +12,16 @@ public class TorchBlockType : IBlockType
         var torch = GameObject.Instantiate(_torchPrefab, Vector3.zero, Quaternion.identity);
         chunk.AddBlockGameObject(localPosition, torch);
 
+        // Handle torches that are placed on wall
         var placementFace = chunk.GetAuxiliaryData(localPosition);
         if(placementFace.HasValue)
         {
             var vec = VoxelFaceHelper.GetVectorFromVoxelFace((VoxelFace)placementFace.Value);
-            torch.transform.localPosition += vec * .5f;
-            torch.transform.localRotation = Quaternion.Euler(-vec.z * 20f, 0, vec.x * 20f);
+            if((VoxelFace)placementFace.Value != VoxelFace.Bottom)
+            {
+                torch.transform.localPosition += vec * .5f;
+                torch.transform.localRotation = Quaternion.Euler(-vec.z * 20f, 0, vec.x * 20f);
+            }
         }
     }
 
