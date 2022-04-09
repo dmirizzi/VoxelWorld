@@ -232,7 +232,9 @@ public class WorldGenerator : MonoBehaviour
 
         var playerController = GameObject.Find("Player").GetComponent<PlayerController>();
         var torch = Instantiate(TorchPrefab, worldPos, Quaternion.identity);
-        playerController.HoldObject(torch);        
+
+        var playerHoldingController = GameObject.Find("Player").GetComponent<PlayerHoldingController>();
+        playerHoldingController.HoldObject(torch);        
 
         UnityEngine.Debug.Log($"Placing player @ {GameObject.Find("Player").transform.position}");
     }

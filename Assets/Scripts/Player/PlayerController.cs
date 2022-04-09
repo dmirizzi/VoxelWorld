@@ -13,17 +13,6 @@ public class PlayerController : MonoBehaviour
 
     public float MaxInteractionDistance = 6f;
 
-    private Transform _cameraTransform;
-
-    private CharacterController _controller;
-
-    private Vector3 _velocity;
-
-    private WorldGenerator _worldGen;
-
-    private GameObject _objectBeingHeld;
-    private IPlayerHoldable _holdeable;
-
     void Start()
     {
         _controller = GetComponent<CharacterController>();
@@ -41,68 +30,9 @@ public class PlayerController : MonoBehaviour
         HandleMovement();
         HandleJumping();
         HandleWorldInteractions();
-        HandleObjectBeingHeld();
-
-        if(Input.GetKeyDown(KeyCode.Alpha1))
-        {
-
-        }
 
         _controller.Move(_velocity * Time.deltaTime);
-    }
-
-    public void HoldObject(GameObject obj)
-    {
-        if(_holdeable != null && _objectBeingHeld != null)
-        {
-            RemoveHeldObject();
-        }
-
-        var holdeable = obj.GetComponent<IPlayerHoldable>();
-        if(holdeable == null)
-        {
-            throw new System.Exception($"Object {obj.name} is not holdeable!");
-        }
-
-        // Set GameObject and all its child objects to the "PlayerHeldItem" layer
-        // so they will only be drawn on the overlay camera
-        obj.layer = LayerMask.NameToLayer("PlayerHeldItem");
-        foreach(var trans in obj.GetComponentsInChildren<Transform>(true))
-        {
-            trans.gameObject.layer = LayerMask.NameToLayer("PlayerHeldItem");
-        }
-
-        _objectBeingHeld = obj;
-        _holdeable = holdeable;
-
-        holdeable.OnHold(gameObject);
-    }
-
-    public void RemoveHeldObject()
-    {
-        if(_holdeable != null && _objectBeingHeld != null)
-        {
-            _holdeable.OnRemove(gameObject);
-            _holdeable = null;
-            _objectBeingHeld = null;
-        }
-    }
-    
-    private void HandleObjectBeingHeld()
-    {
-        if(_objectBeingHeld != null && _holdeable != null)
-        {
-            _objectBeingHeld.transform.position = 
-                _cameraTransform.position +
-                _cameraTransform.right * _holdeable.HoldingOffset.x +
-                _cameraTransform.up * _holdeable.HoldingOffset.y +
-                _cameraTransform.forward * _holdeable.HoldingOffset.z;
-
-            _objectBeingHeld.transform.rotation = 
-                _cameraTransform.rotation *
-                _holdeable.HoldingRotation;
-        }
-    }
+    } 
 
     private bool PlayerIntersectsVoxel(Vector3Int voxelPos)
     {
@@ -223,18 +153,6 @@ public class PlayerController : MonoBehaviour
         return (null, null);
     }
 
-    private float GetIntersectionDepthWithGround()
-    {
-        var intersectionDepth = 0f;
-        var distanceToPlayerBottom = _controller.bounds.size.y / 2f;
-        var hit = Physics.Raycast(transform.position, Vector3.down, out var hitInfo, distanceToPlayerBottom);
-        if(hit)
-        {
-            intersectionDepth = hitInfo.distance - distanceToPlayerBottom;
-        }
-        return intersectionDepth;
-    }
-
     private bool IsGrounded()
     {
         var distanceToPlayerBottom = _controller.bounds.size.y / 2f;
@@ -245,7 +163,16 @@ public class PlayerController : MonoBehaviour
             LayerMask.GetMask("Voxels"));
     }
 
+    private Transform _cameraTransform;
+
+    private CharacterController _controller;
+
+    private Vector3 _velocity;
+
+    private WorldGenerator _worldGen;
+
     private Ray? _debugLastRay;
+
     private Vector3? _debugLastHit;
 
     private Vector3? _lastPlacedVoxel;
