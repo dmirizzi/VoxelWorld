@@ -175,19 +175,19 @@ public class ChunkBuilder
 
     private Vector2[] GetUVsForVoxelType(VoxelType voxelType, VoxelFace face)
     {     
-        // Shift the UV coordinates by a half texel to probe the texture pixel colors at the center
-        // of the pixel rather than the border to avoid interpolation between atlas tiles
-        Vector2 halfTexel = new Vector2(
-          .5f / VoxelInfo.TextureAtlasWidth,
-          -.5f / VoxelInfo.TextureAtlasHeight
+        // Shift the UV coordinates by a tiny amount to probe the texture pixel colors away from the border
+        // of the pixel rather than at the border to avoid interpolation between atlas tiles
+        Vector2 texelOffset = new Vector2(
+          .0000001f,
+          .0000001f
         );
 
         if(!_tileUVCache.ContainsKey((voxelType, face)))
         {
-            var uvOffset = VoxelInfo.GetAtlasUVOffsetForVoxel(voxelType, face) + halfTexel;
+            var uvOffset = VoxelInfo.GetAtlasUVOffsetForVoxel(voxelType, face) + texelOffset;
             var uvTileSize = new Vector2(
-                VoxelInfo.TextureTileSize * 1.0f / VoxelInfo.TextureAtlasWidth - halfTexel.x * 2,
-                VoxelInfo.TextureTileSize * 1.0f / VoxelInfo.TextureAtlasHeight + halfTexel.y * 2
+                VoxelInfo.TextureTileSize * 1.0f / VoxelInfo.TextureAtlasWidth - texelOffset.x * 2,
+                VoxelInfo.TextureTileSize * 1.0f / VoxelInfo.TextureAtlasHeight + texelOffset.y * 2
             );
 
             var uvs = new Vector2[]

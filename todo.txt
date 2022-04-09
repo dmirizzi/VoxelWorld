@@ -6,6 +6,8 @@
 [ ] Water should be less translucent the deeper it goes
 [ ] Bump Mapping?
 [ ] Lights go through gaps between voxels and cast "light stripes"
+[ ] Lighting is different between chunks / no smooth lighting transition between chunks
+[x] Center texel correction causes seams between voxels / half-pixels at the border of voxels
 
 [ ] Chunk occlusion culling?
     https://tomcc.github.io/2014/08/31/visibility-1.html
@@ -20,13 +22,19 @@ VoxelWorld
 [x] Add/Remove voxels
 [x] Set multiple voxels in sphere shape
 [x] WorldGen.GetUVsForTile: Pregenerate UVs once for all tiles
+[x] Custom game objects as part of voxel infrastructure
+    -> Voxels with interaction, special effects etc.
+[x] Multithreaded chunk building
+[x] Holes in voxel world when destroying voxels on chunk borders
+
+[ ] Get VoxelInfo from config file (solid, tileXY etc.)
+    -> JSON config
+
+[ ] Refactor ChunkBuilder
 
 [ ] Custom Meshes as part of voxel infrastructure
     [ ] One mesh for all?
     [ ] One mesh for all same models so they can share a texture?
-
-[x] Custom game objects as part of voxel infrastructure
-    -> Voxels with interaction, special effects etc.
 
 [ ] Water simulation
 
@@ -45,8 +53,8 @@ Items / Blocks
 ----------------------------------------------------------------------------------------------------------------
 
 [x] Torch
-    [ ] Torch base object not affected by torch light
     [x] Integrate torches into chunk infrastructure
+    [ ] Torch base object not affected by torch light
 
 ----------------------------------------------------------------------------------------------------------------
 NPCs
@@ -61,7 +69,6 @@ NPCs
 ----------------------------------------------------------------------------------------------------------------
 
 [ ] Item Base Class?
-
 [ ] Item Containers
 
 ----------------------------------------------------------------------------------------------------------------
@@ -71,6 +78,8 @@ Player
 [x] Place/Remove Block player is looking at
 [x] Ability to hold items
 [x] Avoid clipping of held item with other objects -> Stack cameras
+[x] Player gets stuck in voxel when building voxel below himself
+
 [ ] Item Container as Player Inventory
 [ ] Attach player held item by setting it as child of player camera + offset
 [ ] Held Item Walking Animation
@@ -86,28 +95,6 @@ Misc
     [ ] Additional point light for sun to cast correct shadows on sunrise / sunset
     [ ] Moon
     [ ] Stars
-
-----------------------------------------------------------------------------------------------------------------
-    Issues / Bugs
-----------------------------------------------------------------------------------------------------------------
-
-[x] Holes in voxel world when destroying voxels on chunk borders
-
-[x] Player gets stuck in voxel when building voxel below himself
-
-[ ] Lighting is different between chunks / no smooth lighting transition between chunks
-
-[ ] Center texel correction causes seams between voxels / half-pixels at the border of voxels
-
-----------------------------------------------------------------------------------------------------------------
-    Refactoring
-----------------------------------------------------------------------------------------------------------------
-
-[x] Multithreaded chunk building
-
-[ ] Refactor ChunkBuilder
-
-[ ] Get VoxelInfo from config file (solid, tileXY etc.)
 
 ----------------------------------------------------------------------------------------------------------------
     Optimization
