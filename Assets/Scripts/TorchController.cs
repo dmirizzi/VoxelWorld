@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class TorchController : MonoBehaviour, IPlayerHoldable
 {
-    public Vector3 HoldingOffset { get; } = new Vector3( 0.8f, -0.4f, 1.2f );
+    public Vector3 HoldingOffset { get; } = new Vector3( 0.9f, -1.0f, 1.5f );
 
     public Quaternion HoldingRotation { get; } = Quaternion.Euler( 0f, 0f, 350f );
 

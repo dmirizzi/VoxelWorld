@@ -28,6 +28,15 @@ public static class VoxelPosConverter
         );
     }
 
+        public static Vector3 GetVoxelCenterSurfaceWorldPos(Vector3Int globalVoxelPos)
+    {
+        return new Vector3(
+            globalVoxelPos.x + VoxelInfo.VoxelSize * 0.5f,
+            globalVoxelPos.y,
+            globalVoxelPos.z + VoxelInfo.VoxelSize * 0.5f
+        );
+    }
+
     public static Vector3 GetVoxelTopCenterSurfaceWorldPos(Vector3Int globalVoxelPos)
     {
         return new Vector3(

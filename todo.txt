@@ -3,7 +3,12 @@
 ----------------------------------------------------------------------------------------------------------------
 
 [ ] Currently using SimpleLit for transparent voxels -> Fine or need to adapt voxel shader for transparency?
+[ ] Water should be less translucent the deeper it goes
 [ ] Bump Mapping?
+[ ] Lights go through gaps between voxels and cast "light stripes"
+
+[ ] Chunk occlusion culling?
+    https://tomcc.github.io/2014/08/31/visibility-1.html
 
 ----------------------------------------------------------------------------------------------------------------
 VoxelWorld
@@ -16,10 +21,12 @@ VoxelWorld
 [x] Set multiple voxels in sphere shape
 [x] WorldGen.GetUVsForTile: Pregenerate UVs once for all tiles
 
-[ ] Custom models as part of voxel infrastructure (e.g. stairs, doors etc.)
+[ ] Custom Meshes as part of voxel infrastructure
     [ ] One mesh for all?
     [ ] One mesh for all same models so they can share a texture?
-    [ ] How about special objects such as torches that are not simple models?
+
+[x] Custom game objects as part of voxel infrastructure
+    -> Voxels with interaction, special effects etc.
 
 [ ] Water simulation
 
@@ -39,7 +46,7 @@ Items / Blocks
 
 [x] Torch
     [ ] Torch base object not affected by torch light
-    [ ] Integrate torches into chunk infrastructure
+    [x] Integrate torches into chunk infrastructure
 
 ----------------------------------------------------------------------------------------------------------------
 NPCs
@@ -65,6 +72,8 @@ Player
 [x] Ability to hold items
 [x] Avoid clipping of held item with other objects -> Stack cameras
 [ ] Item Container as Player Inventory
+[ ] Attach player held item by setting it as child of player camera + offset
+[ ] Held Item Walking Animation
 
 ----------------------------------------------------------------------------------------------------------------
 Misc
@@ -103,8 +112,6 @@ Misc
 ----------------------------------------------------------------------------------------------------------------
     Optimization
 ----------------------------------------------------------------------------------------------------------------
-[ ] Chunk occlusion culling?
-    https://tomcc.github.io/2014/08/31/visibility-1.html
 
 [ ] Optimize mesh generation to merge adjoining voxel faces with same Texture
     -> Does that work with texture atlas UVs?

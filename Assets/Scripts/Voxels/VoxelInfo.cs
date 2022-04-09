@@ -4,10 +4,11 @@ using UnityEngine;
 public enum VoxelType
 {
     Empty = 0,
-    Grass = 1,
-    Dirt = 2,
-    Water = 3,
-    Cobblestone = 4
+    Grass,
+    Dirt,
+    Water,
+    Cobblestone,
+    Torch
 }
 
 public enum VoxelFace
@@ -55,6 +56,22 @@ public static class VoxelInfo
 
     public const int TextureAtlasHeight = 128;
 
+    public static bool IsGameObjectBlock(VoxelType voxelType)
+    {
+        switch(voxelType)
+        {
+            case VoxelType.Empty:           return false;
+            case VoxelType.Grass:           return false;
+            case VoxelType.Dirt:            return false;
+            case VoxelType.Water:           return false;
+            case VoxelType.Cobblestone:     return false;
+            case VoxelType.Torch:           return true;
+
+            default: 
+                throw new System.ArgumentException($"Invalid voxel type {voxelType}");
+        }
+    }
+
     public static bool IsSolid(VoxelType voxelType)
     {
         switch(voxelType)
@@ -64,6 +81,7 @@ public static class VoxelInfo
             case VoxelType.Dirt:            return true;
             case VoxelType.Water:           return false;
             case VoxelType.Cobblestone:     return true;
+            case VoxelType.Torch:           return false;
 
             default: 
                 throw new System.ArgumentException($"Invalid voxel type {voxelType}");

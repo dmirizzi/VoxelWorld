@@ -16,9 +16,6 @@ public class WorldGenerator : MonoBehaviour
 
     public VoxelWorld VoxelWorld { get; private set; }
 
-    private List<GameObject> _generatedObjects = new List<GameObject>();
-
-    // Start is called before the first frame update
     void Start()
     {
         VoxelWorld = new VoxelWorld(TextureAtlasMaterial, TextureAtlasTransparentMaterial);
@@ -28,34 +25,23 @@ public class WorldGenerator : MonoBehaviour
         WorldGenerated = true;
     }
 
-    private void ClearWorld()
-    {
-        foreach(var obj in _generatedObjects)
-        {
-            Destroy(obj);
-        }
-        _generatedObjects.Clear();
-
-        VoxelWorld.Clear();
-    }
-
     private void GenerateTerrain(int size)
     {
-        size /= 2;
+        //size /= 2;
 
         var seed = UnityEngine.Random.Range(0, 1000);
 
-        for(int x = -size; x < size; ++x)
+        for(int x = 0; x < size; ++x)
         {
-            for(int z = -size; z < size; ++z)
+            for(int z = 0; z < size; ++z)
             {
-                var height = Mathf.Min(64, (int)(Mathf.PerlinNoise(seed + x / 20.0f, seed + z / 20.0f) * 32) - 5);
-                //var height = 0;
+                //var height = Mathf.Min(64, (int)(Mathf.PerlinNoise(seed + x / 20.0f, seed + z / 20.0f) * 32) - 5);
+                var height = 0;
 
                 bool isWater = height < 0;
                 if(isWater) height = 0;
 
-                for(int y = -64; y <= height; ++y)
+                for(int y = 0; y <= height; ++y)
                 {
                     if(isWater)
                     {
@@ -230,8 +216,8 @@ public class WorldGenerator : MonoBehaviour
 
     private void PlaceTorch(Vector3Int voxelPos)
     {
-        var worldPos = VoxelPosConverter.GetVoxelTopCenterSurfaceWorldPos(voxelPos) + Vector3.up * 0.35f;
-        _generatedObjects.Add(Instantiate(TorchPrefab, worldPos, Quaternion.identity));
+        var worldPos = voxelPos + Vector3Int.up;
+        VoxelWorld.SetVoxel(worldPos, VoxelType.Torch);
     }
 
     private void PlacePlayer()
@@ -280,10 +266,10 @@ public class WorldGenerator : MonoBehaviour
         var sw = new Stopwatch();
         sw.Start();
 
-        ClearWorld();
+        VoxelWorld.Clear();
 
-        GenerateTerrain(128);
-
+        GenerateTerrain(16);
+/*
         GenerateCave(
             new Vector3Int(0, 0, 0),
             new Vector3Int(
@@ -296,15 +282,15 @@ public class WorldGenerator : MonoBehaviour
             _deathNeighbors,
             _emptyChance
         );
-
-        VoxelWorld.Build();
-
-        int numTorches = 5;
+*/
+        int numTorches = 1;
         for(int i = 0; i < numTorches; ++i)
         {
             var pos = VoxelWorld.GetRandomSolidSurfaceVoxel();
             PlaceTorch(pos);
         }
+
+        VoxelWorld.BuildChangedChunks();
 
         PlacePlayer();
 

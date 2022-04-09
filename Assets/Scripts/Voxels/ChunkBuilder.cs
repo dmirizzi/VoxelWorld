@@ -31,7 +31,7 @@ public class ChunkBuilder
 
     public GameObject[] GetChunkGameObjects()
     {
-        var chunkGameObj = new GameObject($"Chunk[{ChunkPos.x}|{ChunkPos.y}|{ChunkPos.z}]");
+        var chunkGameObj = new GameObject($"SolidVoxelMesh");
         chunkGameObj.AddComponent<MeshRenderer>();
         var mesh = chunkGameObj.AddComponent<MeshFilter>().mesh;
 
@@ -42,12 +42,11 @@ public class ChunkBuilder
         mesh.uv = _chunkUVs.ToArray();
         mesh.Optimize();
 
-        chunkGameObj.transform.position = _chunkVoxelPos;
         chunkGameObj.GetComponent<Renderer>().material = _textureAtlasMaterial;
         GenerateMeshCollider(chunkGameObj);
         chunkGameObj.layer = LayerMask.NameToLayer("Voxels");
 
-        var chunkTpGameObj = new GameObject($"ChunkTP[{ChunkPos.x}|{ChunkPos.y}|{ChunkPos.z}]");
+        var chunkTpGameObj = new GameObject($"TransparentVoxelMesh");
         chunkTpGameObj.AddComponent<MeshRenderer>();
         var meshTp = chunkTpGameObj.AddComponent<MeshFilter>().mesh;
 
@@ -58,7 +57,6 @@ public class ChunkBuilder
         meshTp.uv = _chunkUVsTp.ToArray();
         meshTp.Optimize();
 
-        chunkTpGameObj.transform.position = _chunkVoxelPos;
         chunkTpGameObj.GetComponent<Renderer>().material = _textureAtlasTransparentMaterial;
         GenerateMeshCollider(chunkTpGameObj);
         chunkTpGameObj.layer = LayerMask.NameToLayer("Voxels");
@@ -69,7 +67,7 @@ public class ChunkBuilder
         };
     }
 
-    public Task Build(Vector3Int chunkPos, byte[,,] chunkData)
+    public Task Build(Vector3Int chunkPos, Chunk chunk)
     {
         ChunkPos = chunkPos;
         _chunkVoxelPos = VoxelPosConverter.ChunkToBaseVoxelPos(chunkPos);
@@ -82,10 +80,11 @@ public class ChunkBuilder
                 {
                     for(int z = 0; z < VoxelInfo.ChunkSize; ++z)
                     {
-                        var voxelType = (VoxelType)chunkData[x, y, z];
+                        var voxelType = (VoxelType)chunk.GetVoxel(x, y, z);
                         if(voxelType == VoxelType.Empty) continue;
+                        if(VoxelInfo.IsGameObjectBlock(voxelType)) continue;
 
-                        bool isTransparent = !VoxelInfo.IsSolid((VoxelType)chunkData[x, y, z]);
+                        bool isTransparent = !VoxelInfo.IsSolid(voxelType);
 
                         // Select which chunk to add mesh to - either solid or transparent
                         var vertices = isTransparent ? _chunkVerticesTp : _chunkVertices;
@@ -125,7 +124,7 @@ public class ChunkBuilder
 
                                 normals.AddRange(faceData.Normals);
 
-                                var uv = GetUVsForVoxelType((VoxelType)chunkData[x, y, z], faceData.VoxelFace);
+                                var uv = GetUVsForVoxelType(voxelType, faceData.VoxelFace);
                                 uvs.Add(uv[faceData.UVIndices[0]]);
                                 uvs.Add(uv[faceData.UVIndices[1]]);
                                 uvs.Add(uv[faceData.UVIndices[2]]);

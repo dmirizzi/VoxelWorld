@@ -5,9 +5,7 @@ using UnityEngine;
 
 public class VoxelWorld
 {
-    private Dictionary<Vector3Int, byte[,,]> _chunks;
-
-    private Dictionary<Vector3Int, GameObject[]> _chunkGameObjects;
+    private Dictionary<Vector3Int, Chunk> _chunks;
 
     private ChunkBuilder _chunkBuilder;
 
@@ -19,10 +17,9 @@ public class VoxelWorld
 
     public VoxelWorld(Material textureAtlasMaterial, Material textureAtlasTransparentMaterial)
     {
-        _chunks = new Dictionary<Vector3Int, byte[,,]>();
+        _chunks = new Dictionary<Vector3Int, Chunk>();
         _changedChunks = new HashSet<Vector3Int>();
         _chunkBuilder = new ChunkBuilder(this, textureAtlasMaterial, textureAtlasTransparentMaterial);
-        _chunkGameObjects = new Dictionary<Vector3Int, GameObject[]>();
         _textureAtlasMaterial = textureAtlasMaterial;
         _textureAtlasTransparentMaterial = textureAtlasTransparentMaterial;
     }
@@ -30,23 +27,50 @@ public class VoxelWorld
     public void SetVoxelAndRebuild(Vector3Int pos, VoxelType type)
     {
         SetVoxel(pos.x, pos.y, pos.z, type);
-        Build();
+        BuildChangedChunks();
     }
 
     public void SetVoxelAndRebuild(int x, int y, int z, VoxelType type)
     {
         SetVoxel(x, y, z, type);
-        Build();
+        BuildChangedChunks();
+    }
+
+    public void SetVoxel(Vector3Int globalPos, VoxelType type)
+    {
+        SetVoxel(globalPos.x, globalPos.y, globalPos.z, type);
     }
 
     public void SetVoxel(int x, int y, int z, VoxelType type)
     {
+        var globalPos = new Vector3Int(x, y, z);
         var chunk = GetChunkFromVoxelPosition(x, y, z, true);
-        var chunkLocalPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(new Vector3Int(x, y, z));
+        var chunkLocalPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(globalPos);
 
-        chunk[chunkLocalPos.x, chunkLocalPos.y, chunkLocalPos.z] = (byte)type;
+        var oldVoxelType = chunk.GetVoxel(chunkLocalPos);
+        var oldBlockType = BlockTypes.GetBlockType(oldVoxelType);
+        if(oldBlockType != null)
+        {
+            if(!oldBlockType.OnRemove(this, chunk, globalPos, chunkLocalPos))
+            {
+                 // Block cannot be removed
+                return;
+            }
+        }
 
-        foreach(var affectedChunk in GetChunksAdjacentToVoxel(new Vector3Int(x, y, z)))
+        var newBlockType = BlockTypes.GetBlockType(type);
+        if(newBlockType != null)
+        {
+            if(!newBlockType.OnPlace(this, chunk, globalPos, chunkLocalPos))
+            {
+                // Block cannot be placed
+                return;
+            }
+        }
+
+        chunk.SetVoxel(chunkLocalPos, type);
+
+        foreach(var affectedChunk in GetChunksAdjacentToVoxel(globalPos))
         {
             _changedChunks.Add(affectedChunk);
         }
@@ -76,19 +100,19 @@ public class VoxelWorld
 
         if(rebuild)
         {
-            Build();
+            BuildChangedChunks();
         }
     }
 
     public VoxelType GetVoxel(int x, int y, int z)
     {
-        var chunkLocalPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(new Vector3Int(x, y, z));
-        var chunkData = GetChunkFromVoxelPosition(x, y, z, false);
-        if(chunkData == null)
+        var chunk = GetChunkFromVoxelPosition(x, y, z, false);
+        if(chunk == null)
         {
             return VoxelType.Empty;
         }
-        return (VoxelType)chunkData[chunkLocalPos.x, chunkLocalPos.y, chunkLocalPos.z];
+        var chunkLocalPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(new Vector3Int(x, y, z));
+        return chunk.GetVoxel(chunkLocalPos);
     }
 
     public VoxelType GetVoxel(Vector3Int voxelPos)
@@ -134,7 +158,7 @@ public class VoxelWorld
         }
     }
 
-    public void Build()
+    public void BuildChangedChunks()
     {
         var builders = new List<ChunkBuilder>();
         var builderTasks = new List<Task>();
@@ -144,13 +168,7 @@ public class VoxelWorld
             if(!_chunks.ContainsKey(chunkPos)) continue;
 
             // Delete existing chunk to regenerate it
-            if(_chunkGameObjects.ContainsKey(chunkPos))
-            {
-                foreach(var chunkGameObject in _chunkGameObjects[chunkPos])
-                {
-                    GameObject.Destroy(chunkGameObject);
-                }
-            }
+            _chunks[chunkPos].DestroyGameObject();
 
             // Queue all builder tasks
             var chunkBuilder = new ChunkBuilder(this, _textureAtlasMaterial, _textureAtlasTransparentMaterial);
@@ -163,7 +181,8 @@ public class VoxelWorld
         // GameObjects must be generated on main thread
         foreach(var builder in builders)
         {
-            _chunkGameObjects[builder.ChunkPos] = builder.GetChunkGameObjects();
+            _chunks[builder.ChunkPos].AddVoxelMeshGameObjects(builder.GetChunkGameObjects());
+            _chunks[builder.ChunkPos].BuildBlockGameObjects();
         }        
     
         _changedChunks.Clear();
@@ -171,15 +190,11 @@ public class VoxelWorld
 
     public void Clear()
     {
-        foreach(var chunk in _chunkGameObjects.Values)
+        foreach(var chunk in _chunks.Values)
         {
-            foreach(var obj in chunk)
-            {
-                GameObject.Destroy(obj);
-            }
+            chunk.DestroyGameObject();
         }
 
-        _chunkGameObjects.Clear();
         _chunks.Clear();
         _changedChunks.Clear();
     }
@@ -195,10 +210,10 @@ public class VoxelWorld
         var localVoxelPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(voxelXZPos);
         foreach(var chunkPos in chunkPositions)
         {
-            var chunkData = _chunks[chunkPos];
+            var chunk = _chunks[chunkPos];
             for(int y = VoxelInfo.ChunkSize - 1; y >= 0; --y)
             {
-                if((VoxelType)chunkData[localVoxelPos.x, y, localVoxelPos.z] != VoxelType.Empty)
+                if(chunk.GetVoxel(localVoxelPos.x, y, localVoxelPos.z) != VoxelType.Empty)
                 {
                     return VoxelPosConverter.ChunkLocalVoxelPosToGlobal(
                         new Vector3Int(localVoxelPos.x, y, localVoxelPos.z),
@@ -234,7 +249,7 @@ public class VoxelWorld
         return adjacentChunks;
     }
 
-    private byte[,,] GetChunkFromVoxelPosition(int x, int y, int z, bool create)
+    private Chunk GetChunkFromVoxelPosition(int x, int y, int z, bool create)
     {
 
         var voxelPos = new Vector3Int(x, y, z);
@@ -244,7 +259,7 @@ public class VoxelWorld
         {
             if(create)
             {
-                _chunks.Add(chunkPos, new byte[VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize]);
+                _chunks.Add(chunkPos, new Chunk(chunkPos));
             }
             else
             {
