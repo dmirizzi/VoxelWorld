@@ -9,7 +9,7 @@ public interface IBlockType
 
     // Is called when the player attempts to place a block of this type
     // Returns true if it can be placed, false otherwise
-    bool OnPlace(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition);
+    bool OnPlace(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition, VoxelFace? placementFace);
 
     // Is called when the player attempts to remove/replace a block of this type
     // Returns true if it can be removed, false otherwise

@@ -24,51 +24,34 @@ public class VoxelWorld
         _textureAtlasTransparentMaterial = textureAtlasTransparentMaterial;
     }
 
-    public void SetVoxelAndRebuild(Vector3Int pos, VoxelType type)
+    public void SetVoxelAndRebuild(Vector3Int pos, VoxelType type, VoxelFace? placementFace = null)
     {
-        SetVoxel(pos.x, pos.y, pos.z, type);
+        SetVoxel(pos.x, pos.y, pos.z, type, placementFace);
         BuildChangedChunks();
     }
 
-    public void SetVoxelAndRebuild(int x, int y, int z, VoxelType type)
+    public void SetVoxelAndRebuild(int x, int y, int z, VoxelType type, VoxelFace? placementFace = null)
     {
-        SetVoxel(x, y, z, type);
+        SetVoxel(x, y, z, type, placementFace);
         BuildChangedChunks();
     }
 
-    public void SetVoxel(Vector3Int globalPos, VoxelType type)
+    public void SetVoxel(Vector3Int globalPos, VoxelType type, VoxelFace? placementFace = null)
     {
-        SetVoxel(globalPos.x, globalPos.y, globalPos.z, type);
+        SetVoxel(globalPos.x, globalPos.y, globalPos.z, type, placementFace);
     }
 
-    public void SetVoxel(int x, int y, int z, VoxelType type)
+    public void SetVoxel(int x, int y, int z, VoxelType type, VoxelFace? placementFace = null)
     {
         var globalPos = new Vector3Int(x, y, z);
         var chunk = GetChunkFromVoxelPosition(x, y, z, true);
         var chunkLocalPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(globalPos);
 
-        var oldVoxelType = chunk.GetVoxel(chunkLocalPos);
-        var oldBlockType = BlockTypes.GetBlockType(oldVoxelType);
-        if(oldBlockType != null)
+        if(!chunk.SetVoxel(chunkLocalPos, type, placementFace))
         {
-            if(!oldBlockType.OnRemove(this, chunk, globalPos, chunkLocalPos))
-            {
-                 // Block cannot be removed
-                return;
-            }
+            // Voxel cant be placed
+            return;
         }
-
-        var newBlockType = BlockTypes.GetBlockType(type);
-        if(newBlockType != null)
-        {
-            if(!newBlockType.OnPlace(this, chunk, globalPos, chunkLocalPos))
-            {
-                // Block cannot be placed
-                return;
-            }
-        }
-
-        chunk.SetVoxel(chunkLocalPos, type);
 
         foreach(var affectedChunk in GetChunksAdjacentToVoxel(globalPos))
         {
@@ -259,7 +242,7 @@ public class VoxelWorld
         {
             if(create)
             {
-                _chunks.Add(chunkPos, new Chunk(chunkPos));
+                _chunks.Add(chunkPos, new Chunk(this, chunkPos));
             }
             else
             {

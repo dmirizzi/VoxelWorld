@@ -8,6 +8,7 @@
 [ ] Lights go through gaps between voxels and cast "light stripes"
 [ ] Lighting is different between chunks / no smooth lighting transition between chunks
 [x] Center texel correction causes seams between voxels / half-pixels at the border of voxels
+[ ] Lights flickering when too many in scene? -> deferred lighting?
 
 [ ] Chunk occlusion culling?
     https://tomcc.github.io/2014/08/31/visibility-1.html
@@ -54,6 +55,7 @@ Items / Blocks
 
 [x] Torch
     [x] Integrate torches into chunk infrastructure
+    [ ] Torch can be placed on walls
     [ ] Torch base object not affected by torch light
 
 ----------------------------------------------------------------------------------------------------------------

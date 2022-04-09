@@ -12,11 +12,13 @@ public class Chunk
 
     public Dictionary<Vector3Int, GameObject> BlockGameObject { get; set; }
 
-    public Chunk(Vector3Int chunkPos)
+    public Chunk(VoxelWorld voxelWorld, Vector3Int chunkPos)
     {
+        _voxelWorld = voxelWorld;
+        _chunkData = new byte[VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize];
+
         ChunkPos = chunkPos;
         CreateNewChunkGameObject();
-        _chunkData = new byte[VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize];
         BlockAuxiliaryData = new Dictionary<Vector3Int, byte>();
         BlockGameObject = new Dictionary<Vector3Int, GameObject>();
     }
@@ -31,8 +33,9 @@ public class Chunk
         return (VoxelType)_chunkData[localX, localY, localZ];
     }
 
-    public void SetVoxel(Vector3Int localPos, VoxelType type)
+    public bool SetVoxel(Vector3Int localPos, VoxelType type, VoxelFace? placementFace = null)
     {
+        // Remove old aux data and gameobjects if it already exists at this voxel position
         if(BlockGameObject.ContainsKey(localPos))
         {
             GameObject.Destroy(BlockGameObject[localPos]);
@@ -42,7 +45,35 @@ public class Chunk
         {
             BlockAuxiliaryData.Remove(localPos);
         }
+
+        var globalPos = VoxelPosConverter.ChunkLocalVoxelPosToGlobal(localPos, ChunkPos);
+
+        // Execute remove logic on old block if available
+        var oldVoxelType = (VoxelType)_chunkData[localPos.x, localPos.y, localPos.z];
+        var oldBlockType = BlockTypes.GetBlockType(oldVoxelType);
+        if(oldBlockType != null)
+        {
+            if(!oldBlockType.OnRemove(_voxelWorld, this, globalPos, localPos))
+            {
+                 // Block cannot be removed
+                return false;
+            }
+        }
+
+        // Execute place logic on old block if available
+        var newBlockType = BlockTypes.GetBlockType(type);
+        if(newBlockType != null)
+        {
+            if(!newBlockType.OnPlace(_voxelWorld, this, globalPos, localPos, placementFace))
+            {
+                // Block cannot be placed
+                return false;
+            }
+        }
+
         _chunkData[localPos.x, localPos.y, localPos.z] = (byte)type;
+
+        return true;
     }
 
     public void AddBlockGameObject(Vector3Int localPos, GameObject obj)
@@ -114,4 +145,6 @@ public class Chunk
     }
 
     private byte[,,] _chunkData;
+
+    private VoxelWorld _voxelWorld;
 }

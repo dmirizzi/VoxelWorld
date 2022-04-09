@@ -133,11 +133,11 @@ public class PlayerController : MonoBehaviour
             if(world != null)
             {
                 var voxelPos = GetTargetedVoxelPos(true);                
-                if(voxelPos != null)                
+                if(voxelPos.Item1.HasValue)                
                 {
-                    if(!PlayerIntersectsVoxel(voxelPos.Value))
+                    if(!PlayerIntersectsVoxel(voxelPos.Item1.Value))
                     {
-                        world.SetVoxelAndRebuild(voxelPos.Value, VoxelType.Cobblestone);
+                        world.SetVoxelAndRebuild(voxelPos.Item1.Value, VoxelType.Torch, voxelPos.Item2.Value);
                     }                   
                 }
             }
@@ -148,9 +148,9 @@ public class PlayerController : MonoBehaviour
             if(world != null)
             {
                 var voxelPos = GetTargetedVoxelPos(false);
-                if(voxelPos != null)
+                if(voxelPos.Item1.HasValue)
                 {
-                    world.SetVoxelAndRebuild(voxelPos.Value, VoxelType.Empty);
+                    world.SetVoxelAndRebuild(voxelPos.Item1.Value, VoxelType.Empty);
                 }
             }
         }
@@ -197,7 +197,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private Vector3Int? GetTargetedVoxelPos(bool surfaceVoxel)
+    private (Vector3Int?, VoxelFace?) GetTargetedVoxelPos(bool surfaceVoxel)
     {
         _debugLastRay = new Ray(_cameraTransform.position, _cameraTransform.forward);
         _debugLastHit = null;
@@ -213,10 +213,14 @@ public class PlayerController : MonoBehaviour
                 var normalDirection = surfaceVoxel ? 0.5f : -0.5f;
                 var voxelCenterWorldPos = hitInfo.point + hitInfo.normal * normalDirection;
                 var voxelPos = VoxelPosConverter.GetVoxelPosFromWorldPos(voxelCenterWorldPos);
-                return voxelPos;
+
+                var voxelFace = VoxelFaceHelper.GetVoxelFaceFromNormal(hitInfo.normal.normalized);
+                voxelFace = VoxelFaceHelper.GetOppositeFace(voxelFace);
+
+                return (voxelPos, voxelFace);
             }
         }
-        return null;        
+        return (null, null);
     }
 
     private float GetIntersectionDepthWithGround()

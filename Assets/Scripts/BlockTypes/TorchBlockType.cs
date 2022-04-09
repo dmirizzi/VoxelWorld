@@ -11,10 +11,32 @@ public class TorchBlockType : IBlockType
     {
         var torch = GameObject.Instantiate(_torchPrefab, Vector3.zero, Quaternion.identity);
         chunk.AddBlockGameObject(localPosition, torch);
+
+        var placementFace = chunk.GetAuxiliaryData(localPosition);
+        if(placementFace.HasValue)
+        {
+            var vec = VoxelFaceHelper.GetVectorFromVoxelFace((VoxelFace)placementFace.Value);
+            torch.transform.localPosition += vec * .5f;
+            torch.transform.localRotation = Quaternion.Euler(-vec.z * 20f, 0, vec.x * 20f);
+        }
     }
 
-    public bool OnPlace(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition)
+    public bool OnPlace(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition, VoxelFace? placementFace)
     {
+        if(placementFace.HasValue)
+        {
+            if(placementFace == VoxelFace.Top)
+            {
+                // Torch cannot be placed on ceiling
+                return false;
+            }
+        }
+
+        // Remember placement direction to build the torch on the right wall
+        if(placementFace.HasValue)
+        {
+            chunk.SetAuxiliaryData(localPosition, (byte)placementFace);
+        }
         return true;
     }
 

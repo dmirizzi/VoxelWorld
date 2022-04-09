@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -13,12 +14,57 @@ public enum VoxelType
 
 public enum VoxelFace
 {
-    Top,
+    Top = 0,
     Bottom,
     Front,
     Back,
     Left,
     Right
+}
+
+public static class VoxelFaceHelper
+{
+    private static Dictionary<Vector3, VoxelFace> _mapping = new Dictionary<Vector3, VoxelFace>()
+    {
+        { Vector3.up,       VoxelFace.Top },
+        { Vector3.down,     VoxelFace.Bottom },
+        { Vector3.back,     VoxelFace.Front },
+        { Vector3.forward,  VoxelFace.Back },
+        { Vector3.left,     VoxelFace.Left },
+        { Vector3.right,    VoxelFace.Right }
+    };
+
+    public static VoxelFace GetVoxelFaceFromNormal(Vector3 normal)
+    {
+        foreach(var vec in _mapping.Keys)
+        {
+            if(Mathf.Approximately(Vector3.Dot(normal, vec), 1f))
+            {
+                return _mapping[vec];
+            }
+        }
+
+        throw new System.ArgumentException($"Invalid voxel face vector: {normal}. Must be cardinal direction.");
+    }
+
+    public static Vector3 GetVectorFromVoxelFace(VoxelFace face)
+    {
+        return _mapping.Single(kv => kv.Value == face).Key;
+    }
+
+    public static VoxelFace GetOppositeFace(VoxelFace face)
+    {
+        int faceInt = (int)face;
+        if(faceInt % 2 == 0)
+        {
+            faceInt++;
+        }
+        else
+        {
+            faceInt--;
+        }
+        return (VoxelFace)faceInt;
+    }
 }
 
 public struct VoxelFaceData
