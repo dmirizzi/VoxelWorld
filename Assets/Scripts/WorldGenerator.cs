@@ -27,21 +27,21 @@ public class WorldGenerator : MonoBehaviour
 
     private void GenerateTerrain(int size)
     {
-        //size /= 2;
+        size /= 2;
 
         var seed = UnityEngine.Random.Range(0, 1000);
 
-        for(int x = 0; x < size; ++x)
+        for(int x = -size; x < size; ++x)
         {
-            for(int z = 0; z < size; ++z)
+            for(int z = -size; z < size; ++z)
             {
-                //var height = Mathf.Min(64, (int)(Mathf.PerlinNoise(seed + x / 20.0f, seed + z / 20.0f) * 32) - 5);
-                var height = 0;
+                var height = Mathf.Min(64, (int)(Mathf.PerlinNoise(seed + x / 20.0f, seed + z / 20.0f) * 32) - 5);
+                //var height = 0;
 
                 bool isWater = height < 0;
                 if(isWater) height = 0;
 
-                for(int y = 0; y <= height; ++y)
+                for(int y = -64; y <= height; ++y)
                 {
                     if(isWater)
                     {
@@ -270,8 +270,7 @@ public class WorldGenerator : MonoBehaviour
 
         VoxelWorld.Clear();
 
-        GenerateTerrain(16);
-/*
+        GenerateTerrain(128);
         GenerateCave(
             new Vector3Int(0, 0, 0),
             new Vector3Int(
@@ -284,7 +283,7 @@ public class WorldGenerator : MonoBehaviour
             _deathNeighbors,
             _emptyChance
         );
-*/
+
         int numTorches = 1;
         for(int i = 0; i < numTorches; ++i)
         {

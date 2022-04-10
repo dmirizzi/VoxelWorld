@@ -13,6 +13,7 @@ public class BlockTypes
         _blockTypeMap = new Dictionary<VoxelType, IBlockType>();
 
         _blockTypeMap[VoxelType.Torch] = new TorchBlockType();
+        _blockTypeMap[VoxelType.CobblestoneWedge] = new WedgeBlockType(VoxelType.CobblestoneWedge, VoxelType.Cobblestone);
     }
 
     public static IBlockType GetBlockType(VoxelType type)

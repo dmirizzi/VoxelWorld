@@ -24,30 +24,30 @@ public class VoxelWorld
         _textureAtlasTransparentMaterial = textureAtlasTransparentMaterial;
     }
 
-    public void SetVoxelAndRebuild(Vector3Int pos, VoxelType type, VoxelFace? placementFace = null)
+    public void SetVoxelAndRebuild(Vector3Int pos, VoxelType type, VoxelFace? placementDir = null)
     {
-        SetVoxel(pos.x, pos.y, pos.z, type, placementFace);
+        SetVoxel(pos.x, pos.y, pos.z, type, placementDir);
         BuildChangedChunks();
     }
 
-    public void SetVoxelAndRebuild(int x, int y, int z, VoxelType type, VoxelFace? placementFace = null)
+    public void SetVoxelAndRebuild(int x, int y, int z, VoxelType type, VoxelFace? placementDir = null)
     {
-        SetVoxel(x, y, z, type, placementFace);
+        SetVoxel(x, y, z, type, placementDir);
         BuildChangedChunks();
     }
 
-    public void SetVoxel(Vector3Int globalPos, VoxelType type, VoxelFace? placementFace = null)
+    public void SetVoxel(Vector3Int globalPos, VoxelType type, VoxelFace? placementDir = null)
     {
-        SetVoxel(globalPos.x, globalPos.y, globalPos.z, type, placementFace);
+        SetVoxel(globalPos.x, globalPos.y, globalPos.z, type, placementDir);
     }
 
-    public void SetVoxel(int x, int y, int z, VoxelType type, VoxelFace? placementFace = null)
+    public void SetVoxel(int x, int y, int z, VoxelType type, VoxelFace? placementDir = null)
     {
         var globalPos = new Vector3Int(x, y, z);
         var chunk = GetChunkFromVoxelPosition(x, y, z, true);
         var chunkLocalPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(globalPos);
 
-        if(!chunk.SetVoxel(chunkLocalPos, type, placementFace))
+        if(!chunk.SetVoxel(chunkLocalPos, type, placementDir))
         {
             // Voxel cant be placed
             return;

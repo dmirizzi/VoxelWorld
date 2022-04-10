@@ -2,6 +2,7 @@
     Graphics / Rendering
 ----------------------------------------------------------------------------------------------------------------
 
+[ ] Voxels have shadow "halo" on top of them
 [ ] Currently using SimpleLit for transparent voxels -> Fine or need to adapt voxel shader for transparency?
 [ ] Water should be less translucent the deeper it goes
 [ ] Bump Mapping?
@@ -28,10 +29,13 @@ VoxelWorld
 [x] Multithreaded chunk building
 [x] Holes in voxel world when destroying voxels on chunk borders
 
+[ ] Allow "Solid" flag to be set for individual faces on voxels
+
 [ ] Get VoxelInfo from config file (solid, tileXY etc.)
     -> JSON config
 
 [ ] Refactor ChunkBuilder
+    [ ] Reserve lists used for voxel building to avoid internal re-copying?
 
 [ ] Custom Meshes as part of voxel infrastructure
     [ ] One mesh for all?
@@ -55,8 +59,9 @@ Items / Blocks
 
 [x] Torch
     [x] Integrate torches into chunk infrastructure
-    [ ] Torch can be placed on walls
+    [x] Torch can be placed on walls
     [ ] Torch base object not affected by torch light
+    [ ] Torch particles should always flow towards global up, regardless of torch rotation
 
 ----------------------------------------------------------------------------------------------------------------
 NPCs

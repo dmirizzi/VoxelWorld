@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class TorchBlockType : IBlockType
@@ -5,6 +6,14 @@ public class TorchBlockType : IBlockType
     public TorchBlockType()
     {
         _torchPrefab = (GameObject)Resources.Load("Prefabs/Torch", typeof(GameObject));
+    }
+
+    public bool HasGameObject => true;
+
+    public bool HasCustomVoxelMesh => false;
+
+    public void OnChunkVoxelMeshBuild(VoxelWorld world, Chunk chunk, VoxelType voxelType, Vector3Int globalVoxelPos, Vector3Int localVoxelPos, ChunkMesh chunkMesh)
+    {
     }
 
     public void OnChunkBuild(Chunk chunk, Vector3Int localPosition)

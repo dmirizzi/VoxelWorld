@@ -9,7 +9,8 @@ public enum VoxelType
     Dirt,
     Water,
     Cobblestone,
-    Torch
+    Torch,
+    CobblestoneWedge
 }
 
 public enum VoxelFace
@@ -34,7 +35,7 @@ public static class VoxelFaceHelper
         { Vector3.right,    VoxelFace.Right }
     };
 
-    public static VoxelFace GetVoxelFaceFromNormal(Vector3 normal)
+    public static VoxelFace? GetVoxelFaceFromVector(Vector3 normal)
     {
         foreach(var vec in _mapping.Keys)
         {
@@ -43,8 +44,7 @@ public static class VoxelFaceHelper
                 return _mapping[vec];
             }
         }
-
-        throw new System.ArgumentException($"Invalid voxel face vector: {normal}. Must be cardinal direction.");
+        return null;
     }
 
     public static Vector3 GetVectorFromVoxelFace(VoxelFace face)
@@ -106,12 +106,30 @@ public static class VoxelInfo
     {
         switch(voxelType)
         {
-            case VoxelType.Empty:           return false;
-            case VoxelType.Grass:           return false;
-            case VoxelType.Dirt:            return false;
-            case VoxelType.Water:           return false;
-            case VoxelType.Cobblestone:     return false;
-            case VoxelType.Torch:           return true;
+            case VoxelType.Empty:               return false;
+            case VoxelType.Grass:               return false;
+            case VoxelType.Dirt:                return false;
+            case VoxelType.Water:               return false;
+            case VoxelType.Cobblestone:         return false;
+            case VoxelType.Torch:               return true;
+            case VoxelType.CobblestoneWedge:    return false;
+
+            default: 
+                throw new System.ArgumentException($"Invalid voxel type {voxelType}");
+        }
+    }
+
+    public static bool IsTransparent(VoxelType voxelType)
+    {
+        switch(voxelType)
+        {
+            case VoxelType.Empty:               return false;
+            case VoxelType.Grass:               return false;
+            case VoxelType.Dirt:                return false;
+            case VoxelType.Water:               return true;
+            case VoxelType.Cobblestone:         return false;
+            case VoxelType.Torch:               return false;
+            case VoxelType.CobblestoneWedge:    return false;
 
             default: 
                 throw new System.ArgumentException($"Invalid voxel type {voxelType}");
@@ -122,12 +140,13 @@ public static class VoxelInfo
     {
         switch(voxelType)
         {
-            case VoxelType.Empty:           return false;
-            case VoxelType.Grass:           return true;
-            case VoxelType.Dirt:            return true;
-            case VoxelType.Water:           return false;
-            case VoxelType.Cobblestone:     return true;
-            case VoxelType.Torch:           return false;
+            case VoxelType.Empty:               return false;
+            case VoxelType.Grass:               return true;
+            case VoxelType.Dirt:                return true;
+            case VoxelType.Water:               return false;
+            case VoxelType.Cobblestone:         return true;
+            case VoxelType.Torch:               return false;
+            case VoxelType.CobblestoneWedge:    return false;
 
             default: 
                 throw new System.ArgumentException($"Invalid voxel type {voxelType}");

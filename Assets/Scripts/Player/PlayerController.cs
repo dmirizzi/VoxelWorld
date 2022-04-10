@@ -67,7 +67,14 @@ public class PlayerController : MonoBehaviour
                 {
                     if(!PlayerIntersectsVoxel(voxelPos.Item1.Value))
                     {
-                        world.SetVoxelAndRebuild(voxelPos.Item1.Value, VoxelType.Torch, voxelPos.Item2.Value);
+                        // If player places block on the ground, placement direction is the player's look direction
+                        var placementDir = voxelPos.Item2.Value;
+                        if(placementDir == VoxelFace.Bottom)
+                        {
+                            placementDir = VoxelFaceHelper.GetVoxelFaceFromVector(GetClosestCardinalLookDirection()).Value;
+                        }
+
+                        world.SetVoxelAndRebuild(voxelPos.Item1.Value, VoxelType.CobblestoneWedge, placementDir);
                     }                   
                 }
             }
@@ -84,6 +91,31 @@ public class PlayerController : MonoBehaviour
                 }
             }
         }
+    }
+
+    private Vector3 GetClosestCardinalLookDirection()
+    {
+        var cardinalDirections = new Vector3[]
+        {
+            Vector3.forward,
+            Vector3.back,
+            Vector3.left,
+            Vector3.right
+        };
+
+        var closestDir = Vector3.zero;
+        var smallestAngle = float.MaxValue;
+        foreach(var dir in cardinalDirections)
+        {
+            var currentAngle = Vector3.Angle(transform.forward, dir);
+            if(currentAngle < smallestAngle)
+            {
+                smallestAngle = currentAngle;
+                closestDir = dir;
+            }
+        }
+
+        return closestDir;
     }
 
     private void HandleMouseLook()
@@ -144,8 +176,15 @@ public class PlayerController : MonoBehaviour
                 var voxelCenterWorldPos = hitInfo.point + hitInfo.normal * normalDirection;
                 var voxelPos = VoxelPosConverter.GetVoxelPosFromWorldPos(voxelCenterWorldPos);
 
-                var voxelFace = VoxelFaceHelper.GetVoxelFaceFromNormal(hitInfo.normal.normalized);
-                voxelFace = VoxelFaceHelper.GetOppositeFace(voxelFace);
+                var voxelFace = VoxelFaceHelper.GetVoxelFaceFromVector(hitInfo.normal.normalized);
+                if(voxelFace.HasValue)
+                {
+                    voxelFace = VoxelFaceHelper.GetOppositeFace(voxelFace.Value);
+                }
+                else
+                {
+                    voxelFace = VoxelFaceHelper.GetVoxelFaceFromVector(GetClosestCardinalLookDirection());
+                }
 
                 return (voxelPos, voxelFace);
             }
