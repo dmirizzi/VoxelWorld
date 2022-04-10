@@ -22,9 +22,6 @@ public static class VoxelBuildHelper
 
     public static bool IsVoxelSideVisible(VoxelWorld world, ushort voxelType, Vector3Int globalVoxelPos, Vector3Int direction)
     {
-        //TODO
-        return true;
-
         var neighbor = world.GetVoxel(globalVoxelPos + direction);
 
         if(VoxelInfo.IsTransparent(voxelType))
@@ -40,7 +37,7 @@ public static class VoxelBuildHelper
         }
 
         // Opaque neighboring voxels hide their shared face
-        return VoxelInfo.IsOpaque(voxelType, BlockFaceHelper.GetOppositeFace(neighborFace.Value));
+        return !VoxelInfo.IsOpaque(neighbor, BlockFaceHelper.GetOppositeFace(neighborFace.Value));
     }
 
     //TODO: Cache calculated UVs -> any significant performance increase?

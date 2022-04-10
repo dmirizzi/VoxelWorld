@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -35,6 +36,7 @@ public class ChunkBuilder
         var solidMeshFilter = solidChunk.AddComponent<MeshFilter>().mesh;
 
         solidMeshFilter.Clear();
+        solidMeshFilter.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
         solidMeshFilter.vertices = _solidMesh.Vertices.ToArray();
         solidMeshFilter.triangles = _solidMesh.Triangles.ToArray();
         solidMeshFilter.normals = _solidMesh.Normals.ToArray();
@@ -50,6 +52,7 @@ public class ChunkBuilder
         var transparentMeshFilter = transparentChunk.AddComponent<MeshFilter>().mesh;
 
         transparentMeshFilter.Clear();
+        transparentMeshFilter.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
         transparentMeshFilter.vertices = _transparentMesh.Vertices.ToArray();
         transparentMeshFilter.triangles = _transparentMesh.Triangles.ToArray();
         transparentMeshFilter.normals = _transparentMesh.Normals.ToArray();
@@ -66,6 +69,7 @@ public class ChunkBuilder
         };
     }
 
+
     public Task Build(Vector3Int chunkPos, Chunk chunk)
     {
         ChunkPos = chunkPos;
@@ -73,14 +77,13 @@ public class ChunkBuilder
 
         return Task.Run( () => 
         {         
-            for(int x = 0; x < VoxelInfo.ChunkSize; ++x)
+            for(int y = 0; y < VoxelInfo.ChunkSize; ++y)
             {
-                for(int y = 0; y < VoxelInfo.ChunkSize; ++y)
+                for(int x = 0; x < VoxelInfo.ChunkSize; ++x)
                 {
                     for(int z = 0; z < VoxelInfo.ChunkSize; ++z)
                     {
                         var voxelType = chunk.GetVoxel(x, y, z);
-                        //TODO
                         if(voxelType == 0) continue;
 
                         var localVoxelPos =  new Vector3Int(x, y, z);
