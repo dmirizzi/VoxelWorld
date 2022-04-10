@@ -13,10 +13,12 @@ public class PlayerController : MonoBehaviour
 
     public float MaxInteractionDistance = 6f;
 
+    public Transform CameraTransform;
+
     void Start()
     {
         _controller = GetComponent<CharacterController>();
-        _cameraTransform = GameObject.Find("Main Camera").transform;
+        CameraTransform = GameObject.Find("Main Camera").transform;
         _worldGen = GameObject.FindObjectsOfType<WorldGenerator>()[0];
     }
 
@@ -121,15 +123,15 @@ public class PlayerController : MonoBehaviour
     private void HandleMouseLook()
     {
         var my = Input.GetAxis("Mouse Y") * Sensitivity;
-        _cameraTransform.Rotate(Vector3.left, my);        
+        CameraTransform.Rotate(Vector3.left, my);        
 
         var mx = Input.GetAxis("Mouse X") * Sensitivity;
         transform.Rotate(Vector3.up, mx);
 
         // Clamp up/down look to avoid inverting the camera
-        if(_cameraTransform.up.y < 0)
+        if(CameraTransform.up.y < 0)
         {
-            _cameraTransform.Rotate(Vector3.left, -my);
+            CameraTransform.Rotate(Vector3.left, -my);
         }
     }
 
@@ -138,8 +140,8 @@ public class PlayerController : MonoBehaviour
         // Movement
         var forward = Input.GetAxis("Vertical");
         var right = Input.GetAxis("Horizontal");
-        var forwardXZ = new Vector3(_cameraTransform.forward.x, 0, _cameraTransform.forward.z).normalized;
-        var rightXZ = new Vector3(_cameraTransform.right.x, 0, _cameraTransform.right.z).normalized;
+        var forwardXZ = new Vector3(CameraTransform.forward.x, 0, CameraTransform.forward.z).normalized;
+        var rightXZ = new Vector3(CameraTransform.right.x, 0, CameraTransform.right.z).normalized;
         _controller.Move((forwardXZ * forward + rightXZ * right) * WalkingSpeed * Time.deltaTime);
     }
 
@@ -161,11 +163,11 @@ public class PlayerController : MonoBehaviour
 
     private (Vector3Int?, VoxelFace?) GetTargetedVoxelPos(bool surfaceVoxel)
     {
-        _debugLastRay = new Ray(_cameraTransform.position, _cameraTransform.forward);
+        _debugLastRay = new Ray(CameraTransform.position, CameraTransform.forward);
         _debugLastHit = null;
         if(Physics.Raycast(
-            _cameraTransform.position, 
-            _cameraTransform.forward, 
+            CameraTransform.position, 
+            CameraTransform.forward, 
             out var hitInfo, 
             LayerMask.GetMask("Voxels")))
         {
@@ -201,8 +203,6 @@ public class PlayerController : MonoBehaviour
             distanceToPlayerBottom + 0.1f,
             LayerMask.GetMask("Voxels"));
     }
-
-    private Transform _cameraTransform;
 
     private CharacterController _controller;
 

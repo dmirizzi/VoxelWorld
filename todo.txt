@@ -2,7 +2,7 @@
     Graphics / Rendering
 ----------------------------------------------------------------------------------------------------------------
 
-[ ] Voxels have shadow "halo" on top of them
+[x] Voxels have shadow "halo" on top of them -> it was a regular shadow from the camera light being too low
 [ ] Currently using SimpleLit for transparent voxels -> Fine or need to adapt voxel shader for transparency?
 [ ] Water should be less translucent the deeper it goes
 [ ] Bump Mapping?

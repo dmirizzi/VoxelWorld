@@ -12,16 +12,16 @@ public class TorchController : MonoBehaviour, IPlayerHoldable
 
     public float FlickeringFrequencyFactor = 8f;
 
-    public void OnHold(GameObject playerObject)
+    public void OnHold(PlayerController player)
     {
         // While the torch is being held, move the light source of the torch
         // to the player object, otherwise the light will clip into objects
-        _lightTransform.parent = playerObject.transform;
+        _lightTransform.parent = player.CameraTransform;
         _oldLightPos = _lightTransform.localPosition;
         _lightTransform.localPosition = Vector3.zero;
     }
 
-    public void OnRemove(GameObject playerObject)
+    public void OnRemove(PlayerController player)
     {
         // When player isnt holding torch anymore, move it back under the torch game object
         _lightTransform.parent = transform;     

@@ -40,14 +40,14 @@ public class PlayerHoldingController : MonoBehaviour
                 _cameraTransform.forward * PlayerHoldeable.HoldingOffset.z;
         HoldingGameObject.transform.localRotation = PlayerHoldeable.HoldingRotation;
 
-        PlayerHoldeable.OnHold(gameObject);
+        PlayerHoldeable.OnHold(GetComponent<PlayerController>());
     }
 
     public void RemoveHeldObject()
     {
         if(PlayerHoldeable != null && HoldingGameObject != null)
         {
-            PlayerHoldeable.OnRemove(gameObject);
+            PlayerHoldeable.OnRemove(GetComponent<PlayerController>());
             RestoreHoldingGameObjectLayers();
 
             PlayerHoldeable = null;

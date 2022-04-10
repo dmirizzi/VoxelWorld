@@ -6,7 +6,7 @@ public interface IPlayerHoldable
 
     Quaternion HoldingRotation { get; }
 
-    void OnHold(GameObject playerObject);
+    void OnHold(PlayerController player);
 
-    void OnRemove(GameObject playerObject);
+    void OnRemove(PlayerController player);
 }
