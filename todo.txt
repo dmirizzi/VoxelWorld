@@ -28,6 +28,7 @@ VoxelWorld
     -> Voxels with interaction, special effects etc.
 [x] Multithreaded chunk building
 [x] Holes in voxel world when destroying voxels on chunk borders
+[x] Custom Meshes as part of voxel infrastructure
 
 [ ] Allow "Solid" flag to be set for individual faces on voxels
 
@@ -36,10 +37,6 @@ VoxelWorld
 
 [ ] Refactor ChunkBuilder
     [ ] Reserve lists used for voxel building to avoid internal re-copying?
-
-[ ] Custom Meshes as part of voxel infrastructure
-    [ ] One mesh for all?
-    [ ] One mesh for all same models so they can share a texture?
 
 [ ] Water simulation
 
