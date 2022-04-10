@@ -307,17 +307,17 @@ public class WorldGenerator : MonoBehaviour
         bool changed = false;
 
         GUI.Label(new Rect(10, 10, 140, 50), $"Width({width})");
-        var newWidth = (int)GUI.HorizontalSlider(new Rect(150, 10, 250, 50), width, 1, 20);
+        var newWidth = (int)GUI.HorizontalSlider(new Rect(150, 10, 250, 50), width, 1, 60);
         if(newWidth != width) changed = true;
         width = newWidth;
         
         GUI.Label(new Rect(10, 60, 140, 50), $"Height({height})");
-        var newHeight = (int)GUI.HorizontalSlider(new Rect(150, 60, 250, 50), height, 1, 20);
+        var newHeight = (int)GUI.HorizontalSlider(new Rect(150, 60, 250, 50), height, 1, 60);
         if(newHeight != height) changed = true;
         height = newHeight;
 
         GUI.Label(new Rect(10, 120, 140, 50), $"Depth({depth})");
-        var newDepth = (int)GUI.HorizontalSlider(new Rect(150, 120, 250, 50), depth, 1, 20);
+        var newDepth = (int)GUI.HorizontalSlider(new Rect(150, 120, 250, 50), depth, 1, 60);
         if(newDepth != depth) changed = true;
         depth = newDepth;
         
