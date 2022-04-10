@@ -1,7 +1,7 @@
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+/*
 public enum VoxelType
 {
     Empty = 0,
@@ -12,64 +12,11 @@ public enum VoxelType
     Torch,
     CobblestoneWedge
 }
-
-public enum VoxelFace
-{
-    Top = 0,
-    Bottom,
-    Front,
-    Back,
-    Left,
-    Right
-}
-
-public static class VoxelFaceHelper
-{
-    private static Dictionary<Vector3, VoxelFace> _mapping = new Dictionary<Vector3, VoxelFace>()
-    {
-        { Vector3.up,       VoxelFace.Top },
-        { Vector3.down,     VoxelFace.Bottom },
-        { Vector3.back,     VoxelFace.Front },
-        { Vector3.forward,  VoxelFace.Back },
-        { Vector3.left,     VoxelFace.Left },
-        { Vector3.right,    VoxelFace.Right }
-    };
-
-    public static VoxelFace? GetVoxelFaceFromVector(Vector3 normal)
-    {
-        foreach(var vec in _mapping.Keys)
-        {
-            if(Mathf.Approximately(Vector3.Dot(normal, vec), 1f))
-            {
-                return _mapping[vec];
-            }
-        }
-        return null;
-    }
-
-    public static Vector3 GetVectorFromVoxelFace(VoxelFace face)
-    {
-        return _mapping.Single(kv => kv.Value == face).Key;
-    }
-
-    public static VoxelFace GetOppositeFace(VoxelFace face)
-    {
-        int faceInt = (int)face;
-        if(faceInt % 2 == 0)
-        {
-            faceInt++;
-        }
-        else
-        {
-            faceInt--;
-        }
-        return (VoxelFace)faceInt;
-    }
-}
+*/
 
 public struct VoxelFaceData
 {
-    public VoxelFaceData(VoxelFace voxelFace, Vector3Int intDirection, Vector3 floatDirection, int[] vertexIndices, int[] uvIndices)
+    public VoxelFaceData(BlockFace voxelFace, Vector3Int intDirection, Vector3 floatDirection, int[] vertexIndices, int[] uvIndices)
     {
         VoxelFace = voxelFace;
         Direction = intDirection;
@@ -78,7 +25,7 @@ public struct VoxelFaceData
         Normals = Enumerable.Repeat(floatDirection, 4).ToArray();
     }
 
-    public VoxelFace VoxelFace;
+    public BlockFace VoxelFace;
 
     public Vector3Int Direction;
 
@@ -102,150 +49,70 @@ public static class VoxelInfo
 
     public const int TextureAtlasHeight = 128;
 
-    public static bool IsGameObjectBlock(VoxelType voxelType)
+    public static bool IsTransparent(ushort blockType)
     {
-        switch(voxelType)
-        {
-            case VoxelType.Empty:               return false;
-            case VoxelType.Grass:               return false;
-            case VoxelType.Dirt:                return false;
-            case VoxelType.Water:               return false;
-            case VoxelType.Cobblestone:         return false;
-            case VoxelType.Torch:               return true;
-            case VoxelType.CobblestoneWedge:    return false;
-
-            default: 
-                throw new System.ArgumentException($"Invalid voxel type {voxelType}");
-        }
+        return BlockTypeData.GetBlockData(blockType).Transparent;
     }
 
-    public static bool IsTransparent(VoxelType voxelType)
+    public static bool IsOpaque(ushort blockType, BlockFace face)
     {
-        switch(voxelType)
-        {
-            case VoxelType.Empty:               return false;
-            case VoxelType.Grass:               return false;
-            case VoxelType.Dirt:                return false;
-            case VoxelType.Water:               return true;
-            case VoxelType.Cobblestone:         return false;
-            case VoxelType.Torch:               return false;
-            case VoxelType.CobblestoneWedge:    return false;
-
-            default: 
-                throw new System.ArgumentException($"Invalid voxel type {voxelType}");
-        }
+        return BlockTypeData.GetBlockData(blockType).IsFaceOpaque(face);
     }
 
-    public static bool IsSolid(VoxelType voxelType)
+    public static float GetVoxelHeightOffset(ushort blockType)
     {
-        switch(voxelType)
-        {
-            case VoxelType.Empty:               return false;
-            case VoxelType.Grass:               return true;
-            case VoxelType.Dirt:                return true;
-            case VoxelType.Water:               return false;
-            case VoxelType.Cobblestone:         return true;
-            case VoxelType.Torch:               return false;
-            case VoxelType.CobblestoneWedge:    return false;
-
-            default: 
-                throw new System.ArgumentException($"Invalid voxel type {voxelType}");
-        }
+        return BlockTypeData.GetBlockData(blockType).HeightOffset;
     }
 
-    public static float GetVoxelHeightOffset(VoxelType voxelType)
+    public static Vector2 GetAtlasUVOffsetForVoxel(ushort blockType, BlockFace face)
     {
-        switch(voxelType)
-        {
-            case VoxelType.Water:       return 0.075f;
-            default:                    return 0.0f;
-        }
-    }
-
-    public static Vector2 GetAtlasUVOffsetForVoxel(VoxelType voxelType, VoxelFace face)
-    {
-        var tilePosX = 0;
-        var tilePosY = 0;
-
-        switch(voxelType)
-        {
-            case VoxelType.Empty: throw new System.ArgumentException("No texture for empty voxel!");
-            case VoxelType.Grass:
-                if(face == VoxelFace.Top)
-                {
-                    tilePosX = 1;
-                    tilePosY = 0;
-                }
-                else if(face == VoxelFace.Bottom)
-                {
-                    tilePosX = 2;
-                    tilePosY = 0;
-                }
-                else 
-                {
-                    tilePosX = 0;
-                    tilePosY = 0;
-                }
-            break;
-            case VoxelType.Dirt:
-                tilePosX = 2;
-                tilePosY = 0;
-            break;
-            case VoxelType.Water:
-                tilePosX = 3;
-                tilePosY = 0;
-            break;
-            case VoxelType.Cobblestone:
-                tilePosX = 4;
-                tilePosY = 0;
-            break;
-        }
+        var tilePosCoords = BlockTypeData.GetBlockData(blockType).GetFaceTextureTileCoords(face);
 
         return new Vector2(
-            (float)TextureTileSize / TextureAtlasWidth * tilePosX,
-            (float)TextureTileSize / TextureAtlasHeight * tilePosY
+            (float)TextureTileSize / TextureAtlasWidth * tilePosCoords[0],
+            (float)TextureTileSize / TextureAtlasHeight * tilePosCoords[1]
         );
     }
     
     public static readonly VoxelFaceData[] VoxelFaceData = new VoxelFaceData[]
     {
         new VoxelFaceData( 
-            VoxelFace.Bottom, 
+            BlockFace.Bottom, 
             Vector3Int.down, 
             Vector3.down,
             new int[] { 0, 1, 2, 3 },
             new int[] { 0, 1, 3, 2 } 
         ),
         new VoxelFaceData( 
-            VoxelFace.Top, 
+            BlockFace.Top, 
             Vector3Int.up, 
             Vector3.up,
             new int[] { 5, 4, 7, 6 },
             new int[] { 3, 2, 0, 1 } 
         ),
         new VoxelFaceData( 
-            VoxelFace.Front, 
+            BlockFace.Front, 
             Vector3Int.back, 
             Vector3.back,
             new int[] { 0, 4, 5, 1 },
             new int[] { 2, 0, 1, 3 } 
         ),
         new VoxelFaceData( 
-            VoxelFace.Back, 
+            BlockFace.Back, 
             Vector3Int.forward, 
             Vector3.forward,
             new int[] { 3, 2, 6, 7 },
             new int[] { 3, 2, 0, 1 } 
         ),
         new VoxelFaceData( 
-            VoxelFace.Left, 
+            BlockFace.Left, 
             Vector3Int.left, 
             Vector3.left,
             new int[] { 4, 0, 3, 7 },
             new int[] { 1, 3, 2, 0 } 
         ),
         new VoxelFaceData( 
-            VoxelFace.Right, 
+            BlockFace.Right, 
             Vector3Int.right, 
             Vector3.right,
             new int[] { 5, 6, 2, 1 },

@@ -79,17 +79,17 @@ public class ChunkBuilder
                 {
                     for(int z = 0; z < VoxelInfo.ChunkSize; ++z)
                     {
-                        var voxelType = (VoxelType)chunk.GetVoxel(x, y, z);
-                        if(voxelType == VoxelType.Empty) continue;
-
-                        var blockType = BlockTypes.GetBlockType(voxelType);
-                        if(blockType != null && blockType.HasGameObject) continue;
+                        var voxelType = chunk.GetVoxel(x, y, z);
+                        //TODO
+                        if(voxelType == 0) continue;
 
                         var localVoxelPos =  new Vector3Int(x, y, z);
                         var globalVoxelPos = _chunkVoxelPos + localVoxelPos;
 
-                        if(blockType != null && blockType.HasCustomVoxelMesh)
+                        var renderType = BlockTypeData.GetBlockData(voxelType).RenderType;
+                        if(renderType == BlockRenderType.CustomMesh)
                         {
+                            var blockType = BlockTypeRegistry.GetBlockType(voxelType);
                             blockType.OnChunkVoxelMeshBuild(
                                 _world,
                                 chunk,
@@ -99,7 +99,7 @@ public class ChunkBuilder
                                 VoxelInfo.IsTransparent(voxelType) ? _transparentMesh : _solidMesh
                             );
                         }
-                        else
+                        else if(renderType == BlockRenderType.Voxel)
                         {
                             AddVoxelVertices(
                                 voxelType,
@@ -115,12 +115,12 @@ public class ChunkBuilder
     }
 
     private void AddVoxelVertices(
-        VoxelType voxelType, 
+        ushort voxelType, 
         Vector3Int globalVoxelPos,
         Vector3Int localVoxelPos,
         ChunkMesh chunkMesh)
     {
-        var heightOffset = (VoxelType)_world.GetVoxel(globalVoxelPos + Vector3Int.up) != voxelType ?
+        var heightOffset = _world.GetVoxel(globalVoxelPos + Vector3Int.up) != voxelType ?
             VoxelInfo.GetVoxelHeightOffset(voxelType)
             : 0.0f;
 
@@ -141,7 +141,7 @@ public class ChunkBuilder
         for(int i = 0; i < VoxelInfo.VoxelFaceData.Length; ++i)
         {
             var faceData = VoxelInfo.VoxelFaceData[i];
-            if(VoxelBuildHelper.VoxelSideVisible(_world, voxelType, globalVoxelPos, faceData.Direction))
+            if(VoxelBuildHelper.IsVoxelSideVisible(_world, voxelType, globalVoxelPos, faceData.Direction))
             {
                 voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[0]]);
                 voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[1]]);

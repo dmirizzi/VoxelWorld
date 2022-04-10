@@ -25,6 +25,57 @@ public class WorldGenerator : MonoBehaviour
         WorldGenerated = true;
     }
 
+    private void GenerateWorld()
+    {
+        var sw = new Stopwatch();
+        sw.Start();
+
+        VoxelWorld.Clear();
+
+        var size = 14;
+        for(int x = -width; x < width; ++x)
+        {
+            for(int z = -depth; z < depth; ++z)
+            {
+                for(int y = -height; y <= height; ++y)
+                {
+                    VoxelWorld.SetVoxel(x, y, z, BlockTypeData.GetBlockTypeId("Dirt"));
+                }
+            }
+        }
+
+        //GenerateTerrain(8);
+        /*
+        GenerateCave(
+            new Vector3Int(0, 0, 0),
+            new Vector3Int(
+                UnityEngine.Random.Range(32, 128), 
+                UnityEngine.Random.Range(32, 128), 
+                UnityEngine.Random.Range(32, 128)
+            ),
+            _iterations,
+            _birthNeighbors,
+            _deathNeighbors,
+            _emptyChance
+        );
+        */
+
+/*
+        int numTorches = 1;
+        for(int i = 0; i < numTorches; ++i)
+        {
+            var pos = VoxelWorld.GetRandomSolidSurfaceVoxel();
+            PlaceTorch(pos);
+        }
+*/
+        VoxelWorld.BuildChangedChunks();
+
+        //PlacePlayer();
+
+        sw.Stop();
+        UnityEngine.Debug.Log($"Generated world in {sw.Elapsed.TotalSeconds} sec");
+    }
+
     private void GenerateTerrain(int size)
     {
         size /= 2;
@@ -35,34 +86,34 @@ public class WorldGenerator : MonoBehaviour
         {
             for(int z = -size; z < size; ++z)
             {
-                var height = Mathf.Min(64, (int)(Mathf.PerlinNoise(seed + x / 20.0f, seed + z / 20.0f) * 32) - 5);
-                //var height = 0;
+                //var height = Mathf.Min(64, (int)(Mathf.PerlinNoise(seed + x / 20.0f, seed + z / 20.0f) * 32) - 5);
+                var height = 8;
 
                 bool isWater = height < 0;
                 if(isWater) height = 0;
 
-                for(int y = -64; y <= height; ++y)
+                for(int y = -32; y <= -1; ++y)
                 {
                     if(isWater)
                     {
                         if(y == -64)
                         {
-                            VoxelWorld.SetVoxel(x, y, z, VoxelType.Dirt);
+                            VoxelWorld.SetVoxel(x, y, z, BlockTypeData.GetBlockTypeId("Dirt"));
                         }
                         else
                         {
-                            VoxelWorld.SetVoxel(x, y, z, VoxelType.Water);
+                            VoxelWorld.SetVoxel(x, y, z, BlockTypeData.GetBlockTypeId("Water"));
                         }
                     }
                     else
                     {
                         if(y < height)
                         {
-                            VoxelWorld.SetVoxel(x, y, z, VoxelType.Dirt);
+                            VoxelWorld.SetVoxel(x, y, z, BlockTypeData.GetBlockTypeId("Dirt"));
                         }
                         else
                         {
-                            VoxelWorld.SetVoxel(x, y, z, VoxelType.Grass);
+                            VoxelWorld.SetVoxel(x, y, z, BlockTypeData.GetBlockTypeId("Grass"));
                         }
                     }                    
                 }
@@ -168,7 +219,7 @@ public class WorldGenerator : MonoBehaviour
                             position.x + x - size.x / 2, 
                             position.y - y, 
                             position.z + z - size.z / 2, 
-                            VoxelType.Empty );
+                            0 );
                     }
                 }                
             }
@@ -217,7 +268,7 @@ public class WorldGenerator : MonoBehaviour
     private void PlaceTorch(Vector3Int voxelPos)
     {
         var worldPos = voxelPos + Vector3Int.up;
-        VoxelWorld.SetVoxel(worldPos, VoxelType.Torch);
+        VoxelWorld.SetVoxel(worldPos, BlockTypeData.GetBlockTypeId("Torch"));
     }
 
     private void PlacePlayer()
@@ -246,8 +297,34 @@ public class WorldGenerator : MonoBehaviour
     private int _iterations = 30;
     private float _emptyChance = .54f;
 
+    private int width = 16;
+    private int height = 16;
+    private int depth = 16;
+
+
     void OnGUI()
     {
+        bool changed = false;
+
+        GUI.Label(new Rect(10, 10, 140, 50), $"Width({width})");
+        var newWidth = (int)GUI.HorizontalSlider(new Rect(150, 10, 250, 50), width, 1, 20);
+        if(newWidth != width) changed = true;
+        width = newWidth;
+        
+        GUI.Label(new Rect(10, 60, 140, 50), $"Height({height})");
+        var newHeight = (int)GUI.HorizontalSlider(new Rect(150, 60, 250, 50), height, 1, 20);
+        if(newHeight != height) changed = true;
+        height = newHeight;
+
+        GUI.Label(new Rect(10, 120, 140, 50), $"Depth({depth})");
+        var newDepth = (int)GUI.HorizontalSlider(new Rect(150, 120, 250, 50), depth, 1, 20);
+        if(newDepth != depth) changed = true;
+        depth = newDepth;
+        
+        if(changed) GenerateWorld();
+
+        /*
+
         GUI.Label(new Rect(10, 10, 140, 50), $"BirthNeighbors({_birthNeighbors})");
         _birthNeighbors = (int)GUI.HorizontalSlider(new Rect(150, 10, 250, 50), _birthNeighbors, 0, 26);
         GUI.Label(new Rect(10, 70, 140, 50), $"DeathNeighbors({_deathNeighbors})");
@@ -256,48 +333,11 @@ public class WorldGenerator : MonoBehaviour
         _iterations  = (int)GUI.HorizontalSlider(new Rect(150, 130, 250, 50), _iterations, 1, 100);
         GUI.Label(new Rect(10, 190, 140, 50), $"EmptyChance({_emptyChance})");
         _emptyChance = GUI.HorizontalSlider(new Rect(150, 190, 250, 50), _emptyChance, 0f, 1.0f);
-
+*/
         if(GUI.Button(new Rect(10, 250, 250, 50), "Generate World") )
         {
             GenerateWorld();
         }
-    }
-
-    private void GenerateWorld()
-    {
-        var sw = new Stopwatch();
-        sw.Start();
-
-        VoxelWorld.Clear();
-
-        GenerateTerrain(128);
-        GenerateCave(
-            new Vector3Int(0, 0, 0),
-            new Vector3Int(
-                UnityEngine.Random.Range(32, 128), 
-                UnityEngine.Random.Range(32, 128), 
-                UnityEngine.Random.Range(32, 128)
-            ),
-            _iterations,
-            _birthNeighbors,
-            _deathNeighbors,
-            _emptyChance
-        );
-
-        int numTorches = 1;
-        for(int i = 0; i < numTorches; ++i)
-        {
-            var pos = VoxelWorld.GetRandomSolidSurfaceVoxel();
-            PlaceTorch(pos);
-        }
-
-        VoxelWorld.BuildChangedChunks();
-
-        PlacePlayer();
-
-
-        sw.Stop();
-        UnityEngine.Debug.Log($"Generated world in {sw.Elapsed.TotalSeconds} sec");
     }
 
     // Update is called once per frame

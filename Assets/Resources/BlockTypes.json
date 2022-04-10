@@ -1,0 +1,58 @@
+{
+    "BlockTypes": [
+        {
+            "Name": "Empty",
+            "RenderType": "Voxel",
+            "OpaqueFaces": ["None"],
+            "FaceTextureTileCoords": {
+                "All": [3, 0]
+            }
+        },
+        {
+            "Name": "Grass",
+            "RenderType": "Voxel",
+            "OpaqueFaces": ["All"],
+            "FaceTextureTileCoords": {
+                "Top": [1, 0],
+                "Bottom": [2, 0],
+                "Default": [0, 0]
+            }
+        },
+        {
+            "Name": "Dirt",
+            "RenderType": "Voxel",
+            "OpaqueFaces": ["All"],
+            "FaceTextureTileCoords": {
+                "Default": [2, 0]
+            }
+        },
+        {
+            "Name": "Water",
+            "RenderType": "Voxel",
+            "OpaqueFaces": ["None"],
+            "Transparent": true,
+            "FaceTextureTileCoords": {
+                "Default": [3, 0]
+            },
+            "HeightOffset": 0.075
+        },
+        {
+            "Name": "Cobblestone",
+            "RenderType": "Voxel",
+            "OpaqueFaces": ["All"],
+            "FaceTextureTileCoords": {
+                "Default": [4, 0]
+            }
+        },
+        {
+            "Name": "Torch",
+            "RenderType": "GameObject",
+            "OpaqueFaces": ["None"]
+        },
+        {
+            "Name": "CobblestoneWedge",
+            "RenderType": "CustomMesh",
+            "OpaqueFaces": ["Back", "Bottom"]
+        }
+    ]
+}

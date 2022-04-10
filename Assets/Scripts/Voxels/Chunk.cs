@@ -15,7 +15,7 @@ public class Chunk
     public Chunk(VoxelWorld voxelWorld, Vector3Int chunkPos)
     {
         _voxelWorld = voxelWorld;
-        _chunkData = new byte[VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize];
+        _chunkData = new ushort[VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize];
 
         ChunkPos = chunkPos;
         CreateNewChunkGameObject();
@@ -23,17 +23,17 @@ public class Chunk
         BlockGameObject = new Dictionary<Vector3Int, GameObject>();
     }
 
-    public VoxelType GetVoxel(Vector3Int localPos)
+    public ushort GetVoxel(Vector3Int localPos)
     {
-        return (VoxelType)_chunkData[localPos.x, localPos.y, localPos.z];
+        return _chunkData[localPos.x, localPos.y, localPos.z];
     }
 
-    public VoxelType GetVoxel(int localX, int localY, int localZ)
+    public ushort GetVoxel(int localX, int localY, int localZ)
     {
-        return (VoxelType)_chunkData[localX, localY, localZ];
+        return _chunkData[localX, localY, localZ];
     }
 
-    public bool SetVoxel(Vector3Int localPos, VoxelType type, VoxelFace? placementFace = null)
+    public bool SetVoxel(Vector3Int localPos, ushort type, BlockFace? placementFace = null)
     {
         // Remove old aux data and gameobjects if it already exists at this voxel position
         if(BlockGameObject.ContainsKey(localPos))
@@ -49,8 +49,8 @@ public class Chunk
         var globalPos = VoxelPosConverter.ChunkLocalVoxelPosToGlobal(localPos, ChunkPos);
 
         // Execute remove logic on old block if available
-        var oldVoxelType = (VoxelType)_chunkData[localPos.x, localPos.y, localPos.z];
-        var oldBlockType = BlockTypes.GetBlockType(oldVoxelType);
+        var oldVoxelType = _chunkData[localPos.x, localPos.y, localPos.z];
+        var oldBlockType = BlockTypeRegistry.GetBlockType(oldVoxelType);
         if(oldBlockType != null)
         {
             if(!oldBlockType.OnRemove(_voxelWorld, this, globalPos, localPos))
@@ -61,7 +61,7 @@ public class Chunk
         }
 
         // Execute place logic on old block if available
-        var newBlockType = BlockTypes.GetBlockType(type);
+        var newBlockType = BlockTypeRegistry.GetBlockType(type);
         if(newBlockType != null)
         {
             if(!newBlockType.OnPlace(_voxelWorld, this, globalPos, localPos, placementFace))
@@ -71,7 +71,7 @@ public class Chunk
             }
         }
 
-        _chunkData[localPos.x, localPos.y, localPos.z] = (byte)type;
+        _chunkData[localPos.x, localPos.y, localPos.z] = type;
 
         return true;
     }
@@ -118,7 +118,7 @@ public class Chunk
             {
                 for(int x = 0; x < VoxelInfo.ChunkSize; ++x)
                 {
-                    var blockType = BlockTypes.GetBlockType((VoxelType)_chunkData[x, y, z]);
+                    var blockType = BlockTypeRegistry.GetBlockType(_chunkData[x, y, z]);
                     if(blockType != null)
                     {
                         blockType.OnChunkBuild(this, new Vector3Int(x, y, z));
@@ -130,6 +130,7 @@ public class Chunk
 
     public void DestroyGameObject()
     {
+        //TODO: Not destroying!?
         if(ChunkGameObject != null)
         {
             GameObject.Destroy(ChunkGameObject);
@@ -144,7 +145,7 @@ public class Chunk
         ChunkGameObject.transform.position = chunkVoxelPos;
     }
 
-    private byte[,,] _chunkData;
+    private ushort[,,] _chunkData;
 
     private VoxelWorld _voxelWorld;
 }

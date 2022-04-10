@@ -24,24 +24,24 @@ public class VoxelWorld
         _textureAtlasTransparentMaterial = textureAtlasTransparentMaterial;
     }
 
-    public void SetVoxelAndRebuild(Vector3Int pos, VoxelType type, VoxelFace? placementDir = null)
+    public void SetVoxelAndRebuild(Vector3Int pos, ushort type, BlockFace? placementDir = null)
     {
         SetVoxel(pos.x, pos.y, pos.z, type, placementDir);
         BuildChangedChunks();
     }
 
-    public void SetVoxelAndRebuild(int x, int y, int z, VoxelType type, VoxelFace? placementDir = null)
+    public void SetVoxelAndRebuild(int x, int y, int z, ushort type, BlockFace? placementDir = null)
     {
         SetVoxel(x, y, z, type, placementDir);
         BuildChangedChunks();
     }
 
-    public void SetVoxel(Vector3Int globalPos, VoxelType type, VoxelFace? placementDir = null)
+    public void SetVoxel(Vector3Int globalPos, ushort type, BlockFace? placementDir = null)
     {
         SetVoxel(globalPos.x, globalPos.y, globalPos.z, type, placementDir);
     }
 
-    public void SetVoxel(int x, int y, int z, VoxelType type, VoxelFace? placementDir = null)
+    public void SetVoxel(int x, int y, int z, ushort type, BlockFace? placementDir = null)
     {
         var globalPos = new Vector3Int(x, y, z);
         var chunk = GetChunkFromVoxelPosition(x, y, z, true);
@@ -59,7 +59,7 @@ public class VoxelWorld
         }
     }
 
-    public void SetVoxelSphere(Vector3Int center, int radius, VoxelType voxelType, bool rebuild)
+    public void SetVoxelSphere(Vector3Int center, int radius, ushort voxelType, bool rebuild)
     {
         var sqrRadius = radius * radius;
 
@@ -87,18 +87,18 @@ public class VoxelWorld
         }
     }
 
-    public VoxelType GetVoxel(int x, int y, int z)
+    public ushort GetVoxel(int x, int y, int z)
     {
         var chunk = GetChunkFromVoxelPosition(x, y, z, false);
         if(chunk == null)
         {
-            return VoxelType.Empty;
+            return 0;
         }
         var chunkLocalPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(new Vector3Int(x, y, z));
         return chunk.GetVoxel(chunkLocalPos);
     }
 
-    public VoxelType GetVoxel(Vector3Int voxelPos)
+    public ushort GetVoxel(Vector3Int voxelPos)
     {
         return GetVoxel(voxelPos.x, voxelPos.y, voxelPos.z);
     }
@@ -196,7 +196,7 @@ public class VoxelWorld
             var chunk = _chunks[chunkPos];
             for(int y = VoxelInfo.ChunkSize - 1; y >= 0; --y)
             {
-                if(chunk.GetVoxel(localVoxelPos.x, y, localVoxelPos.z) != VoxelType.Empty)
+                if(chunk.GetVoxel(localVoxelPos.x, y, localVoxelPos.z) != 0)
                 {
                     return VoxelPosConverter.ChunkLocalVoxelPosToGlobal(
                         new Vector3Int(localVoxelPos.x, y, localVoxelPos.z),

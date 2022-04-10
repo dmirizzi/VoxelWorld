@@ -1,10 +1,8 @@
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 class WedgeBlockType : IBlockType
 {
-    public WedgeBlockType(VoxelType voxelType, VoxelType voxelTypeTexture)
+    public WedgeBlockType(ushort voxelType, ushort voxelTypeTexture)
     {
         // Specific type of this voxel (e.g. CobblestoneWedge)
         _voxelType = voxelType;
@@ -14,17 +12,13 @@ class WedgeBlockType : IBlockType
         _voxelTypeTexture = voxelTypeTexture;
     }
 
-    public bool HasGameObject => false;
-
-    public bool HasCustomVoxelMesh => true;
-
     public void OnChunkBuild(Chunk chunk, Vector3Int localPosition)
     {
     }
 
     public void OnChunkVoxelMeshBuild(VoxelWorld world, 
                                       Chunk chunk, 
-                                      VoxelType voxelType, 
+                                      ushort blockType, 
                                       Vector3Int globalVoxelPos, 
                                       Vector3Int localVoxelPos, 
                                       ChunkMesh chunkMesh)
@@ -45,7 +39,7 @@ class WedgeBlockType : IBlockType
         var placementDir = Vector3.forward;
         if(placementFace.HasValue)
         {
-            placementDir = VoxelFaceHelper.GetVectorFromVoxelFace((VoxelFace)placementFace.Value);
+            placementDir = BlockFaceHelper.GetVectorFromBlockFace((BlockFace)placementFace.Value);
             cornerVertices = VoxelBuildHelper.PointVerticesTowards(cornerVertices, placementDir);
         }
 
@@ -56,9 +50,9 @@ class WedgeBlockType : IBlockType
         }
 
         int vertexBaseIdx = chunkMesh.Vertices.Count;
-        var tileUV = VoxelBuildHelper.GetUVsForVoxelType(_voxelTypeTexture, VoxelFace.Bottom);
+        var tileUV = VoxelBuildHelper.GetUVsForVoxelType(_voxelTypeTexture, BlockFace.Bottom);
 
-        if(VoxelBuildHelper.VoxelSideVisible(world, _voxelType, globalVoxelPos, Vector3Int.down))
+        if(VoxelBuildHelper.IsVoxelSideVisible(world, _voxelType, globalVoxelPos, Vector3Int.down))
         {
             chunkMesh.AddQuad(
                 new Vector3[] { cornerVertices[0], cornerVertices[1], cornerVertices[2], cornerVertices[3] },
@@ -66,7 +60,7 @@ class WedgeBlockType : IBlockType
             );
         }
             
-        if(VoxelBuildHelper.VoxelSideVisible(world, _voxelType, globalVoxelPos, Vector3Int.FloorToInt(placementDir)))
+        if(VoxelBuildHelper.IsVoxelSideVisible(world, _voxelType, globalVoxelPos, Vector3Int.FloorToInt(placementDir)))
         {
             chunkMesh.AddQuad(
                 new Vector3[] { cornerVertices[3], cornerVertices[2], cornerVertices[4], cornerVertices[5] },
@@ -94,18 +88,18 @@ class WedgeBlockType : IBlockType
                         Chunk chunk, 
                         Vector3Int globalPosition, 
                         Vector3Int localPosition, 
-                        VoxelFace? placementFace)
+                        BlockFace? placementFace)
     {
         // Remember placement direction to build the torch on the right wall
         if(placementFace.HasValue)
         {
-            if(placementFace == VoxelFace.Top)
+            if(placementFace == BlockFace.Top)
             {
                 return false;
             }
-            else if(placementFace == VoxelFace.Bottom)
+            else if(placementFace == BlockFace.Bottom)
             {
-                placementFace = VoxelFace.Back;
+                placementFace = BlockFace.Back;
             }
             chunk.SetAuxiliaryData(localPosition, (byte)placementFace);
         }
@@ -118,7 +112,7 @@ class WedgeBlockType : IBlockType
         return true;
     }
 
-    private VoxelType _voxelType;
+    private ushort _voxelType;
 
-    private VoxelType _voxelTypeTexture;
+    private ushort _voxelTypeTexture;
 }

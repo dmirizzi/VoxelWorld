@@ -25,10 +25,10 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        //Cursor.lockState = CursorLockMode.Locked;
+        //Cursor.visible = false;
 
-        HandleMouseLook();
+        //HandleMouseLook();
         HandleMovement();
         HandleJumping();
         HandleWorldInteractions();
@@ -71,12 +71,12 @@ public class PlayerController : MonoBehaviour
                     {
                         // If player places block on the ground, placement direction is the player's look direction
                         var placementDir = voxelPos.Item2.Value;
-                        if(placementDir == VoxelFace.Bottom)
+                        if(placementDir == BlockFace.Bottom)
                         {
-                            placementDir = VoxelFaceHelper.GetVoxelFaceFromVector(GetClosestCardinalLookDirection()).Value;
+                            placementDir = BlockFaceHelper.GetBlockFaceFromVector(GetClosestCardinalLookDirection()).Value;
                         }
 
-                        world.SetVoxelAndRebuild(voxelPos.Item1.Value, VoxelType.CobblestoneWedge, placementDir);
+                        world.SetVoxelAndRebuild(voxelPos.Item1.Value, 6, placementDir);
                     }                   
                 }
             }
@@ -89,7 +89,7 @@ public class PlayerController : MonoBehaviour
                 var voxelPos = GetTargetedVoxelPos(false);
                 if(voxelPos.Item1.HasValue)
                 {
-                    world.SetVoxelAndRebuild(voxelPos.Item1.Value, VoxelType.Empty);
+                    world.SetVoxelAndRebuild(voxelPos.Item1.Value, 0);
                 }
             }
         }
@@ -161,7 +161,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private (Vector3Int?, VoxelFace?) GetTargetedVoxelPos(bool surfaceVoxel)
+    private (Vector3Int?, BlockFace?) GetTargetedVoxelPos(bool surfaceVoxel)
     {
         _debugLastRay = new Ray(CameraTransform.position, CameraTransform.forward);
         _debugLastHit = null;
@@ -178,14 +178,14 @@ public class PlayerController : MonoBehaviour
                 var voxelCenterWorldPos = hitInfo.point + hitInfo.normal * normalDirection;
                 var voxelPos = VoxelPosConverter.GetVoxelPosFromWorldPos(voxelCenterWorldPos);
 
-                var voxelFace = VoxelFaceHelper.GetVoxelFaceFromVector(hitInfo.normal.normalized);
+                var voxelFace = BlockFaceHelper.GetBlockFaceFromVector(hitInfo.normal.normalized);
                 if(voxelFace.HasValue)
                 {
-                    voxelFace = VoxelFaceHelper.GetOppositeFace(voxelFace.Value);
+                    voxelFace = BlockFaceHelper.GetOppositeFace(voxelFace.Value);
                 }
                 else
                 {
-                    voxelFace = VoxelFaceHelper.GetVoxelFaceFromVector(GetClosestCardinalLookDirection());
+                    voxelFace = BlockFaceHelper.GetBlockFaceFromVector(GetClosestCardinalLookDirection());
                 }
 
                 return (voxelPos, voxelFace);

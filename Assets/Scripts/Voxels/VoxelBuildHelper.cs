@@ -20,8 +20,11 @@ public static class VoxelBuildHelper
         return result;
     }
 
-    public static bool VoxelSideVisible(VoxelWorld world, VoxelType voxelType, Vector3Int globalVoxelPos, Vector3Int direction)
+    public static bool IsVoxelSideVisible(VoxelWorld world, ushort voxelType, Vector3Int globalVoxelPos, Vector3Int direction)
     {
+        //TODO
+        return true;
+
         var neighbor = world.GetVoxel(globalVoxelPos + direction);
 
         if(VoxelInfo.IsTransparent(voxelType))
@@ -30,13 +33,19 @@ public static class VoxelBuildHelper
             return voxelType != neighbor;
         }
 
-        // Solid neighboring voxels hide their shared face
-        return !VoxelInfo.IsSolid(neighbor);
+        var neighborFace = BlockFaceHelper.GetBlockFaceFromVector(direction);
+        if(!neighborFace.HasValue)
+        {
+            throw new System.ArgumentException($"Direction vector must be a cardinal direction! Instead is {direction}");
+        }
+
+        // Opaque neighboring voxels hide their shared face
+        return VoxelInfo.IsOpaque(voxelType, BlockFaceHelper.GetOppositeFace(neighborFace.Value));
     }
 
     //TODO: Cache calculated UVs -> any significant performance increase?
     //TODO: Either thread-safe dict access or precalculate all uvs before building world
-    public static Vector2[] GetUVsForVoxelType(VoxelType voxelType, VoxelFace face)
+    public static Vector2[] GetUVsForVoxelType(ushort voxelType, BlockFace face)
     {     
         // Shift the UV coordinates by a tiny amount to probe the texture pixel colors away from the border
         // of the pixel rather than at the border to avoid interpolation between atlas tiles
