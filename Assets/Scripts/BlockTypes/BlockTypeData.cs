@@ -60,8 +60,14 @@ public class BlockType
     // Y-Offset of the top block face (> 0 will lower the top face)
     public float HeightOffset { get; set; }
 
-    public bool IsFaceOpaque(BlockFace face)
+    public bool IsFaceOpaque(BlockFace face, int yRotation)
     {
+        if(yRotation != 0)
+        {
+            var newFace = BlockFaceHelper.RotateFaceY(face, yRotation);
+            face = newFace;
+        }
+
         var selector = BlockFaceHelper.ToBlockFaceSelector(face);
 
         if(OpaqueFaces.Contains(selector))

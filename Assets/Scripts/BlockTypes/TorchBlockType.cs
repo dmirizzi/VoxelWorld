@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 public class TorchBlockType : IBlockType
@@ -52,6 +51,11 @@ public class TorchBlockType : IBlockType
     public bool OnRemove(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition)
     {
         return true;        
+    }
+
+    public BlockFace GetForwardFace(VoxelWorld world, Vector3Int globalPosition)
+    {
+        return BlockFace.Back;
     }
 
     private GameObject _torchPrefab;

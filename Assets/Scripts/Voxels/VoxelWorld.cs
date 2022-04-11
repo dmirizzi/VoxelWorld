@@ -87,6 +87,22 @@ public class VoxelWorld
         }
     }
 
+    public byte? GetVoxelAuxiliaryData(Vector3Int pos)
+    {
+        return GetVoxelAuxiliaryData(pos.x, pos.y, pos.z);
+    }
+
+    public byte? GetVoxelAuxiliaryData(int x, int y, int z)
+    {
+        var chunk = GetChunkFromVoxelPosition(x, y, z, false);
+        if(chunk == null)
+        {
+            return 0;
+        }
+        var chunkLocalPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(new Vector3Int(x, y, z));
+        return chunk.GetAuxiliaryData(chunkLocalPos);
+    }
+
     public ushort GetVoxel(int x, int y, int z)
     {
         var chunk = GetChunkFromVoxelPosition(x, y, z, false);

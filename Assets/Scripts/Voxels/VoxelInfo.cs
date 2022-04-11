@@ -54,9 +54,9 @@ public static class VoxelInfo
         return BlockTypeData.GetBlockData(blockType).Transparent;
     }
 
-    public static bool IsOpaque(ushort blockType, BlockFace face)
+    public static bool IsOpaque(ushort blockType, BlockFace face, int yRotation)
     {
-        return BlockTypeData.GetBlockData(blockType).IsFaceOpaque(face);
+        return BlockTypeData.GetBlockData(blockType).IsFaceOpaque(face, yRotation);
     }
 
     public static float GetVoxelHeightOffset(ushort blockType)

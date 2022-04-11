@@ -1,4 +1,9 @@
 ----------------------------------------------------------------------------------------------------------------
+    Refactoring
+----------------------------------------------------------------------------------------------------------------
+[ ] Use TryGet-Pattern instead of nullable return values
+
+----------------------------------------------------------------------------------------------------------------
     Graphics / Rendering
 ----------------------------------------------------------------------------------------------------------------
 
@@ -29,11 +34,8 @@ VoxelWorld
 [x] Multithreaded chunk building
 [x] Holes in voxel world when destroying voxels on chunk borders
 [x] Custom Meshes as part of voxel infrastructure
-
-[ ] Allow "Solid" flag to be set for individual faces on voxels
-
-[ ] Get VoxelInfo from config file (solid, tileXY etc.)
-    -> JSON config
+[x] Allow "Solid" flag to be set for individual faces on voxels
+[x] Get VoxelInfo from config file (solid, tileXY etc.) -> JSON config
 
 [ ] Refactor ChunkBuilder
     [ ] Reserve lists used for voxel building to avoid internal re-copying?

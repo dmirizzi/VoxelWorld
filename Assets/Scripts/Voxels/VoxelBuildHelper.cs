@@ -30,14 +30,24 @@ public static class VoxelBuildHelper
             return voxelType != neighbor;
         }
 
-        var neighborFace = BlockFaceHelper.GetBlockFaceFromVector(direction);
+        var neighborFace = BlockFaceHelper.GetBlockFaceFromVector(-direction);
         if(!neighborFace.HasValue)
         {
             throw new System.ArgumentException($"Direction vector must be a cardinal direction! Instead is {direction}");
         }
 
+        var blockType = BlockTypeRegistry.GetBlockType(neighbor);
+        int yRotation = 0;
+        if(blockType != null)
+        {
+            yRotation = BlockFaceHelper.GetYAngleBetweenFaces(
+                blockType.GetForwardFace(world, globalVoxelPos + direction),
+                BlockFace.Back
+            );
+        }
+
         // Opaque neighboring voxels hide their shared face
-        return !VoxelInfo.IsOpaque(neighbor, BlockFaceHelper.GetOppositeFace(neighborFace.Value));
+        return !VoxelInfo.IsOpaque(neighbor, neighborFace.Value, yRotation);
     }
 
     //TODO: Cache calculated UVs -> any significant performance increase?

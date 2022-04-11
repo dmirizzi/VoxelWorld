@@ -112,6 +112,12 @@ class WedgeBlockType : IBlockType
         return true;
     }
 
+    public BlockFace GetForwardFace(VoxelWorld world, Vector3Int globalPosition)
+    {
+        var auxData = world.GetVoxelAuxiliaryData(globalPosition);
+        return (BlockFace)auxData;
+    }
+
     private ushort _voxelType;
 
     private ushort _voxelTypeTexture;

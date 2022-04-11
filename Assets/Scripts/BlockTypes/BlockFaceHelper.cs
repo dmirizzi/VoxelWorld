@@ -29,11 +29,31 @@ public static class BlockFaceHelper
         }
     }
 
-    public static BlockFace? GetBlockFaceFromVector(Vector3 normal)
+    public static BlockFace RotateFaceY(BlockFace face, int yAngleDeg)
+    {
+        var vec = Quaternion.Euler(0, yAngleDeg, 0) * GetVectorFromBlockFace(face);
+
+        var result = GetBlockFaceFromVector(vec);
+        if(result == null)
+        {
+            throw new System.ArgumentException($"Y-Angle for BlockFace rotation must be a cardinal direction (i.e. a multiple of 90)");
+        }
+
+        return result.Value;
+    }
+
+    public static int GetYAngleBetweenFaces(BlockFace from, BlockFace to)
+    {
+        var fromVec = GetVectorFromBlockFace(from);
+        var toVec = GetVectorFromBlockFace(to);
+        return (int)Vector3.SignedAngle(fromVec, toVec, Vector3.up);
+    }
+
+    public static BlockFace? GetBlockFaceFromVector(Vector3 vector)
     {
         foreach(var vec in _mapping.Keys)
         {
-            if(Mathf.Approximately(Vector3.Dot(normal, vec), 1f))
+            if(Mathf.Approximately(Vector3.Dot(vector, vec), 1f))
             {
                 return _mapping[vec];
             }
