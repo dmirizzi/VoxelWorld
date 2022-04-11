@@ -8,12 +8,12 @@
 ----------------------------------------------------------------------------------------------------------------
 
 [x] Voxels have shadow "halo" on top of them -> it was a regular shadow from the camera light being too low
+[x] Center texel correction causes seams between voxels / half-pixels at the border of voxels
 [ ] Currently using SimpleLit for transparent voxels -> Fine or need to adapt voxel shader for transparency?
 [ ] Water should be less translucent the deeper it goes
 [ ] Bump Mapping?
 [ ] Lights go through gaps between voxels and cast "light stripes"
 [ ] Lighting is different between chunks / no smooth lighting transition between chunks
-[x] Center texel correction causes seams between voxels / half-pixels at the border of voxels
 [ ] Lights flickering when too many in scene? -> deferred lighting?
 
 [ ] Chunk occlusion culling?
@@ -37,6 +37,10 @@ VoxelWorld
 [x] Allow "Solid" flag to be set for individual faces on voxels
 [x] Get VoxelInfo from config file (solid, tileXY etc.) -> JSON config
 
+[ ] Custom models as custom voxel mesh (e.g. stairs)
+
+[ ] Allow for arbitrary rotations of custom mesh voxels (not just on y axis)
+
 [ ] Refactor ChunkBuilder
     [ ] Reserve lists used for voxel building to avoid internal re-copying?
 
@@ -48,6 +52,8 @@ VoxelWorld
 World Gen
 ----------------------------------------------------------------------------------------------------------------
 
+[ ] World Seed -> Deterministic world gen based on seed + position
+
 [x] Simple cave generator based on cellular automata
 [ ] Dungeon generator
     [ ] Simple rooms connected by corridors
@@ -55,6 +61,12 @@ World Gen
 ----------------------------------------------------------------------------------------------------------------
 Items / Blocks
 ----------------------------------------------------------------------------------------------------------------
+
+[ ] Ladder
+
+[ ] Door
+
+[ ] Quarter Wedge
 
 [x] Torch
     [x] Integrate torches into chunk infrastructure
@@ -85,9 +97,16 @@ Player
 [x] Ability to hold items
 [x] Avoid clipping of held item with other objects -> Stack cameras
 [x] Player gets stuck in voxel when building voxel below himself
+[x] Attach player held item by setting it as child of player camera + offset
+
+[ ] JUMPING SUCKS - Ground detection doesnt always work (especially on edges, inclines etc)
+    -> Use sphere casting instead of raycasting for ground detection?
+
+[ ] Unequipped item after switching item in action bar can be left in world if switching really fast
+    (ie press 1 and 2 at the same time)
 
 [ ] Item Container as Player Inventory
-[ ] Attach player held item by setting it as child of player camera + offset
+
 [ ] Held Item Walking Animation
 
 ----------------------------------------------------------------------------------------------------------------

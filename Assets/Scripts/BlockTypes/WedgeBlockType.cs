@@ -88,7 +88,8 @@ class WedgeBlockType : IBlockType
                         Chunk chunk, 
                         Vector3Int globalPosition, 
                         Vector3Int localPosition, 
-                        BlockFace? placementFace)
+                        BlockFace? placementFace,
+                        BlockFace? lookDir)
     {
         // Remember placement direction to build the torch on the right wall
         if(placementFace.HasValue)
@@ -97,9 +98,9 @@ class WedgeBlockType : IBlockType
             {
                 return false;
             }
-            else if(placementFace == BlockFace.Bottom)
+            if(placementFace == BlockFace.Bottom)
             {
-                placementFace = BlockFace.Back;
+                placementFace = lookDir;
             }
             chunk.SetAuxiliaryData(localPosition, (byte)placementFace);
         }

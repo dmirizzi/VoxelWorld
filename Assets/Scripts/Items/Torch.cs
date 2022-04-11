@@ -1,17 +1,23 @@
 using UnityEngine;
 
-public class TorchController : MonoBehaviour, IPlayerHoldable
+public class Torch : MonoBehaviour, IPlayerHoldable
 {
-    public Vector3 HoldingOffset { get; } = new Vector3( 0.9f, -1.0f, 1.5f );
-
-    public Quaternion HoldingRotation { get; } = Quaternion.Euler( 0f, 0f, 350f );
-
     public float BaseIntensity = .5f;
 
     public float FlickeringIntensityFraction = .2f;
 
     public float FlickeringFrequencyFactor = 8f;
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // IPlayerHoldable
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    public Vector3 HoldingOffset { get; } = new Vector3( 0.9f, -1.0f, 1.5f );
+
+    public Quaternion HoldingRotation { get; } = Quaternion.Euler( 0f, 0f, 350f );
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Controller
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     public void OnHold(PlayerController player)
     {
         // While the torch is being held, move the light source of the torch

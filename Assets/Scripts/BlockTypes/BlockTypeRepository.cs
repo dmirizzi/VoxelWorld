@@ -40,7 +40,7 @@ public enum BlockFaceSelector
 }
 
 [Serializable]
-public class BlockType
+public class BlockData
 {
     public string Name { get; set; }
 
@@ -113,53 +113,53 @@ public class BlockType
 }
 
 [System.Serializable]
-public class BlockTypeList
+public class BlockDataList
 {
-    public List<BlockType> BlockTypes;
+    public List<BlockData> BlockData;
 }
 
-public static class BlockTypeData
+public static class BlockDataRepository
 {
 
-    static BlockTypeData()
+    static BlockDataRepository()
     {
         var blockTypesContent = Resources.Load<TextAsset>("BlockTypes").text;
-        _blockTypeList = JsonConvert.DeserializeObject<BlockTypeList>(blockTypesContent);
+        _blockDataList = JsonConvert.DeserializeObject<BlockDataList>(blockTypesContent);
 
-        for(ushort idx = 0; idx < _blockTypeList.BlockTypes.Count; ++idx)
+        for(ushort idx = 0; idx < _blockDataList.BlockData.Count; ++idx)
         {
-            var blockType = _blockTypeList.BlockTypes[idx];
-            _blockTypesByName[blockType.Name] = blockType;
-            _blockTypeIds[blockType.Name] = idx;
+            var blockType = _blockDataList.BlockData[idx];
+            _blockDataByName[blockType.Name] = blockType;
+            _blockIds[blockType.Name] = idx;
         }
     }
 
     public static ushort GetBlockTypeId(string name)
     {
-        if(!_blockTypeIds.ContainsKey(name))
+        if(!_blockIds.ContainsKey(name))
         {
             throw new System.ArgumentException($"Unknown block {name}");
         }
-        return _blockTypeIds[name];
+        return _blockIds[name];
     }
 
-    public static BlockType GetBlockType(string name)
+    public static BlockData GetBlockData(string name)
     {
-        if(!_blockTypeIds.ContainsKey(name))
+        if(!_blockIds.ContainsKey(name))
         {
             throw new System.ArgumentException($"Unknown block {name}");
         }
-        return _blockTypesByName[name];
+        return _blockDataByName[name];
     }
 
-    public static BlockType GetBlockData(int index)
+    public static BlockData GetBlockData(int index)
     {
-        return _blockTypeList.BlockTypes[index];
+        return _blockDataList.BlockData[index];
     }
 
-    private static BlockTypeList _blockTypeList;
+    private static BlockDataList _blockDataList;
 
-    private static Dictionary<string, BlockType> _blockTypesByName = new Dictionary<string, BlockType>();
+    private static Dictionary<string, BlockData> _blockDataByName = new Dictionary<string, BlockData>();
 
-    private static Dictionary<string, ushort> _blockTypeIds = new Dictionary<string, ushort>();
+    private static Dictionary<string, ushort> _blockIds = new Dictionary<string, ushort>();
 }

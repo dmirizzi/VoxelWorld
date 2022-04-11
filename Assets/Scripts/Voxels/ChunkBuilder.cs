@@ -89,7 +89,7 @@ public class ChunkBuilder
                         var localVoxelPos =  new Vector3Int(x, y, z);
                         var globalVoxelPos = _chunkVoxelPos + localVoxelPos;
 
-                        var renderType = BlockTypeData.GetBlockData(voxelType).RenderType;
+                        var renderType = BlockDataRepository.GetBlockData(voxelType).RenderType;
                         if(renderType == BlockRenderType.CustomMesh)
                         {
                             var blockType = BlockTypeRegistry.GetBlockType(voxelType);

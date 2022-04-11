@@ -1,0 +1,25 @@
+{
+    "Items": [
+        {
+            "Name": "Grass",
+            "BlockType": "Grass"
+        },
+        {
+            "Name": "Dirt",
+            "BlockType": "Dirt"
+        },
+        {
+            "Name": "Cobblestone",
+            "BlockType": "Cobblestone"
+        },
+        {
+            "Name": "CobblestoneWedge",
+            "BlockType": "CobblestoneWedge"
+        },
+        {
+            "Name": "Torch",
+            "PrefabResource": "Prefabs/Torch",
+            "BlockType": "Torch"
+        }
+    ]
+}

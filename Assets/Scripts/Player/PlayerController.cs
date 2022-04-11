@@ -20,6 +20,7 @@ public class PlayerController : MonoBehaviour
         _controller = GetComponent<CharacterController>();
         CameraTransform = GameObject.Find("Main Camera").transform;
         _worldGen = GameObject.FindObjectsOfType<WorldGenerator>()[0];
+        _actionBar = GetComponent<PlayerActionBarController>();
     }
 
     // Update is called once per frame
@@ -42,7 +43,7 @@ public class PlayerController : MonoBehaviour
 
         var hits = Physics.BoxCastAll(
             voxelSurfaceWorldPos, 
-            new Vector3(.5f, .5f, 0f),
+            new Vector3(.5f, .5f, .5f),
             Vector3.down,
             Quaternion.identity,
             0.5f
@@ -61,23 +62,12 @@ public class PlayerController : MonoBehaviour
     {
         if(Input.GetButtonDown("Fire1"))
         {
-            var world = _worldGen.VoxelWorld;
-            if(world != null)
+            if(_actionBar.CurrentlySelectedItem != null )
             {
-                var voxelPos = GetTargetedVoxelPos(true);                
-                if(voxelPos.Item1.HasValue)                
+                var blockType = _actionBar.CurrentlySelectedItem.BlockType;
+                if(!string.IsNullOrEmpty(blockType))
                 {
-                    if(!PlayerIntersectsVoxel(voxelPos.Item1.Value))
-                    {
-                        // If player places block on the ground, placement direction is the player's look direction
-                        var placementDir = voxelPos.Item2.Value;
-                        if(placementDir == BlockFace.Bottom)
-                        {
-                            placementDir = BlockFaceHelper.GetBlockFaceFromVector(GetClosestCardinalLookDirection()).Value;
-                        }
-
-                        world.SetVoxelAndRebuild(voxelPos.Item1.Value, 6, placementDir);
-                    }                   
+                    PlaceBlock(blockType);
                 }
             }
         }
@@ -91,6 +81,30 @@ public class PlayerController : MonoBehaviour
                 {
                     world.SetVoxelAndRebuild(voxelPos.Item1.Value, 0);
                 }
+            }
+        }
+    }
+
+    private void PlaceBlock(string blockType)
+    {
+        var world = _worldGen.VoxelWorld;
+        if(world != null)
+        {
+            var voxelPos = GetTargetedVoxelPos(true);                
+            if(voxelPos.Item1.HasValue)                
+            {
+                var targetVoxelPos = voxelPos.Item1.Value;
+                if(!PlayerIntersectsVoxel(voxelPos.Item1.Value))
+                {
+                    var placementDir = voxelPos.Item2.Value;
+                    var lookDir = BlockFaceHelper.GetBlockFaceFromVector(GetClosestCardinalLookDirection()).Value;
+
+                    world.SetVoxelAndRebuild(
+                        targetVoxelPos, 
+                        BlockDataRepository.GetBlockTypeId(blockType), 
+                        placementDir,
+                        lookDir);
+                }                   
             }
         }
     }
@@ -205,6 +219,8 @@ public class PlayerController : MonoBehaviour
     }
 
     private CharacterController _controller;
+
+    private PlayerActionBarController _actionBar;
 
     private Vector3 _velocity;
 

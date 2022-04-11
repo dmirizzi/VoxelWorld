@@ -82,22 +82,22 @@ public class WorldGenerator : MonoBehaviour
                 {
                     if(y == -64)
                     {
-                        VoxelWorld.SetVoxel(x, y, z, BlockTypeData.GetBlockTypeId("Cobblestone"));
+                        VoxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Cobblestone"));
                     }
                     else if(isWater)
                     {
 
-                        VoxelWorld.SetVoxel(x, y, z, BlockTypeData.GetBlockTypeId("Water"));
+                        VoxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Water"));
                     }
                     else
                     {
                         if(y < height)
                         {
-                            VoxelWorld.SetVoxel(x, y, z, BlockTypeData.GetBlockTypeId("Dirt"));
+                            VoxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Dirt"));
                         }
                         else
                         {
-                            VoxelWorld.SetVoxel(x, y, z, BlockTypeData.GetBlockTypeId("Grass"));
+                            VoxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Grass"));
                         }
                     }                    
                 }
@@ -252,7 +252,7 @@ public class WorldGenerator : MonoBehaviour
     private void PlaceTorch(Vector3Int voxelPos)
     {
         var worldPos = voxelPos + Vector3Int.up;
-        VoxelWorld.SetVoxel(worldPos, BlockTypeData.GetBlockTypeId("Torch"));
+        VoxelWorld.SetVoxel(worldPos, BlockDataRepository.GetBlockTypeId("Torch"));
     }
 
     private void PlacePlayer()
@@ -264,13 +264,12 @@ public class WorldGenerator : MonoBehaviour
         characterController.enabled = false;
         characterController.transform.position = worldPos + Vector3.up * 10;
         characterController.enabled = true;
-
+/*
         var playerController = GameObject.Find("Player").GetComponent<PlayerController>();
         var torch = Instantiate(TorchPrefab, worldPos, Quaternion.identity);
-
         var playerHoldingController = GameObject.Find("Player").GetComponent<PlayerHoldingController>();
         playerHoldingController.HoldObject(torch);        
-
+*/
         UnityEngine.Debug.Log($"Placing player @ {GameObject.Find("Player").transform.position}");
     }
 
@@ -283,7 +282,7 @@ public class WorldGenerator : MonoBehaviour
 
     void OnGUI()
     {
-
+/*
         GUI.Label(new Rect(10, 10, 140, 50), $"BirthNeighbors({_birthNeighbors})");
         _birthNeighbors = (int)GUI.HorizontalSlider(new Rect(150, 10, 250, 50), _birthNeighbors, 0, 26);
         GUI.Label(new Rect(10, 70, 140, 50), $"DeathNeighbors({_deathNeighbors})");
@@ -297,6 +296,7 @@ public class WorldGenerator : MonoBehaviour
         {
             GenerateWorld();
         }
+*/
     }
 
     // Update is called once per frame

@@ -33,7 +33,7 @@ public class Chunk
         return _chunkData[localX, localY, localZ];
     }
 
-    public bool SetVoxel(Vector3Int localPos, ushort type, BlockFace? placementFace = null)
+    public bool SetVoxel(Vector3Int localPos, ushort type, BlockFace? placementFace = null, BlockFace? lookDir = null)
     {
         // Remove old aux data and gameobjects if it already exists at this voxel position
         if(BlockGameObject.ContainsKey(localPos))
@@ -64,7 +64,7 @@ public class Chunk
         var newBlockType = BlockTypeRegistry.GetBlockType(type);
         if(newBlockType != null)
         {
-            if(!newBlockType.OnPlace(_voxelWorld, this, globalPos, localPos, placementFace))
+            if(!newBlockType.OnPlace(_voxelWorld, this, globalPos, localPos, placementFace, lookDir))
             {
                 // Block cannot be placed
                 return false;

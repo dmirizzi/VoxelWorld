@@ -7,7 +7,7 @@ public class PlayerHoldingController : MonoBehaviour
 
     public IPlayerHoldable PlayerHoldeable;
 
-    void Start()
+    void Awake()
     {
         _cameraTransform = GameObject.Find("Main Camera").transform;
         _layerBackup = new Dictionary<GameObject, int>();
@@ -33,12 +33,13 @@ public class PlayerHoldingController : MonoBehaviour
         SetHoldingGameObjectLayerToOverlay();
 
         // Attach holding object to camera
-        HoldingGameObject.transform.parent = _cameraTransform;
-        HoldingGameObject.transform.localPosition = 
+        HoldingGameObject.transform.position = 
+                _cameraTransform.position +
                 _cameraTransform.right * PlayerHoldeable.HoldingOffset.x +
                 _cameraTransform.up * PlayerHoldeable.HoldingOffset.y +
                 _cameraTransform.forward * PlayerHoldeable.HoldingOffset.z;
-        HoldingGameObject.transform.localRotation = PlayerHoldeable.HoldingRotation;
+        HoldingGameObject.transform.rotation = _cameraTransform.rotation * PlayerHoldeable.HoldingRotation;
+        HoldingGameObject.transform.parent = _cameraTransform;
 
         PlayerHoldeable.OnHold(GetComponent<PlayerController>());
     }
@@ -50,10 +51,11 @@ public class PlayerHoldingController : MonoBehaviour
             PlayerHoldeable.OnRemove(GetComponent<PlayerController>());
             RestoreHoldingGameObjectLayers();
 
+            HoldingGameObject.transform.parent = null;
+
             PlayerHoldeable = null;
             HoldingGameObject = null;
 
-            HoldingGameObject.transform.parent = null;
         }
     }
 

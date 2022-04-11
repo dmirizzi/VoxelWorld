@@ -51,22 +51,22 @@ public static class VoxelInfo
 
     public static bool IsTransparent(ushort blockType)
     {
-        return BlockTypeData.GetBlockData(blockType).Transparent;
+        return BlockDataRepository.GetBlockData(blockType).Transparent;
     }
 
     public static bool IsOpaque(ushort blockType, BlockFace face, int yRotation)
     {
-        return BlockTypeData.GetBlockData(blockType).IsFaceOpaque(face, yRotation);
+        return BlockDataRepository.GetBlockData(blockType).IsFaceOpaque(face, yRotation);
     }
 
     public static float GetVoxelHeightOffset(ushort blockType)
     {
-        return BlockTypeData.GetBlockData(blockType).HeightOffset;
+        return BlockDataRepository.GetBlockData(blockType).HeightOffset;
     }
 
     public static Vector2 GetAtlasUVOffsetForVoxel(ushort blockType, BlockFace face)
     {
-        var tilePosCoords = BlockTypeData.GetBlockData(blockType).GetFaceTextureTileCoords(face);
+        var tilePosCoords = BlockDataRepository.GetBlockData(blockType).GetFaceTextureTileCoords(face);
 
         return new Vector2(
             (float)TextureTileSize / TextureAtlasWidth * tilePosCoords[0],

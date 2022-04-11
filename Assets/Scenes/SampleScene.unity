@@ -230,6 +230,7 @@ GameObject:
   - component: {fileID: 692184342}
   - component: {fileID: 692184343}
   - component: {fileID: 692184344}
+  - component: {fileID: 692184345}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -270,6 +271,7 @@ MonoBehaviour:
   JumpForce: 6.5
   GravityFactor: 1.5
   MaxInteractionDistance: 6
+  CameraTransform: {fileID: 0}
 --- !u!143 &692184343
 CharacterController:
   m_ObjectHideFlags: 0
@@ -300,7 +302,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b668e86832192041b14a02c486c417b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _objectBeingHeld: {fileID: 0}
+  HoldingGameObject: {fileID: 0}
+--- !u!114 &692184345
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 692184339}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d599d98041843b0448567a29ef058a59, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
