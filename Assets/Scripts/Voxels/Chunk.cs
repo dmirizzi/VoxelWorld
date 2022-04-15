@@ -8,7 +8,7 @@ public class Chunk
 
     public GameObject ChunkGameObject { get; set; }
 
-    public Dictionary<Vector3Int, byte> BlockAuxiliaryData { get; set; }
+    public Dictionary<Vector3Int, ushort> BlockAuxiliaryData { get; set; }
 
     public Dictionary<Vector3Int, GameObject> BlockGameObject { get; set; }
 
@@ -19,7 +19,7 @@ public class Chunk
 
         ChunkPos = chunkPos;
         CreateNewChunkGameObject();
-        BlockAuxiliaryData = new Dictionary<Vector3Int, byte>();
+        BlockAuxiliaryData = new Dictionary<Vector3Int, ushort>();
         BlockGameObject = new Dictionary<Vector3Int, GameObject>();
     }
 
@@ -96,12 +96,12 @@ public class Chunk
         }
     }
 
-    public void SetAuxiliaryData(Vector3Int localPos, byte data)
+    public void SetAuxiliaryData(Vector3Int localPos, ushort data)
     {
         BlockAuxiliaryData[localPos] = data;
     }
 
-    public byte? GetAuxiliaryData(Vector3Int localPos)
+    public ushort? GetAuxiliaryData(Vector3Int localPos)
     {
         if(BlockAuxiliaryData.ContainsKey(localPos))
         {

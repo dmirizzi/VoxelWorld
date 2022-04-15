@@ -78,6 +78,10 @@ Items / Blocks
 [ ] Ladder
 
 [ ] Door
+    [ ] Need BlockTypes Door and something generic like Placeholder Just to make sure the second block is not empty
+        Then the actual Door block will handle the mesh for upper and lower half
+    [ ] Extend IBlockType interface to handle player interaction
+    [ ] Extend PlayerController to allow block interaction
 
 [ ] Quarter Wedge
 
@@ -86,6 +90,8 @@ Items / Blocks
     [x] Torch can be placed on walls
     [ ] Torch base object not affected by torch light
     [ ] Torch particles should always flow towards global up, regardless of torch rotation
+    [ ] Remove torch if block it is attached to is removed
+        -> Extend IBlockType interface with method if neighboring voxel is changed
 
 ----------------------------------------------------------------------------------------------------------------
 NPCs
@@ -111,6 +117,10 @@ Player
 [x] Avoid clipping of held item with other objects -> Stack cameras
 [x] Player gets stuck in voxel when building voxel below himself
 [x] Attach player held item by setting it as child of player camera + offset
+
+[ ] More user friendly block placing
+    -> Live block preview
+    -> Rotateable
 
 [ ] JUMPING SUCKS - Ground detection doesnt always work (especially on edges, inclines etc)
     -> Use sphere casting instead of raycasting for ground detection?

@@ -87,12 +87,23 @@ public class VoxelWorld
         }
     }
 
-    public byte? GetVoxelAuxiliaryData(Vector3Int pos)
+    public void SetVoxelAuxiliaryData(Vector3Int pos, ushort auxData)
+    {
+        var chunk = GetChunkFromVoxelPosition(pos.x, pos.y, pos.z, false);
+        if(chunk == null)
+        {
+            throw new System.ArgumentException($"Can't set auxiliary data for block @ {pos} - chunk doesn't exist yet.");
+        }
+        var chunkLocalPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(pos);
+        chunk.SetAuxiliaryData(chunkLocalPos, auxData);
+    }
+
+    public ushort? GetVoxelAuxiliaryData(Vector3Int pos)
     {
         return GetVoxelAuxiliaryData(pos.x, pos.y, pos.z);
     }
 
-    public byte? GetVoxelAuxiliaryData(int x, int y, int z)
+    public ushort? GetVoxelAuxiliaryData(int x, int y, int z)
     {
         var chunk = GetChunkFromVoxelPosition(x, y, z, false);
         if(chunk == null)
