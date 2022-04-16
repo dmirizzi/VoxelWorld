@@ -16,12 +16,16 @@
 [ ] Flood Fill Lighting
     [x] Basic Lighting
     [x] Smoother Light Attenuation -> switched to float for lightmap channels
-    [x] Improper color attenuation when using colors with inequal components (something 255, 50, 10) 
-        -> fixed by switch to float too
     [x] Some corners / voxel sides not lit properly 
         -> "top most" solid voxel needs to have light value too, otherwise voxels at the edge towards solid voxel have light color 0
+    [x] Recalculating light map on removed solid voxel
+    [x] Still some voxels not lit correctly near chunk borders 
+        -> Due to lightmap not creating new chunks if they dont exist yet, which caused light values to get lost
+
+    [ ] Improper color attenuation when using colors with inequal components (something 255, 50, 10) 
+        -> Needs to attenuate faster the higher the color is
     [ ] Removing lights
-    [ ] Recalculating light map on added/removed solid voxel
+    [ ] Recalculating light map on added solid voxel
 
 [ ]Lighting 
     [ ] Lights go through gaps between voxels and cast "light stripes"

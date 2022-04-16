@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -10,7 +11,7 @@ public class VoxelWorld
         _chunks = new Dictionary<Vector3Int, Chunk>();
         _chunkBuilders = new Dictionary<Vector3Int, ChunkBuilder>();
         _changedChunks = new HashSet<Vector3Int>();
-        _lightMapCalculator = new LightMapCalculator(this);
+        _lightMap = new LightMap(this);
         _textureAtlasMaterial = textureAtlasMaterial;
         _textureAtlasTransparentMaterial = textureAtlasTransparentMaterial;
     }
@@ -38,15 +39,45 @@ public class VoxelWorld
         var chunk = GetChunkFromVoxelPosition(x, y, z, true);
         var chunkLocalPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(globalPos);
 
+        var oldVoxelType = chunk.GetVoxel(chunkLocalPos);
         if(!chunk.SetVoxel(chunkLocalPos, type, placementDir, lookDir))
         {
             // Voxel cant be placed
             return;
         }
 
-        foreach(var affectedChunk in GetChunksAdjacentToVoxel(globalPos))
+        // If non-transparent voxel was removed or replaced by a transparent voxel, update light map
+        var chunksAffectedByLightUpdate = new HashSet<Chunk>();
+        if(!VoxelInfo.IsTransparent(oldVoxelType) && VoxelInfo.IsTransparent(type))
         {
-            _changedChunks.Add(affectedChunk);
+            
+            _lightMap.UpdateOnRemovedSolidVoxel(new Vector3Int(x, y, z), chunksAffectedByLightUpdate);
+        }
+
+        foreach(var affectedChunkPos in GetChunksAdjacentToVoxel(globalPos))
+        {
+            // Remember affected chunks for rebuilding in batches later
+            if(!_chunks.ContainsKey(affectedChunkPos))
+            {
+                continue;
+            }
+            _changedChunks.Add(affectedChunkPos);
+
+            // Only update light on chunks that are not being rebuilt anyways
+            var affectedChunk = _chunks[affectedChunkPos];
+            if(chunksAffectedByLightUpdate.Contains(affectedChunk))
+            {
+                chunksAffectedByLightUpdate.Remove(affectedChunk);
+            }
+        }
+
+        // Update lighting on affected chunks that won't be rebuilt anyway due to changed voxel
+        foreach(var lightUpdateChunk in chunksAffectedByLightUpdate)
+        {
+            if(_chunkBuilders.ContainsKey(lightUpdateChunk.ChunkPos))
+            {
+                _chunkBuilders[lightUpdateChunk.ChunkPos].UpdateLightVertexColors();
+            }
         }
     }
 
@@ -88,18 +119,19 @@ public class VoxelWorld
 
         var tasks = new Task[]
         {
-            Task.Run(() => _lightMapCalculator.AddLight(pos, 0, color.r, range, affectedChunks[0])),
-            Task.Run(() => _lightMapCalculator.AddLight(pos, 1, color.g, range, affectedChunks[1])),
-            Task.Run(() => _lightMapCalculator.AddLight(pos, 2, color.b, range, affectedChunks[2]))
+            Task.Run(() => _lightMap.AddLight(pos, 0, color.r, range, affectedChunks[0])),
+            Task.Run(() => _lightMap.AddLight(pos, 1, color.g, range, affectedChunks[1])),
+            Task.Run(() => _lightMap.AddLight(pos, 2, color.b, range, affectedChunks[2]))
         };
         Task.WaitAll(tasks);
 
+        var lightUpdateTasks = new List<Task>();
         foreach(var chunk in affectedChunks.OrderByDescending(x => x.Count).First())
         {
             if(_chunkBuilders.ContainsKey(chunk.ChunkPos))
             {
                 _chunkBuilders[chunk.ChunkPos].UpdateLightVertexColors();
-            }
+            }            
         }
     }
 
@@ -286,26 +318,31 @@ public class VoxelWorld
         var voxelPos = new Vector3Int(x, y, z);
         var chunkPos = VoxelPosConverter.VoxelToChunkPos(voxelPos);
 
-        if(!_chunks.ContainsKey(chunkPos))
+        lock(_chunkCreationLock)
         {
-            if(create)
+            if(!_chunks.ContainsKey(chunkPos))
             {
-                _chunks.Add(chunkPos, new Chunk(this, chunkPos));
-            }
-            else
-            {
-                return null;
-            }
+                if(create)
+                {
+                    _chunks.Add(chunkPos, new Chunk(this, chunkPos));
+                }
+                else
+                {
+                    return null;
+                }
 
+            }
+            return _chunks[chunkPos];        
         }
-        return _chunks[chunkPos];        
     }
+
+    private object _chunkCreationLock = new object();
 
     private Dictionary<Vector3Int, Chunk> _chunks;
 
     private Dictionary<Vector3Int, ChunkBuilder> _chunkBuilders;
 
-    private LightMapCalculator _lightMapCalculator;
+    private LightMap _lightMap;
 
     private HashSet<Vector3Int> _changedChunks;
 

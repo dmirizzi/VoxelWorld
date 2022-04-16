@@ -1,35 +1,69 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 
 // Based on Seed of Andromeda fast flood fill lighting
 // https://web.archive.org/web/20210429192404/https://www.seedofandromeda.com/blogs/29-fast-flood-fill-lighting-in-a-blocky-voxel-game-pt-1
-public class LightMapCalculator
+public class LightMap
 {
-    public LightMapCalculator(VoxelWorld world)
+    private const float LightAttenuationFactor = 0.75f;
+
+    public LightMap(VoxelWorld world)
     {
         _world = world;
     }
 
     public void AddLight(Vector3Int sourcePos, int channel, byte intensity, int range, HashSet<Chunk> visitedChunks)
     {
-        var visitedNodes = new HashSet<Vector3Int>();
-        var lightNodes = new Queue<LightNode>();
-        var firstChunk = _world.GetChunkFromVoxelPosition(sourcePos.x, sourcePos.y, sourcePos.z, false);
+        var firstChunk = _world.GetChunkFromVoxelPosition(sourcePos.x, sourcePos.y, sourcePos.z, true);
         if(firstChunk == null)
         {
             return;
         }
+        firstChunk.SetLightChannelValue(VoxelPosConverter.GlobalToChunkLocalVoxelPos(sourcePos), channel, intensity);
 
+        var lightNodes = new Queue<LightNode>();
         lightNodes.Enqueue(new LightNode 
         {
             GlobalPos = sourcePos,
             Chunk = firstChunk
         });
-        firstChunk.SetLightChannelValue(VoxelPosConverter.GlobalToChunkLocalVoxelPos(sourcePos), channel, intensity);
+
+        var visitedNodes = new HashSet<Vector3Int>();
         visitedNodes.Add(sourcePos);
 
-        float attenuation = (float)intensity / range;
+        PropagateLightNodes(lightNodes, channel, visitedNodes, visitedChunks);
+    }
 
+    public void UpdateOnRemovedSolidVoxel(Vector3Int globalRemovedVoxelPos, HashSet<Chunk> visitedChunks)
+    {
+        var lightNodes = new Queue<LightNode>();
+        foreach(var dir in fillDirections)
+        {
+            var neighborGlobalPos = globalRemovedVoxelPos + dir;
+            var chunk = _world.GetChunkFromVoxelPosition(neighborGlobalPos.x, neighborGlobalPos.y, neighborGlobalPos.z, true);
+            lightNodes.Enqueue(new LightNode
+            {
+                GlobalPos = neighborGlobalPos,
+                Chunk = chunk
+            });
+        }
+
+        var visitedNodes = new HashSet<Vector3Int>();
+
+        for(int channel = 0; channel < 3; ++channel)
+        {
+            PropagateLightNodes(lightNodes, channel, visitedNodes, visitedChunks);
+        }
+    }
+
+    public void RemoveLight(int x, int y, int z, Color32 color)
+    {
+
+    }    
+
+    private void PropagateLightNodes(Queue<LightNode> lightNodes, int channel, HashSet<Vector3Int> visitedNodes, HashSet<Chunk> visitedChunks)
+    {
         while(lightNodes.Count > 0)
         {
             var node = lightNodes.Dequeue();
@@ -49,13 +83,14 @@ public class LightMapCalculator
                 visitedNodes.Add(neighborGlobalPos);
 
                 //TODO: Faster to only get new chunk when crossing chunk borders?
-                var chunk = _world.GetChunkFromVoxelPosition(neighborGlobalPos.x, neighborGlobalPos.y, neighborGlobalPos.z, false);
+                var chunk = _world.GetChunkFromVoxelPosition(neighborGlobalPos.x, neighborGlobalPos.y, neighborGlobalPos.z, true);
                 if(chunk != null)
                 {
                     var localNeighborPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(neighborGlobalPos);
-                    if(chunk.GetLightChannelValue(localNeighborPos, channel) + (attenuation + 1) <= currentLightLevel)
+                    if(chunk.GetLightChannelValue(localNeighborPos, channel) + 2 <= currentLightLevel)
                     {
-                        chunk.SetLightChannelValue(localNeighborPos, channel, (byte)(currentLightLevel - attenuation));
+                        chunk.SetLightChannelValue(localNeighborPos, channel, currentLightLevel * LightAttenuationFactor );
+
                         if(!VoxelBuildHelper.IsVoxelSideOpaque(_world, chunk.GetVoxel(localPos), node.GlobalPos, dir))
                         {
                             lightNodes.Enqueue(new LightNode
@@ -69,16 +104,6 @@ public class LightMapCalculator
             }            
         }
     }
-
-    private int CalculateAttenuation(float normalizedDistance)
-    {
-        return (int)Mathf.Round(1f / (-0.95f * normalizedDistance + 1f));
-    }
-
-    public void RemoveLight(int x, int y, int z, Color32 color)
-    {
-
-    }    
 
     private VoxelWorld _world;
 

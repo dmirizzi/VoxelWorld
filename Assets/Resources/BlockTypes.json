@@ -4,6 +4,7 @@
             "Name": "Empty",
             "RenderType": "Voxel",
             "OpaqueFaces": ["None"],
+            "Transparent": true,
             "FaceTextureTileCoords": {
                 "All": [3, 0]
             }
@@ -48,7 +49,7 @@
             "Name": "Torch",
             "RenderType": "GameObject",
             "OpaqueFaces": ["None"],
-            "LightColor": "FF6E30",
+            "LightColor": "FF9568",
             "LightRange": 8
         },
         {

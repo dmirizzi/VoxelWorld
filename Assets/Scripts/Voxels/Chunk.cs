@@ -6,7 +6,21 @@ public class Chunk
 {
     public Vector3Int ChunkPos { get; set; }
 
-    public GameObject ChunkGameObject { get; set; }
+    public GameObject ChunkGameObject 
+    { 
+        get
+        {
+            if(_chunkGameObject == null)
+            {
+                CreateNewChunkGameObject();
+            }
+            return _chunkGameObject;
+        } 
+        set
+        {
+            _chunkGameObject = value;
+        } 
+    }
 
     public Dictionary<Vector3Int, byte> BlockAuxiliaryData { get; set; }
 
@@ -19,7 +33,6 @@ public class Chunk
         _lightMap = new float[VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, 3];
 
         ChunkPos = chunkPos;
-        CreateNewChunkGameObject();
         BlockAuxiliaryData = new Dictionary<Vector3Int, byte>();
         BlockGameObject = new Dictionary<Vector3Int, GameObject>();
     }
@@ -187,9 +200,9 @@ public class Chunk
 
     private void CreateNewChunkGameObject()
     {
-        ChunkGameObject = new GameObject($"Chunk[{ChunkPos.x}|{ChunkPos.y}|{ChunkPos.z}]");
+        _chunkGameObject = new GameObject($"Chunk[{ChunkPos.x}|{ChunkPos.y}|{ChunkPos.z}]");
         var chunkVoxelPos = VoxelPosConverter.ChunkToBaseVoxelPos(ChunkPos);
-        ChunkGameObject.transform.position = chunkVoxelPos;
+        _chunkGameObject.transform.position = chunkVoxelPos;
     }
 
     // 5-bit for each color channel (RGB)
@@ -198,4 +211,6 @@ public class Chunk
     private ushort[,,] _chunkData;
 
     private VoxelWorld _voxelWorld;
+
+    private GameObject _chunkGameObject;
 }
