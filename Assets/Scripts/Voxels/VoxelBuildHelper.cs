@@ -20,8 +20,30 @@ public static class VoxelBuildHelper
         return result;
     }
 
-    public static bool IsVoxelSideVisible(VoxelWorld world, ushort voxelType, Vector3Int globalVoxelPos, Vector3Int direction)
+    public static bool IsVoxelSideOpaque(VoxelWorld world, ushort voxelType, Vector3Int globalVoxelPos, Vector3Int direction)
     {
+        var neighbor = world.GetVoxel(globalVoxelPos + direction);
+        var neighborFace = BlockFaceHelper.GetBlockFaceFromVector(-direction);
+        if(!neighborFace.HasValue)
+        {
+            throw new System.ArgumentException($"Direction vector must be a cardinal direction! Instead is {direction}");
+        }
+
+        var blockType = BlockTypeRegistry.GetBlockType(neighbor);
+        int yRotation = 0;
+        if(blockType != null)
+        {
+            yRotation = BlockFaceHelper.GetYAngleBetweenFaces(
+                blockType.GetForwardFace(world, globalVoxelPos + direction),
+                BlockFace.Back
+            );
+        }
+
+        return VoxelInfo.IsOpaque(neighbor, neighborFace.Value, yRotation);        
+    }
+
+    public static bool IsVoxelSideVisible(VoxelWorld world, ushort voxelType, Vector3Int globalVoxelPos, Vector3Int direction)
+    {        
         var neighbor = world.GetVoxel(globalVoxelPos + direction);
 
         if(VoxelInfo.IsTransparent(voxelType))
@@ -46,7 +68,6 @@ public static class VoxelBuildHelper
             );
         }
 
-        // Opaque neighboring voxels hide their shared face
         return !VoxelInfo.IsOpaque(neighbor, neighborFace.Value, yRotation);
     }
 

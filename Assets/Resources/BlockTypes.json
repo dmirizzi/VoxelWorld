@@ -47,7 +47,9 @@
         {
             "Name": "Torch",
             "RenderType": "GameObject",
-            "OpaqueFaces": ["None"]
+            "OpaqueFaces": ["None"],
+            "LightColor": "FFFFFF",
+            "LightRange": 8
         },
         {
             "Name": "CobblestoneWedge",

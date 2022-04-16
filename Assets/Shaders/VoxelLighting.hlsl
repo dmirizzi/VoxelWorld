@@ -8,16 +8,21 @@ struct CustomLightingData
     float3 normalWS;
     float4 albedo;
     float3 positionWS;
+    float3 vertexColor;
     float4 shadowCoord;
 };
 
 #ifndef SHADERGRAPH_PREVIEW
     float4 CustomLightHandling(CustomLightingData d, Light light)
     {
-        float3 radiance = clamp(light.color * (sqrt(light.distanceAttenuation) * light.shadowAttenuation) * 1.25, 0, 1.25);
-        float diffuse = saturate(dot(d.normalWS, light.direction));
+        //float3 radiance = clamp(light.color * (sqrt(light.distanceAttenuation) * light.shadowAttenuation) * 1.25, 0, 1.25);
+        //float diffuse = saturate(dot(d.normalWS, light.direction));
 
-        float3 colorRGB = d.albedo.xyz * radiance * diffuse;
+        //float3 colorRGB = d.albedo.xyz * radiance * diffuse;
+        //colorRGB = colorRGB * d.vertexColor;
+
+        float3 colorRGB = d.albedo.xyz * d.vertexColor;
+
         float4 color;
         color.xyz = colorRGB.xyz;
         color.w = d.albedo.w;
@@ -51,25 +56,27 @@ float4 CalculateCustomLighting(CustomLightingData d)
 }
 
 #ifdef SHADERGRAPH_PREVIEW
-    void CalculateCustomLighting_float(float3 Position, float3 Normal, float4 Albedo, out float3 Color)
+    void CalculateCustomLighting_float(float3 Position, float3 Normal, float4 Albedo, float3 VertexColor, out float4 Color)
     {
         CustomLightingData d;
         d.normalWS = Normal;
         d.albedo = Albedo;
         d.positionWS = Position;
+        d.vertexColor = VertexColor;
         d.shadowCoord = 0;
 
-        Color = CalculateCustomLighting(d).xyz;
+        Color = CalculateCustomLighting(d);
     }
 
 #else
     // Using float4 for colors in case we need to add support for transparency later
-    void CalculateCustomLighting_float(float3 Position, float3 Normal, float4 Albedo, out float4 Color)
+    void CalculateCustomLighting_float(float3 Position, float3 Normal, float4 Albedo, float3 VertexColor, out float4 Color)
     {
         CustomLightingData d;
         d.normalWS = Normal;
         d.albedo = Albedo;
         d.positionWS = Position;
+        d.vertexColor = VertexColor;
 
         #ifdef SHADERGRAPH_PREVIEW
             d.shadowCoord = 0;

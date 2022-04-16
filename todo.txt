@@ -13,7 +13,14 @@
 [ ] Water should be less translucent the deeper it goes
 [ ] Bump Mapping?
 
-[ ]Lighting
+[ ] Flood Fill Lighting
+    [x] Basic Lighting
+    [ ] Smoother Light Attenuation
+    [ ] Some corners not lit properly
+    [ ] Some voxel sides not lit properly
+    [ ] Improper color attenuation when using colors with inequal components (something 255, 50, 10) 
+
+[ ]Lighting 
     [ ] Lights go through gaps between voxels and cast "light stripes"
     [ ] Lighting is different between chunks / no smooth lighting transition between chunks
     [ ] Lights flickering when too many in scene?

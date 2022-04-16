@@ -2,9 +2,48 @@
 // Taken from https://stackoverflow.com/questions/25201242/json-net-serializing-enums-to-strings-in-dictionaries-by-default-how-to-make-i
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
+
+public class VoxelColorConverter : JsonConverter
+{
+    public override bool CanConvert(Type objectType)
+    {
+        return objectType == typeof(Color32?);
+    }
+
+    public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+    {
+        var hex = reader.Value as string;
+        if(hex == null)
+        {
+            return null;
+        }
+
+        byte r = byte.Parse(hex.Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
+        byte g = byte.Parse(hex.Substring(2, 2), System.Globalization.NumberStyles.HexNumber);
+        byte b = byte.Parse(hex.Substring(4, 2), System.Globalization.NumberStyles.HexNumber);
+
+        // Scale color channels from 8-bit down to 5-bit
+        float scaledR = r / 255.0f * 32.0f;
+        float scaledG = g / 255.0f * 32.0f;
+        float scaledB = b / 255.0f * 32.0f;
+
+        return new Color32((byte)scaledR, (byte)scaledG, (byte)scaledB, 255);
+    }
+
+    public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+    {
+        var color = (Color32)value;
+        var sb = new StringBuilder();
+        sb.Append(color.r.ToString("X2"));
+        sb.Append(color.b.ToString("X2"));
+        sb.Append(color.g.ToString("X2"));
+        writer.WriteRawValue(sb.ToString());
+    }
+}
 
 public class DictionaryWithEnumKeyConverter<T, U> : JsonConverter where T : System.Enum
 {

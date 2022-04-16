@@ -45,6 +45,10 @@ public class TorchBlockType : IBlockType
         {
             chunk.SetAuxiliaryData(localPosition, (byte)placementFace);
         }
+
+        var data = BlockDataRepository.GetBlockData("Torch");
+        world.AddLight(globalPosition, data.LightColor.Value, data.LightRange);
+
         return true;
     }
 

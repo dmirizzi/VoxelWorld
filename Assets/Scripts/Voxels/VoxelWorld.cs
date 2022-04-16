@@ -5,21 +5,12 @@ using UnityEngine;
 
 public class VoxelWorld
 {
-    private Dictionary<Vector3Int, Chunk> _chunks;
-
-    private ChunkBuilder _chunkBuilder;
-
-    private HashSet<Vector3Int> _changedChunks;
-
-    private Material _textureAtlasMaterial;
-
-    private Material _textureAtlasTransparentMaterial;
-
     public VoxelWorld(Material textureAtlasMaterial, Material textureAtlasTransparentMaterial)
     {
         _chunks = new Dictionary<Vector3Int, Chunk>();
+        _chunkBuilders = new Dictionary<Vector3Int, ChunkBuilder>();
         _changedChunks = new HashSet<Vector3Int>();
-        _chunkBuilder = new ChunkBuilder(this, textureAtlasMaterial, textureAtlasTransparentMaterial);
+        _lightMapCalculator = new LightMapCalculator(this);
         _textureAtlasMaterial = textureAtlasMaterial;
         _textureAtlasTransparentMaterial = textureAtlasTransparentMaterial;
     }
@@ -85,6 +76,48 @@ public class VoxelWorld
         {
             BuildChangedChunks();
         }
+    }
+
+    public void AddLight(Vector3Int pos, Color32 color, int range)
+    {
+        var affectedChunks = new HashSet<Chunk>[] {
+            new HashSet<Chunk>(),
+            new HashSet<Chunk>(),
+            new HashSet<Chunk>()
+        };
+
+        var tasks = new Task[]
+        {
+            Task.Run(() => _lightMapCalculator.AddLight(pos, 0, color.r, range, affectedChunks[0])),
+            Task.Run(() => _lightMapCalculator.AddLight(pos, 1, color.g, range, affectedChunks[1])),
+            Task.Run(() => _lightMapCalculator.AddLight(pos, 2, color.b, range, affectedChunks[2]))
+        };
+        Task.WaitAll(tasks);
+
+        foreach(var chunk in affectedChunks.OrderByDescending(x => x.Count).First())
+        {
+            if(_chunkBuilders.ContainsKey(chunk.ChunkPos))
+            {
+                _chunkBuilders[chunk.ChunkPos].UpdateLightVertexColors();
+            }
+        }
+    }
+
+    public Color32 GetLightValue(Vector3Int pos)
+    {
+        var chunk = GetChunkFromVoxelPosition(pos.x, pos.y, pos.z, false);
+        if(chunk == null)
+        {
+            return new Color32(0, 0, 0, 0);
+        }
+        var chunkLocalPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(pos);
+        return new Color32
+        (
+            (byte)(Mathf.Clamp(chunk.GetLightChannelValue(chunkLocalPos, 0) * 16, 0, 255)),
+            (byte)(Mathf.Clamp(chunk.GetLightChannelValue(chunkLocalPos, 1) * 16, 0, 255)),
+            (byte)(Mathf.Clamp(chunk.GetLightChannelValue(chunkLocalPos, 2) * 16, 0, 255)),
+            255
+        );
     }
 
     public byte? GetVoxelAuxiliaryData(Vector3Int pos)
@@ -170,9 +203,9 @@ public class VoxelWorld
             _chunks[chunkPos].DestroyGameObject();
 
             // Queue all builder tasks
-            var chunkBuilder = new ChunkBuilder(this, _textureAtlasMaterial, _textureAtlasTransparentMaterial);
-            builders.Add(chunkBuilder);
-            builderTasks.Add(chunkBuilder.Build(chunkPos, _chunks[chunkPos]));           
+            _chunkBuilders[chunkPos] = new ChunkBuilder(this, chunkPos, _chunks[chunkPos], _textureAtlasMaterial, _textureAtlasTransparentMaterial);
+            builders.Add(_chunkBuilders[chunkPos]);
+            builderTasks.Add(_chunkBuilders[chunkPos].Build());           
         }
 
         Task.WaitAll(builderTasks.ToArray());
@@ -193,7 +226,6 @@ public class VoxelWorld
         {
             chunk.DestroyGameObject();
         }
-
         _chunks.Clear();
         _changedChunks.Clear();
     }
@@ -248,7 +280,7 @@ public class VoxelWorld
         return adjacentChunks;
     }
 
-    private Chunk GetChunkFromVoxelPosition(int x, int y, int z, bool create)
+    public Chunk GetChunkFromVoxelPosition(int x, int y, int z, bool create)
     {
 
         var voxelPos = new Vector3Int(x, y, z);
@@ -268,4 +300,16 @@ public class VoxelWorld
         }
         return _chunks[chunkPos];        
     }
+
+    private Dictionary<Vector3Int, Chunk> _chunks;
+
+    private Dictionary<Vector3Int, ChunkBuilder> _chunkBuilders;
+
+    private LightMapCalculator _lightMapCalculator;
+
+    private HashSet<Vector3Int> _changedChunks;
+
+    private Material _textureAtlasMaterial;
+
+    private Material _textureAtlasTransparentMaterial;
 }

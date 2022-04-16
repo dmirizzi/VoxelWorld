@@ -16,6 +16,7 @@ public class Chunk
     {
         _voxelWorld = voxelWorld;
         _chunkData = new ushort[VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize];
+        _lightMap = new byte[VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, 3];
 
         ChunkPos = chunkPos;
         CreateNewChunkGameObject();
@@ -138,12 +139,61 @@ public class Chunk
         CreateNewChunkGameObject();
     }
 
+    public void SetLightChannelValue(Vector3Int pos, int channel, byte intensity)
+    {
+        _lightMap[pos.x, pos.y, pos.z, channel] = intensity;
+    }
+
+    public byte GetLightChannelValue(Vector3Int pos, int channel)
+    {
+        return _lightMap[pos.x, pos.y, pos.z, channel];
+    }
+
+    // 0BBB.BBGG.GGGR.RRRR
+    /*
+    public void SetRedLightValue(Vector3Int pos, byte intensity)
+    {
+        var newVal = _lightMap[pos.x, pos.y, pos.z] & 0x7FE0 | (intensity & 0x1F);
+        _lightMap[pos.x, pos.y, pos.z] = (ushort)newVal;
+    }
+
+    public void SetGreenLightValue(Vector3Int pos, byte intensity)
+    {
+        var newVal = _lightMap[pos.x, pos.y, pos.z] & 0x7C1F | (intensity & 0x1F);
+        _lightMap[pos.x, pos.y, pos.z] = (ushort)newVal;
+    }
+
+    public void SetBlueLightValue(Vector3Int pos, byte intensity)
+    {
+        var newVal = _lightMap[pos.x, pos.y, pos.z] & 0x3FF | (intensity & 0x1F);
+        _lightMap[pos.x, pos.y, pos.z] = (ushort)newVal;
+    }
+
+    public byte GetRedLightValue(Vector3Int pos)
+    {
+        return (byte)(_lightMap[pos.x, pos.y, pos.z] & 0x1F);
+    }
+
+    public byte GetGreenLightValue(Vector3Int pos)
+    {
+        return (byte)((_lightMap[pos.x, pos.y, pos.z] & 0x3E0) >> 5);
+    }
+
+    public byte GetBlueLightValue(Vector3Int pos)
+    {
+        return (byte)((_lightMap[pos.x, pos.y, pos.z] & 0x7C00) >> 10);
+    }
+*/
+
     private void CreateNewChunkGameObject()
     {
         ChunkGameObject = new GameObject($"Chunk[{ChunkPos.x}|{ChunkPos.y}|{ChunkPos.z}]");
         var chunkVoxelPos = VoxelPosConverter.ChunkToBaseVoxelPos(ChunkPos);
         ChunkGameObject.transform.position = chunkVoxelPos;
     }
+
+    // 5-bit for each color channel (RGB)
+    private byte[,,,] _lightMap;
 
     private ushort[,,] _chunkData;
 
