@@ -26,12 +26,7 @@ public class VoxelColorConverter : JsonConverter
         byte g = byte.Parse(hex.Substring(2, 2), System.Globalization.NumberStyles.HexNumber);
         byte b = byte.Parse(hex.Substring(4, 2), System.Globalization.NumberStyles.HexNumber);
 
-        // Scale color channels from 8-bit down to 5-bit
-        float scaledR = r / 255.0f * 32.0f;
-        float scaledG = g / 255.0f * 32.0f;
-        float scaledB = b / 255.0f * 32.0f;
-
-        return new Color32((byte)scaledR, (byte)scaledG, (byte)scaledB, 255);
+        return new Color32(r, g, b, 255);
     }
 
     public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)

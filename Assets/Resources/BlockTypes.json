@@ -48,7 +48,7 @@
             "Name": "Torch",
             "RenderType": "GameObject",
             "OpaqueFaces": ["None"],
-            "LightColor": "FFFFFF",
+            "LightColor": "FF6E30",
             "LightRange": 8
         },
         {

@@ -113,9 +113,9 @@ public class VoxelWorld
         var chunkLocalPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(pos);
         return new Color32
         (
-            (byte)(Mathf.Clamp(chunk.GetLightChannelValue(chunkLocalPos, 0) * 16, 0, 255)),
-            (byte)(Mathf.Clamp(chunk.GetLightChannelValue(chunkLocalPos, 1) * 16, 0, 255)),
-            (byte)(Mathf.Clamp(chunk.GetLightChannelValue(chunkLocalPos, 2) * 16, 0, 255)),
+            (byte)(Mathf.Clamp(chunk.GetLightChannelValue(chunkLocalPos, 0), 0, 255)),
+            (byte)(Mathf.Clamp(chunk.GetLightChannelValue(chunkLocalPos, 1), 0, 255)),
+            (byte)(Mathf.Clamp(chunk.GetLightChannelValue(chunkLocalPos, 2), 0, 255)),
             255
         );
     }

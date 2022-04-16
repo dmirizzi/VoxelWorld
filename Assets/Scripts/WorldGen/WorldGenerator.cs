@@ -31,7 +31,6 @@ public class WorldGenerator : MonoBehaviour
         sw.Start();
 
         VoxelWorld.Clear();
-
 /*
         for(int x = -64; x < 64; ++x)
         {
@@ -42,11 +41,12 @@ public class WorldGenerator : MonoBehaviour
                     VoxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Dirt"));
                 }
             }
-        }*/
+        }
 
-        //VoxelWorld.AddLight(new Vector3Int(0, 1, 0), new Color32(20, 20, 20, 255), 15);
-        //VoxelWorld.AddLight(new Vector3Int(30, 2, 0), new Color32(16, 16, 16, 255));
-        //VoxelWorld.AddLight(new Vector3Int(15, 2, -10), new Color32(16, 16, 16, 255));
+        VoxelWorld.AddLight(new Vector3Int(0, 1, 0), new Color32(255, 78, 203, 255), 20);
+        VoxelWorld.AddLight(new Vector3Int(30, 2, 0), new Color32(50, 255, 50, 255), 20);
+        VoxelWorld.AddLight(new Vector3Int(15, 2, -10), new Color32(255, 255, 0, 255), 20);
+*/
 
         GenerateTerrain(128);
 
@@ -69,8 +69,8 @@ public class WorldGenerator : MonoBehaviour
             var pos = VoxelWorld.GetRandomSolidSurfaceVoxel();
             PlaceTorch(pos);
         }
-        VoxelWorld.BuildChangedChunks();
 
+        VoxelWorld.BuildChangedChunks();
         PlacePlayer();
 
         sw.Stop();

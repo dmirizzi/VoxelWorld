@@ -15,10 +15,12 @@
 
 [ ] Flood Fill Lighting
     [x] Basic Lighting
-    [ ] Smoother Light Attenuation
+    [x] Smoother Light Attenuation -> switched to float for lightmap channels
+    [x] Improper color attenuation when using colors with inequal components (something 255, 50, 10) 
+        -> fixed by switch to float too
     [ ] Some corners not lit properly
     [ ] Some voxel sides not lit properly
-    [ ] Improper color attenuation when using colors with inequal components (something 255, 50, 10) 
+    [ ] Removing lights
 
 [ ]Lighting 
     [ ] Lights go through gaps between voxels and cast "light stripes"

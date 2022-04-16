@@ -61,10 +61,13 @@ public class LightMapCalculator
                 var chunk = _world.GetChunkFromVoxelPosition(neighborGlobalPos.x, neighborGlobalPos.y, neighborGlobalPos.z, false);
                 if(chunk != null)
                 {
+                    float attenuation = (float)intensity / range;
+                    /*
                     var normalizedDistance = ((Vector3)(neighborGlobalPos - sourcePos)).magnitude / (float)range;
                     var attenuation = CalculateAttenuation(normalizedDistance);
                     if(attenuation <= 1) attenuation = 1;
                     if(normalizedDistance > 1.1) continue;
+                    */
 
                     var localNeighborPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(neighborGlobalPos);
                     if(!VoxelBuildHelper.IsVoxelSideOpaque(_world, chunk.GetVoxel(localPos), node.GlobalPos, dir)
