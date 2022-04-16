@@ -129,16 +129,21 @@ public class ChunkBuilder
 
     private Color32[] GetLightVertexColors()
     {
-        // Add vertex colors based on light map
         var colors = new Color32[_solidMesh.Vertices.Count];
+
         for(int vi = 0; vi < _solidMesh.Vertices.Count; ++vi)
         {
-            var localVoxelPos = Vector3Int.FloorToInt(_solidMesh.Vertices[vi]);
-            var globalVoxelPos = VoxelPosConverter.ChunkLocalVoxelPosToGlobal(localVoxelPos, _chunk.ChunkPos);
+            var localVoxelPos = Vector3Int.RoundToInt(_solidMesh.Vertices[vi]);
+            var globalVoxelPos = VoxelPosConverter.ChunkLocalVoxelPosToGlobal(localVoxelPos, _chunk.ChunkPos)
+                                    + Vector3Int.FloorToInt(_solidMesh.Normals[vi]);
 
             //TODO: Would be faster to get light value direct from chunk and surrounding chunks
-            colors[vi] = _world.GetLightValue(globalVoxelPos);
+
+            // Add vertex colors based on light map
+            var lightVal = _world.GetLightValue(globalVoxelPos);
+            colors[vi] = lightVal;
         }
+
         return colors;
     }
 

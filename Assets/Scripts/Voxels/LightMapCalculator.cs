@@ -28,8 +28,7 @@ public class LightMapCalculator
         firstChunk.SetLightChannelValue(VoxelPosConverter.GlobalToChunkLocalVoxelPos(sourcePos), channel, intensity);
         visitedNodes.Add(sourcePos);
 
-        //var attenuation = intensity / range;
-        //if(attenuation <= 0) attenuation = 1;
+        float attenuation = (float)intensity / range;
 
         while(lightNodes.Count > 0)
         {
@@ -39,15 +38,7 @@ public class LightMapCalculator
 
             var localPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(node.GlobalPos);
             var currentLightLevel = node.Chunk.GetLightChannelValue(localPos, channel);           
-/*
-            if(channel == 0)
-            {
-                var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                go.transform.position = VoxelPosConverter.GetVoxelCenterWorldPos(node.GlobalPos);
-                go.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
-                go.GetComponent<Renderer>().material.color = new Color(currentLightLevel / 4f, currentLightLevel / 4f, currentLightLevel / 4f, 1.0f);
-            }
-*/
+
             foreach(var dir in fillDirections)
             {
                 var neighborGlobalPos = node.GlobalPos + dir;
@@ -61,24 +52,18 @@ public class LightMapCalculator
                 var chunk = _world.GetChunkFromVoxelPosition(neighborGlobalPos.x, neighborGlobalPos.y, neighborGlobalPos.z, false);
                 if(chunk != null)
                 {
-                    float attenuation = (float)intensity / range;
-                    /*
-                    var normalizedDistance = ((Vector3)(neighborGlobalPos - sourcePos)).magnitude / (float)range;
-                    var attenuation = CalculateAttenuation(normalizedDistance);
-                    if(attenuation <= 1) attenuation = 1;
-                    if(normalizedDistance > 1.1) continue;
-                    */
-
                     var localNeighborPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(neighborGlobalPos);
-                    if(!VoxelBuildHelper.IsVoxelSideOpaque(_world, chunk.GetVoxel(localPos), node.GlobalPos, dir)
-                    && chunk.GetLightChannelValue(localNeighborPos, channel) + (attenuation + 1) <= currentLightLevel)
+                    if(chunk.GetLightChannelValue(localNeighborPos, channel) + (attenuation + 1) <= currentLightLevel)
                     {
                         chunk.SetLightChannelValue(localNeighborPos, channel, (byte)(currentLightLevel - attenuation));
-                        lightNodes.Enqueue(new LightNode
+                        if(!VoxelBuildHelper.IsVoxelSideOpaque(_world, chunk.GetVoxel(localPos), node.GlobalPos, dir))
                         {
-                            GlobalPos = neighborGlobalPos,
-                            Chunk = chunk
-                        });
+                            lightNodes.Enqueue(new LightNode
+                            {
+                                GlobalPos = neighborGlobalPos,
+                                Chunk = chunk
+                            });
+                        }
                     }
                 }
             }            

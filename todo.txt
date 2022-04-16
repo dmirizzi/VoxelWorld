@@ -18,9 +18,10 @@
     [x] Smoother Light Attenuation -> switched to float for lightmap channels
     [x] Improper color attenuation when using colors with inequal components (something 255, 50, 10) 
         -> fixed by switch to float too
-    [ ] Some corners not lit properly
-    [ ] Some voxel sides not lit properly
+    [x] Some corners / voxel sides not lit properly 
+        -> "top most" solid voxel needs to have light value too, otherwise voxels at the edge towards solid voxel have light color 0
     [ ] Removing lights
+    [ ] Recalculating light map on added/removed solid voxel
 
 [ ]Lighting 
     [ ] Lights go through gaps between voxels and cast "light stripes"
