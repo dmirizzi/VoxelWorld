@@ -107,6 +107,7 @@ Items / Blocks
 [ ] Ladder
 
 [ ] Door
+    [ ] Multi-voxel blocks -> see branch block_properties
 
 [ ] Quarter Wedge
 
