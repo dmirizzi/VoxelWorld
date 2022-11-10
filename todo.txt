@@ -57,8 +57,17 @@ VoxelWorld
 [x] Get VoxelInfo from config file (solid, tileXY etc.) -> JSON config
 
 [ ] Greedy Meshing
+    [ ] Check https://gist.github.com/Vercidium/a3002bd083cce2bc854c9ff8f0118d33
+    [ ] Generate Texture Array from Texture Atlas (instead of one flat texture)
+    [ ] Assign UVs to greedy meshes according to their voxel size (e.g. 3x3 voxels -> uv 0,0-3,3)
+        -> with texture repeat wrapping, this will tile the voxel texture onto the greedy mesh
+    [ ] What about the light map? We need different light values across a greedy mesh
+        [ ] Store light map for mesh in 2d array & pass to (fragment?) shader?
+        [ ] Or only merge if they have the same light value?
 
 [ ] Custom models as custom voxel mesh (e.g. stairs)
+
+[ ] Voxel Sprites
 
 [ ] Voxel Prefabs (e.g. village houses, tents etc.)
 
@@ -70,6 +79,8 @@ VoxelWorld
 [ ] Water simulation
 
 [ ] Voxel Property: Collideable (e.g. Water) -> better word than collideable?
+
+[ ] Voxel Overlay Animation, e.g. breaking animation
 
 ----------------------------------------------------------------------------------------------------------------
 World Gen
@@ -86,6 +97,8 @@ World Gen
 
 [ ] Dungeon generator
     [ ] Simple rooms connected by corridors
+
+[ ] Tree Generator
 
 ----------------------------------------------------------------------------------------------------------------
 Items / Blocks
@@ -149,6 +162,12 @@ Misc
     [ ] Additional point light for sun to cast correct shadows on sunrise / sunset
     [ ] Moon
     [ ] Stars
+
+[ ] Weather System  
+    [ ] Clouds
+    [ ] Rain
+    [ ] Snow
+    [ ] Lightning & Thunder
 
 ----------------------------------------------------------------------------------------------------------------
     Optimization
