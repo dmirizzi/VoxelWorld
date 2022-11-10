@@ -24,6 +24,7 @@ public class Torch : MonoBehaviour, IPlayerHoldable
         // to the player object, otherwise the light will clip into objects
         if(_lightTransform != null)
         {
+            _light.gameObject.SetActive(true);            
             _lightTransform.parent = player.CameraTransform;
             _oldLightPos = _lightTransform.localPosition;
             _lightTransform.localPosition = Vector3.zero;
@@ -35,6 +36,7 @@ public class Torch : MonoBehaviour, IPlayerHoldable
         if(_lightTransform != null)
         {
             // When player isnt holding torch anymore, move it back under the torch game object
+            _light.gameObject.SetActive(false);            
             _lightTransform.parent = transform;     
             _lightTransform.localPosition = _oldLightPos;
         }
@@ -42,7 +44,7 @@ public class Torch : MonoBehaviour, IPlayerHoldable
 
     void Awake()
     {
-        _light = GetComponentInChildren<Light>();
+        _light = GetComponentInChildren<Light>(true);
         if(_light != null)
         {
             _lightTransform = _light.gameObject.transform;

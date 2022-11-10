@@ -15,13 +15,11 @@ struct CustomLightingData
 #ifndef SHADERGRAPH_PREVIEW
     float4 CustomLightHandling(CustomLightingData d, Light light)
     {
-        //float3 radiance = clamp(light.color * (sqrt(light.distanceAttenuation) * light.shadowAttenuation) * 1.25, 0, 1.25);
-        //float diffuse = saturate(dot(d.normalWS, light.direction));
+        float3 radiance = clamp(light.color * (sqrt(light.distanceAttenuation) * light.shadowAttenuation) * 1.25, 0, 1.25);
+        float diffuse = saturate(dot(d.normalWS, light.direction));
 
-        //float3 colorRGB = d.albedo.xyz * radiance * diffuse;
-        //colorRGB = colorRGB * d.vertexColor;
-
-        float3 colorRGB = d.albedo.xyz * d.vertexColor;
+        // Combine voxel light mapping (via vertexColor) with dynamic lighting
+        float3 colorRGB = d.albedo.xyz * d.vertexColor + d.albedo.xyz * radiance * diffuse;
 
         float4 color;
         color.xyz = colorRGB.xyz;

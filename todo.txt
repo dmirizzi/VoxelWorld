@@ -32,16 +32,8 @@
 [ ] Dynamic Lighting 
     [ ] Lights go through gaps between voxels and cast "light stripes"
     [ ] Lighting is different between chunks / no smooth lighting transition between chunks
-    [ ] Lights flickering when too many in scene?
-        -> Deferred lighting doesnt seem to help!?
-    [ ] Custom Voxel-based lighting?
-        - Static lights (lava, placed torches etc.) via per-voxel baked lighting
-        - Dynamic lights (handheld torch, sun/moon) via unity dynamic lighting
-        - Shadows !?
     [ ] Ambient Occlusion?
         -> https://web.archive.org/web/20120921194612/http://codeflow.org/entries/2010/dec/09/minecraft-like-rendering-experiments-in-opengl-4/
-    [ ] Unity Dynamic Lighting Options
-        -> https://docs.unity3d.com/2019.3/Documentation/Manual/BestPracticeMakingBelievableVisuals9.html
 
 [ ] Chunk occlusion culling?
     https://tomcc.github.io/2014/08/31/visibility-1.html
@@ -63,6 +55,8 @@ VoxelWorld
 [x] Custom Meshes as part of voxel infrastructure
 [x] Allow "Solid" flag to be set for individual faces on voxels
 [x] Get VoxelInfo from config file (solid, tileXY etc.) -> JSON config
+
+[ ] Greedy Meshing
 
 [ ] Custom models as custom voxel mesh (e.g. stairs)
 
