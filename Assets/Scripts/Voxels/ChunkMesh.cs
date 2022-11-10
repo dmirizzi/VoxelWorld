@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -16,7 +15,7 @@ public class ChunkMesh
     public List<Vector3> Vertices { get; }
 
     public List<Vector3> Normals { get; }
-
+    
     public List<Vector2> UVCoordinates { get; }
 
     public List<int> Triangles { get; }

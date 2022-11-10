@@ -1,7 +1,7 @@
 public interface IBlockPropertySerializer<T>
 {
-    ushort Serialize(T auxData);
+    ushort Serialize(T auxData, ushort oldAuxData, int offset);
 
-    T Deserialize(ushort serializedAuxData, int offsetInBytes);
+    T Deserialize(ushort serializedAuxData, int offsetInBits);
 
 }

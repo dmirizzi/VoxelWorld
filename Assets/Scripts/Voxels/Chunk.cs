@@ -4,23 +4,34 @@ using UnityEngine;
 
 public class Chunk
 {
-    public Vector3Int ChunkPos { get; set; }
+    public Vector3Int ChunkPos { get; private set; }
 
-    public GameObject ChunkGameObject { get; set; }
-
-    public Dictionary<Vector3Int, ushort> BlockAuxiliaryData { get; set; }
-
-    public Dictionary<Vector3Int, GameObject> BlockGameObject { get; set; }
+    public GameObject ChunkGameObject 
+    { 
+        get
+        {
+            if(_chunkGameObject == null)
+            {
+                CreateNewChunkGameObject();
+            }
+            return _chunkGameObject;
+        } 
+        private set
+        {
+            _chunkGameObject = value;
+        } 
+    }
 
     public Chunk(VoxelWorld voxelWorld, Vector3Int chunkPos)
     {
         _voxelWorld = voxelWorld;
         _chunkData = new ushort[VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize];
+        _lightMap = new float[VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, 3];
 
         ChunkPos = chunkPos;
-        CreateNewChunkGameObject();
-        BlockAuxiliaryData = new Dictionary<Vector3Int, ushort>();
-        BlockGameObject = new Dictionary<Vector3Int, GameObject>();
+        //CreateNewChunkGameObject();
+        _blockAuxiliaryData = new Dictionary<Vector3Int, ushort>();
+        _blockGameObject = new Dictionary<Vector3Int, GameObject>();
     }
 
     public ushort GetVoxel(Vector3Int localPos)
@@ -36,14 +47,14 @@ public class Chunk
     public bool SetVoxel(Vector3Int localPos, ushort type, BlockFace? placementFace = null, BlockFace? lookDir = null)
     {
         // Remove old aux data and gameobjects if it already exists at this voxel position
-        if(BlockGameObject.ContainsKey(localPos))
+        if(_blockGameObject.ContainsKey(localPos))
         {
-            GameObject.Destroy(BlockGameObject[localPos]);
-            BlockGameObject.Remove(localPos);
+            GameObject.Destroy(_blockGameObject[localPos]);
+            _blockGameObject.Remove(localPos);
         }
-        if(BlockAuxiliaryData.ContainsKey(localPos))
+        if(_blockAuxiliaryData.ContainsKey(localPos))
         {
-            BlockAuxiliaryData.Remove(localPos);
+            _blockAuxiliaryData.Remove(localPos);
         }
 
         var globalPos = VoxelPosConverter.ChunkLocalVoxelPosToGlobal(localPos, ChunkPos);
@@ -78,11 +89,11 @@ public class Chunk
 
     public void AddBlockGameObject(Vector3Int localPos, GameObject obj)
     {
-        if(BlockGameObject.ContainsKey(localPos))
+        if(_blockGameObject.ContainsKey(localPos))
         {
-            GameObject.Destroy(BlockGameObject[localPos]);
+            GameObject.Destroy(_blockGameObject[localPos]);
         }
-        BlockGameObject[localPos] = obj;
+        _blockGameObject[localPos] = obj;
         obj.transform.parent = ChunkGameObject.transform;
         obj.transform.localPosition = VoxelPosConverter.GetVoxelCenterSurfaceWorldPos(localPos);
     }
@@ -98,14 +109,14 @@ public class Chunk
 
     public void SetAuxiliaryData(Vector3Int localPos, ushort data)
     {
-        BlockAuxiliaryData[localPos] = data;
+        _blockAuxiliaryData[localPos] = data;
     }
 
     public ushort? GetAuxiliaryData(Vector3Int localPos)
     {
-        if(BlockAuxiliaryData.ContainsKey(localPos))
+        if(_blockAuxiliaryData.ContainsKey(localPos))
         {
-            return BlockAuxiliaryData[localPos];
+            return _blockAuxiliaryData[localPos];
         }
         return null;
     }
@@ -138,14 +149,33 @@ public class Chunk
         CreateNewChunkGameObject();
     }
 
+    public void SetLightChannelValue(Vector3Int pos, int channel, float intensity)
+    {
+        _lightMap[pos.x, pos.y, pos.z, channel] = intensity;
+    }
+
+    public float GetLightChannelValue(Vector3Int pos, int channel)
+    {
+        return _lightMap[pos.x, pos.y, pos.z, channel];
+    }
     private void CreateNewChunkGameObject()
     {
-        ChunkGameObject = new GameObject($"Chunk[{ChunkPos.x}|{ChunkPos.y}|{ChunkPos.z}]");
+        _chunkGameObject = new GameObject($"Chunk[{ChunkPos.x}|{ChunkPos.y}|{ChunkPos.z}]");
         var chunkVoxelPos = VoxelPosConverter.ChunkToBaseVoxelPos(ChunkPos);
-        ChunkGameObject.transform.position = chunkVoxelPos;
+        _chunkGameObject.transform.position = chunkVoxelPos;
     }
+
+    // 5-bit for each color channel (RGB)
+    private float[,,,] _lightMap;
 
     private ushort[,,] _chunkData;
 
     private VoxelWorld _voxelWorld;
+
+    private GameObject _chunkGameObject;
+
+    private Dictionary<Vector3Int, ushort> _blockAuxiliaryData;
+
+    private Dictionary<Vector3Int, GameObject> _blockGameObject;
+
 }

@@ -23,7 +23,7 @@ public class PlayerHoldingController : MonoBehaviour
         PlayerHoldeable = obj.GetComponent<IPlayerHoldable>();
         if(PlayerHoldeable == null)
         {
-            throw new System.Exception($"Object {obj.name} is not holdeable!");
+            Debug.LogError($"GameObject {obj.name} is not holdeable");
         }
 
         HoldingGameObject = obj;

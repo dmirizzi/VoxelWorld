@@ -22,30 +22,45 @@ public class Torch : MonoBehaviour, IPlayerHoldable
     {
         // While the torch is being held, move the light source of the torch
         // to the player object, otherwise the light will clip into objects
-        _lightTransform.parent = player.CameraTransform;
-        _oldLightPos = _lightTransform.localPosition;
-        _lightTransform.localPosition = Vector3.zero;
+        if(_lightTransform != null)
+        {
+            _light.gameObject.SetActive(true);            
+            _lightTransform.parent = player.CameraTransform;
+            _oldLightPos = _lightTransform.localPosition;
+            _lightTransform.localPosition = Vector3.zero;
+        }
     }
 
     public void OnRemove(PlayerController player)
     {
-        // When player isnt holding torch anymore, move it back under the torch game object
-        _lightTransform.parent = transform;     
-        _lightTransform.localPosition = _oldLightPos;   
+        if(_lightTransform != null)
+        {
+            // When player isnt holding torch anymore, move it back under the torch game object
+            _light.gameObject.SetActive(false);            
+            _lightTransform.parent = transform;     
+            _lightTransform.localPosition = _oldLightPos;
+        }
     }
 
     void Awake()
     {
-        _light = GetComponentInChildren<Light>();
-        _lightTransform = _light.gameObject.transform;
+        _light = GetComponentInChildren<Light>(true);
+        if(_light != null)
+        {
+            _lightTransform = _light.gameObject.transform;
+        }
+        
         _noiseSeed = Random.Range(0f, 10000f);
         _torchRenderer = GetComponent<MeshRenderer>();
     }
 
     void Update()
     {
-        var intensity = BaseIntensity + Mathf.PerlinNoise(Time.time * FlickeringFrequencyFactor, _noiseSeed) * FlickeringIntensityFraction + (1 - FlickeringIntensityFraction);
-        _light.intensity = intensity;
+        if(_light != null)
+        {
+            var intensity = BaseIntensity + Mathf.PerlinNoise(Time.time * FlickeringFrequencyFactor, _noiseSeed) * FlickeringIntensityFraction + (1 - FlickeringIntensityFraction);
+            _light.intensity = intensity;
+        }
     }
 
     private Vector3 _oldLightPos;

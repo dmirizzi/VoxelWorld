@@ -4,6 +4,7 @@
             "Name": "Empty",
             "RenderType": "Voxel",
             "OpaqueFaces": ["None"],
+            "Transparent": true,
             "FaceTextureTileCoords": {
                 "All": [3, 0]
             }
@@ -47,7 +48,8 @@
         {
             "Name": "Torch",
             "RenderType": "GameObject",
-            "OpaqueFaces": ["None"]
+            "OpaqueFaces": ["None"],
+            "LightColor": "FF9568"
         },
         {
             "Name": "CobblestoneWedge",

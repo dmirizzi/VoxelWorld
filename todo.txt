@@ -13,19 +13,27 @@
 [ ] Water should be less translucent the deeper it goes
 [ ] Bump Mapping?
 
-[ ]Lighting
+[ ] Flood Fill Lighting
+    [x] Basic Lighting
+    [x] Smoother Light Attenuation -> switched to float for lightmap channels
+    [x] Some corners / voxel sides not lit properly 
+        -> "top most" solid voxel needs to have light value too, otherwise voxels at the edge towards solid voxel have light color 0
+    [x] Recalculating light map on removed solid voxel
+    [x] Still some voxels not lit correctly near chunk borders 
+        -> Due to lightmap not creating new chunks if they dont exist yet, which caused light values to get lost
+
+    [ ] Improper color attenuation when using colors with inequal components (something 255, 50, 10) 
+        -> Needs to attenuate faster the higher the color is
+        -> Or: Instead use a hue/brightness color model?
+
+    [ ] Removing lights
+    [ ] Recalculating light map on added solid voxel
+
+[ ] Dynamic Lighting 
     [ ] Lights go through gaps between voxels and cast "light stripes"
     [ ] Lighting is different between chunks / no smooth lighting transition between chunks
-    [ ] Lights flickering when too many in scene?
-        -> Deferred lighting doesnt seem to help!?
-    [ ] Custom Voxel-based lighting?
-        - Static lights (lava, placed torches etc.) via per-voxel baked lighting
-        - Dynamic lights (handheld torch, sun/moon) via unity dynamic lighting
-        - Shadows !?
     [ ] Ambient Occlusion?
         -> https://web.archive.org/web/20120921194612/http://codeflow.org/entries/2010/dec/09/minecraft-like-rendering-experiments-in-opengl-4/
-    [ ] Unity Dynamic Lighting Options
-        -> https://docs.unity3d.com/2019.3/Documentation/Manual/BestPracticeMakingBelievableVisuals9.html
 
 [ ] Chunk occlusion culling?
     https://tomcc.github.io/2014/08/31/visibility-1.html
@@ -48,7 +56,20 @@ VoxelWorld
 [x] Allow "Solid" flag to be set for individual faces on voxels
 [x] Get VoxelInfo from config file (solid, tileXY etc.) -> JSON config
 
+[ ] Greedy Meshing
+    [ ] Check https://gist.github.com/Vercidium/a3002bd083cce2bc854c9ff8f0118d33
+    [ ] Generate Texture Array from Texture Atlas (instead of one flat texture)
+    [ ] Assign UVs to greedy meshes according to their voxel size (e.g. 3x3 voxels -> uv 0,0-3,3)
+        -> with texture repeat wrapping, this will tile the voxel texture onto the greedy mesh
+    [ ] What about the light map? We need different light values across a greedy mesh
+        [ ] Store light map for mesh in 2d array & pass to (fragment?) shader?
+        [ ] Or only merge if they have the same light value?
+
 [ ] Custom models as custom voxel mesh (e.g. stairs)
+
+[ ] Voxel Sprites
+
+[ ] Voxel Prefabs (e.g. village houses, tents etc.)
 
 [ ] Allow for arbitrary rotations of custom mesh voxels (not just on y axis)
 
@@ -59,17 +80,25 @@ VoxelWorld
 
 [ ] Voxel Property: Collideable (e.g. Water) -> better word than collideable?
 
+[ ] Voxel Overlay Animation, e.g. breaking animation
+
 ----------------------------------------------------------------------------------------------------------------
 World Gen
 ----------------------------------------------------------------------------------------------------------------
 
 [ ] World Seed -> Deterministic world gen based on seed + position
 
-[ ] World saving / loading
+[ ] Infinite World Gen
+    -> Generate world when moving towards empty chunks & unload chunks behind player
+
+[ ] Serialization / Deserialization
 
 [x] Simple cave generator based on cellular automata
+
 [ ] Dungeon generator
     [ ] Simple rooms connected by corridors
+
+[ ] Tree Generator
 
 ----------------------------------------------------------------------------------------------------------------
 Items / Blocks
@@ -143,6 +172,12 @@ Misc
     [ ] Additional point light for sun to cast correct shadows on sunrise / sunset
     [ ] Moon
     [ ] Stars
+
+[ ] Weather System  
+    [ ] Clouds
+    [ ] Rain
+    [ ] Snow
+    [ ] Lightning & Thunder
 
 ----------------------------------------------------------------------------------------------------------------
     Optimization

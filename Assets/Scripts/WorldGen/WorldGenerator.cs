@@ -32,12 +32,27 @@ public class WorldGenerator : MonoBehaviour
 
         VoxelWorld.Clear();
 
-        GenerateTerrain(128);
+        // for(int x = -64; x < 64; ++x)
+        // {
+        //     for(int z = -64; z < 64; ++z)
+        //     {
+        //         for(int y = 0; y <= 0; ++y)
+        //         {
+        //             VoxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Dirt"));
+        //         }
+        //     }
+        // }
+
+        //VoxelWorld.AddLight(new Vector3Int(0, 1, 0), new Color32(255, 78, 203, 255), 20);
+        //VoxelWorld.AddLight(new Vector3Int(30, 2, 0), new Color32(50, 255, 50, 255), 20);
+        //VoxelWorld.AddLight(new Vector3Int(15, 2, -10), new Color32(255, 255, 0, 255), 20);
+
+        GenerateTerrain(64);
 
         GenerateCave(
             new Vector3Int(0, 0, 0),
             new Vector3Int(
-                UnityEngine.Random.Range(32, 128), 
+                UnityEngine.Random.Range(32, 128),
                 UnityEngine.Random.Range(32, 128), 
                 UnityEngine.Random.Range(32, 128)
             ),
@@ -47,15 +62,23 @@ public class WorldGenerator : MonoBehaviour
             _emptyChance
         );
 
-        int numTorches = 1;
+        int numTorches = 10;
         for(int i = 0; i < numTorches; ++i)
         {
             var pos = VoxelWorld.GetRandomSolidSurfaceVoxel();
+            // VoxelWorld.AddLight(
+            //     pos,
+            //     new Color32(
+            //         (byte)UnityEngine.Random.Range(0, 256),
+            //         (byte)UnityEngine.Random.Range(0, 256),
+            //         (byte)UnityEngine.Random.Range(0, 256),
+            //         255),
+            //     16        
+            // );
             PlaceTorch(pos);
         }
 
         VoxelWorld.BuildChangedChunks();
-
         PlacePlayer();
 
         sw.Stop();

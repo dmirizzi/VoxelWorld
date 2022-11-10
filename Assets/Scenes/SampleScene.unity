@@ -152,7 +152,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0e1ee2b55d13d246bb0def376892619, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  CurrentTimeSec: 43000
+  CurrentTimeSec: 0
   TimeFactor: 100
   SunLightIntensityFactor: 1.5
   SunLight: {fileID: 705507994}

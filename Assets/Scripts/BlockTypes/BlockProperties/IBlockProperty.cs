@@ -1,6 +1,6 @@
 public interface IBlockProperty
 {
-    int SerializedLengthInBytes { get; }
+    int SerializedLengthInBits { get; }
 
     IBlockPropertySerializer<T> GetSerializer<T>();
 }
