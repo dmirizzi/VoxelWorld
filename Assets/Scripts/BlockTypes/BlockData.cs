@@ -56,8 +56,6 @@ public class BlockData
     [JsonConverter (typeof(VoxelColorConverter))]
     public Color32? LightColor { get; set; }
 
-    public int LightRange { get; set; }
-
     // Mapping of block faces -> texture tile coordinates
     [JsonConverter (typeof(DictionaryWithEnumKeyConverter<BlockFaceSelector, int[]>))]
     public Dictionary<BlockFaceSelector, int[]> FaceTextureTileCoords { get; set; }

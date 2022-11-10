@@ -47,13 +47,15 @@ public class TorchBlockType : IBlockType
         }
 
         var data = BlockDataRepository.GetBlockData("Torch");
-        world.AddLight(globalPosition, data.LightColor.Value, data.LightRange);
+        world.SetLight(globalPosition, data.LightColor.Value, true);
 
         return true;
     }
 
     public bool OnRemove(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition)
     {
+        var data = BlockDataRepository.GetBlockData("Torch");
+        world.SetLight(globalPosition, data.LightColor.Value, false);
         return true;        
     }
 

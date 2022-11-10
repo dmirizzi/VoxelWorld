@@ -24,10 +24,12 @@
 
     [ ] Improper color attenuation when using colors with inequal components (something 255, 50, 10) 
         -> Needs to attenuate faster the higher the color is
+        -> Or: Instead use a hue/brightness color model?
+
     [ ] Removing lights
     [ ] Recalculating light map on added solid voxel
 
-[ ]Lighting 
+[ ] Dynamic Lighting 
     [ ] Lights go through gaps between voxels and cast "light stripes"
     [ ] Lighting is different between chunks / no smooth lighting transition between chunks
     [ ] Lights flickering when too many in scene?
@@ -64,6 +66,8 @@ VoxelWorld
 
 [ ] Custom models as custom voxel mesh (e.g. stairs)
 
+[ ] Voxel Prefabs (e.g. village houses, tents etc.)
+
 [ ] Allow for arbitrary rotations of custom mesh voxels (not just on y axis)
 
 [ ] Refactor ChunkBuilder
@@ -79,9 +83,13 @@ World Gen
 
 [ ] World Seed -> Deterministic world gen based on seed + position
 
-[ ] World saving / loading
+[ ] Infinite World Gen
+    -> Generate world when moving towards empty chunks & unload chunks behind player
+
+[ ] Serialization / Deserialization
 
 [x] Simple cave generator based on cellular automata
+
 [ ] Dungeon generator
     [ ] Simple rooms connected by corridors
 

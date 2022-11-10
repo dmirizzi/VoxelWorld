@@ -13,24 +13,24 @@ public class LightMap
         _world = world;
     }
 
-    public void AddLight(Vector3Int sourcePos, int channel, byte intensity, int range, HashSet<Chunk> visitedChunks)
+    public void AddLight(Vector3Int lightPos, int channel, byte intensity, HashSet<Chunk> visitedChunks)
     {
-        var firstChunk = _world.GetChunkFromVoxelPosition(sourcePos.x, sourcePos.y, sourcePos.z, true);
+        var firstChunk = _world.GetChunkFromVoxelPosition(lightPos.x, lightPos.y, lightPos.z, true);
         if(firstChunk == null)
         {
             return;
         }
-        firstChunk.SetLightChannelValue(VoxelPosConverter.GlobalToChunkLocalVoxelPos(sourcePos), channel, intensity);
+        firstChunk.SetLightChannelValue(VoxelPosConverter.GlobalToChunkLocalVoxelPos(lightPos), channel, intensity);
 
         var lightNodes = new Queue<LightNode>();
         lightNodes.Enqueue(new LightNode 
         {
-            GlobalPos = sourcePos,
+            GlobalPos = lightPos,
             Chunk = firstChunk
         });
 
         var visitedNodes = new HashSet<Vector3Int>();
-        visitedNodes.Add(sourcePos);
+        visitedNodes.Add(lightPos);
 
         PropagateLightNodes(lightNodes, channel, visitedNodes, visitedChunks);
     }
@@ -57,9 +57,68 @@ public class LightMap
         }
     }
 
-    public void RemoveLight(int x, int y, int z, Color32 color)
+    public void RemoveLight(Vector3Int lightPos, int channel, byte intensity, HashSet<Chunk> visitedChunks)
     {
+        var firstChunk = _world.GetChunkFromVoxelPosition(lightPos.x, lightPos.y, lightPos.z, true);
+        if(firstChunk == null)
+        {
+            return;
+        }
+        var localPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(lightPos);
+        var lightLevel = firstChunk.GetLightChannelValue(localPos, channel);
+        firstChunk.SetLightChannelValue(localPos, channel, 0);
 
+        var removeLightNodes = new Queue<RemoveLightNode>();
+        removeLightNodes.Enqueue(new RemoveLightNode
+        {
+            Chunk = firstChunk,
+            GlobalPos = lightPos,
+            LightLevel = lightLevel
+        });
+
+        var visitedNodes = new HashSet<Vector3Int>();
+        var lightNodes = new Queue<LightNode>();
+
+        while(removeLightNodes.Count > 0)
+        {
+            var removeLightNode = removeLightNodes.Dequeue();
+            visitedChunks.Add(removeLightNode.Chunk);
+
+            foreach(var dir in fillDirections)
+            {
+                var neighborGlobalPos = removeLightNode.GlobalPos + dir;
+                if(visitedNodes.Contains(neighborGlobalPos))
+                {
+                    continue;
+                }
+                visitedNodes.Add(neighborGlobalPos);
+
+                var neighborChunk = _world.GetChunkFromVoxelPosition(neighborGlobalPos.x, neighborGlobalPos.y, neighborGlobalPos.z, true);
+                if(neighborChunk != null)
+                {
+                    var localNeighborPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(neighborGlobalPos);
+                    var neighborLightLevel = neighborChunk.GetLightChannelValue(localNeighborPos, channel);
+                    if(neighborLightLevel > 0 && neighborLightLevel < removeLightNode.LightLevel)                
+                    {
+                        neighborChunk.SetLightChannelValue(localNeighborPos, channel, 0);
+                        removeLightNodes.Enqueue(new RemoveLightNode
+                        {
+                            Chunk = neighborChunk,
+                            GlobalPos = neighborGlobalPos,
+                            LightLevel = neighborLightLevel
+                        });
+                    }
+                    else if(neighborLightLevel >= removeLightNode.LightLevel)
+                    {
+                        lightNodes.Enqueue(new LightNode
+                        {
+                            GlobalPos = neighborGlobalPos,
+                            Chunk = neighborChunk
+                        });
+                    }
+                }
+            }
+        }
     }    
 
     private void PropagateLightNodes(Queue<LightNode> lightNodes, int channel, HashSet<Vector3Int> visitedNodes, HashSet<Chunk> visitedChunks)
@@ -83,20 +142,20 @@ public class LightMap
                 visitedNodes.Add(neighborGlobalPos);
 
                 //TODO: Faster to only get new chunk when crossing chunk borders?
-                var chunk = _world.GetChunkFromVoxelPosition(neighborGlobalPos.x, neighborGlobalPos.y, neighborGlobalPos.z, true);
-                if(chunk != null)
+                var neighborChunk = _world.GetChunkFromVoxelPosition(neighborGlobalPos.x, neighborGlobalPos.y, neighborGlobalPos.z, true);
+                if(neighborChunk != null)
                 {
                     var localNeighborPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(neighborGlobalPos);
-                    if(chunk.GetLightChannelValue(localNeighborPos, channel) + 2 <= currentLightLevel)
+                    if(neighborChunk.GetLightChannelValue(localNeighborPos, channel) + 2 <= currentLightLevel)
                     {
-                        chunk.SetLightChannelValue(localNeighborPos, channel, currentLightLevel * LightAttenuationFactor );
+                        neighborChunk.SetLightChannelValue(localNeighborPos, channel, currentLightLevel * LightAttenuationFactor );
 
-                        if(!VoxelBuildHelper.IsVoxelSideOpaque(_world, chunk.GetVoxel(localPos), node.GlobalPos, dir))
+                        if(!VoxelBuildHelper.IsVoxelSideOpaque(_world, neighborChunk.GetVoxel(localPos), node.GlobalPos, dir))
                         {
                             lightNodes.Enqueue(new LightNode
                             {
                                 GlobalPos = neighborGlobalPos,
-                                Chunk = chunk
+                                Chunk = neighborChunk
                             });
                         }
                     }
@@ -111,6 +170,15 @@ public class LightMap
     {
         public Chunk Chunk;
         public Vector3Int GlobalPos;
+    }
+
+    private struct RemoveLightNode
+    {
+        public Chunk Chunk;
+
+        public Vector3Int GlobalPos;
+
+        public float LightLevel;
     }
 
     private Vector3Int[] fillDirections = 

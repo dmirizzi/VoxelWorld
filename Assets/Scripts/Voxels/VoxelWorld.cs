@@ -49,8 +49,8 @@ public class VoxelWorld
         // If non-transparent voxel was removed or replaced by a transparent voxel, update light map
         var chunksAffectedByLightUpdate = new HashSet<Chunk>();
         if(!VoxelInfo.IsTransparent(oldVoxelType) && VoxelInfo.IsTransparent(type))
-        {
-            
+        { 
+            //TODO:### Only do this for SetVoxelAndRebuild            
             _lightMap.UpdateOnRemovedSolidVoxel(new Vector3Int(x, y, z), chunksAffectedByLightUpdate);
         }
 
@@ -109,7 +109,7 @@ public class VoxelWorld
         }
     }
 
-    public void AddLight(Vector3Int pos, Color32 color, int range)
+    public void SetLight(Vector3Int pos, Color32 color, bool add)
     {
         var affectedChunks = new HashSet<Chunk>[] {
             new HashSet<Chunk>(),
@@ -117,11 +117,24 @@ public class VoxelWorld
             new HashSet<Chunk>()
         };
 
-        var tasks = new Task[]
+        var colorChannels = new byte[]{
+            color.r,
+            color.g,
+            color.b
+        };
+
+        var taskFactory = new TaskFactory();
+        var tasks = new Task[3];
+        for(int channel = 0; channel < 3; ++channel)
         {
-            Task.Run(() => _lightMap.AddLight(pos, 0, color.r, range, affectedChunks[0])),
-            Task.Run(() => _lightMap.AddLight(pos, 1, color.g, range, affectedChunks[1])),
-            Task.Run(() => _lightMap.AddLight(pos, 2, color.b, range, affectedChunks[2]))
+            if(add)
+            {
+                tasks[channel] = taskFactory.StartNew(c => _lightMap.AddLight(pos, (int)c, colorChannels[(int)c], affectedChunks[(int)c]), channel);
+            }
+            else
+            {
+                tasks[channel] = taskFactory.StartNew(c => _lightMap.RemoveLight(pos, (int)c, colorChannels[(int)c], affectedChunks[(int)c]), channel);
+            }
         };
         Task.WaitAll(tasks);
 
