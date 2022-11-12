@@ -136,16 +136,18 @@ public class VoxelWorld
                 tasks[channel] = taskFactory.StartNew(c => _lightMap.RemoveLight(pos, (int)c, colorChannels[(int)c], affectedChunks[(int)c]), channel);
             }
         };
-        Task.WaitAll(tasks);
 
-        var lightUpdateTasks = new List<Task>();
-        foreach(var chunk in affectedChunks.OrderByDescending(x => x.Count).First())
+        Task.WhenAll(tasks).ContinueWith( _ => 
         {
-            if(_chunkBuilders.ContainsKey(chunk.ChunkPos))
+            var lightUpdateTasks = new List<Task>();
+            foreach(var chunk in affectedChunks.OrderByDescending(x => x.Count).First())
             {
-                _chunkBuilders[chunk.ChunkPos].UpdateLightVertexColors();
-            }            
-        }
+                if(_chunkBuilders.ContainsKey(chunk.ChunkPos))
+                {
+                    _chunkBuilders[chunk.ChunkPos].UpdateLightVertexColors();
+                }            
+            }
+        });
     }
 
     public Color32 GetLightValue(Vector3Int pos)
