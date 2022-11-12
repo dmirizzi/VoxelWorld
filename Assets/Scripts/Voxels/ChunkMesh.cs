@@ -20,6 +20,64 @@ public class ChunkMesh
 
     public List<int> Triangles { get; }
 
+    public void AddBox(Vector3 centerPos, Vector3 size, Vector2[] uvCoordinates, Vector3 direction)
+    {
+        var cornerVertices = new Vector3[]
+        {
+            new Vector3(-size.x, -size.y, -size.z),
+            new Vector3(+size.x, -size.y, -size.z),
+            new Vector3(+size.x, -size.y, +size.z),
+            new Vector3(-size.x, -size.y, +size.z),
+            new Vector3(-size.x, +size.y, -size.z),
+            new Vector3(+size.x, +size.y, -size.z),
+            new Vector3(+size.x, +size.y, +size.z),
+            new Vector3(-size.x, +size.y, +size.z)
+        };
+
+        cornerVertices = VoxelBuildHelper.PointVerticesTowards(cornerVertices, direction);
+
+        for(int i = 0; i < cornerVertices.Length; ++i)
+        {
+            cornerVertices[i] += centerPos;
+        }
+
+        // Top
+        AddQuad(
+            new Vector3[] { cornerVertices[4], cornerVertices[7], cornerVertices[6], cornerVertices[5] },
+            new Vector2[] { uvCoordinates[2], uvCoordinates[0], uvCoordinates[1], uvCoordinates[3] }
+        );
+
+        // Bottom
+        AddQuad(
+            new Vector3[] { cornerVertices[0], cornerVertices[1], cornerVertices[2], cornerVertices[3] },
+            new Vector2[] { uvCoordinates[0], uvCoordinates[1], uvCoordinates[3], uvCoordinates[2] }            
+        );
+
+        // Front
+        AddQuad(
+            new Vector3[] { cornerVertices[0], cornerVertices[4], cornerVertices[5], cornerVertices[1] },
+            new Vector2[] { uvCoordinates[2], uvCoordinates[0], uvCoordinates[1], uvCoordinates[3] }
+        );
+
+        // Back
+        AddQuad(
+            new Vector3[] { cornerVertices[3], cornerVertices[2], cornerVertices[6], cornerVertices[7] },
+            new Vector2[] { uvCoordinates[3], uvCoordinates[2], uvCoordinates[0], uvCoordinates[1] }
+        );
+
+        // Left
+        AddQuad(
+            new Vector3[] { cornerVertices[7], cornerVertices[4], cornerVertices[0], cornerVertices[3] },
+            new Vector2[] { uvCoordinates[0], uvCoordinates[1], uvCoordinates[2], uvCoordinates[3] }
+        );
+
+        // Right
+        AddQuad(
+            new Vector3[] { cornerVertices[5], cornerVertices[6], cornerVertices[2], cornerVertices[1] },
+            new Vector2[] { uvCoordinates[0], uvCoordinates[1], uvCoordinates[3], uvCoordinates[2] }
+        );
+    }
+
     public void AddQuad(Vector3[] vertices, Vector2[] uvCoordinates)
     {
         var normal = Vector3.Cross(

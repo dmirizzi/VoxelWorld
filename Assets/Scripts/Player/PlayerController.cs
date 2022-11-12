@@ -234,7 +234,7 @@ public class PlayerController : MonoBehaviour
 
     void OnDrawGizmos()
     {
-        if(_lastPlacedVoxel != null) Gizmos.DrawCube(_lastPlacedVoxel.Value, Vector3.one);
+        //if(_lastPlacedVoxel != null) Gizmos.DrawCube(_lastPlacedVoxel.Value, Vector3.one);
         //if(_debugLastRay != null) Gizmos.DrawRay(_debugLastRay.Value);
         //if(_debugLastHit != null) Gizmos.DrawSphere(_debugLastHit.Value, .15f);
     }

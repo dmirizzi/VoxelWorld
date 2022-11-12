@@ -44,7 +44,7 @@ public class Chunk
         return _chunkData[localX, localY, localZ];
     }
 
-    public bool SetVoxel(Vector3Int localPos, ushort type, BlockFace? placementFace = null, BlockFace? lookDir = null)
+    public bool SetVoxel(Vector3Int localPos, ushort type, BlockFace? placementFace = null, BlockFace? lookDir = null, bool useExistingAuxData = false)
     {
         // Remove old aux data and gameobjects if it already exists at this voxel position
         if(_blockGameObject.ContainsKey(localPos))
@@ -52,16 +52,13 @@ public class Chunk
             GameObject.Destroy(_blockGameObject[localPos]);
             _blockGameObject.Remove(localPos);
         }
-        if(_blockAuxiliaryData.ContainsKey(localPos))
-        {
-            _blockAuxiliaryData.Remove(localPos);
-        }
 
         var globalPos = VoxelPosConverter.ChunkLocalVoxelPosToGlobal(localPos, ChunkPos);
 
         // Execute remove logic on old block if available
         var oldVoxelType = _chunkData[localPos.x, localPos.y, localPos.z];
         var oldBlockType = BlockTypeRegistry.GetBlockType(oldVoxelType);
+
         if(oldBlockType != null)
         {
             if(!oldBlockType.OnRemove(_voxelWorld, this, globalPos, localPos))
@@ -69,6 +66,13 @@ public class Chunk
                  // Block cannot be removed
                 return false;
             }
+        }
+
+        // Clear auxiliary data before setting new voxel unless it should explicitly be kept,
+        // e.g. when setting initial aux data for a new voxel
+        if(!useExistingAuxData && _blockAuxiliaryData.ContainsKey(localPos))
+        {
+            _blockAuxiliaryData.Remove(localPos);
         }
 
         // Execute place logic on old block if available
@@ -112,6 +116,11 @@ public class Chunk
         _blockAuxiliaryData[localPos] = data;
     }
 
+    public void ClearAuxiliaryData(Vector3Int localPos)
+    {
+        _blockAuxiliaryData.Remove(localPos);
+    }
+
     public ushort? GetAuxiliaryData(Vector3Int localPos)
     {
         if(_blockAuxiliaryData.ContainsKey(localPos))
@@ -132,7 +141,9 @@ public class Chunk
                     var blockType = BlockTypeRegistry.GetBlockType(_chunkData[x, y, z]);
                     if(blockType != null)
                     {
-                        blockType.OnChunkBuild(this, new Vector3Int(x, y, z));
+                        var localPos = new Vector3Int(x, y, z);
+                        var globalPos = VoxelPosConverter.ChunkLocalVoxelPosToGlobal(localPos, ChunkPos);
+                        blockType.OnChunkBuild(_voxelWorld, this, globalPos, localPos);
                     }
                 }                
             }
@@ -158,6 +169,7 @@ public class Chunk
     {
         return _lightMap[pos.x, pos.y, pos.z, channel];
     }
+    
     private void CreateNewChunkGameObject()
     {
         _chunkGameObject = new GameObject($"Chunk[{ChunkPos.x}|{ChunkPos.y}|{ChunkPos.z}]");

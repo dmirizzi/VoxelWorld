@@ -20,6 +20,10 @@
             "Name": "Torch",
             "PrefabResource": "Prefabs/Torch",
             "BlockType": "Torch"
+        },
+        {
+            "Name": "Door",
+            "BlockType": "Door"
         }
     ]
 }

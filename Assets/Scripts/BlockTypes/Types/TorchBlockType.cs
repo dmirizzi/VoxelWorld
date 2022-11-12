@@ -11,13 +11,13 @@ public class TorchBlockType : BlockTypeBase
     {
     }
 
-    public override void OnChunkBuild(Chunk chunk, Vector3Int localPosition)
+    public override void OnChunkBuild(VoxelWorld world, Chunk chunk, Vector3Int globalPos, Vector3Int localPos)
     {
         var torch = GameObject.Instantiate(_torchPrefab, Vector3.zero, Quaternion.identity);
-        chunk.AddBlockGameObject(localPosition, torch);
+        chunk.AddBlockGameObject(localPos, torch);
 
         // Handle torches that are placed on wall
-        var placement = GetProperty<PlacementFaceProperty>(chunk, localPosition);
+        var placement = GetProperty<PlacementFaceProperty>(world, globalPos);
         if(placement != null)
         {
             var vec = BlockFaceHelper.GetVectorFromBlockFace(placement.PlacementFace);
@@ -29,25 +29,22 @@ public class TorchBlockType : BlockTypeBase
         }
     }
 
-    public override bool OnPlace(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition, BlockFace? placementFace, BlockFace? lookDir)
+    public override bool OnPlace(VoxelWorld world, Chunk chunk, Vector3Int globalPos, Vector3Int localPos, BlockFace? placementFace, BlockFace? lookDir)
     {
-        if(placementFace.HasValue)
+        if(placementFace.HasValue && placementFace == BlockFace.Top)
         {
-            if(placementFace == BlockFace.Top)
-            {
-                // Torch cannot be placed on ceiling
-                return false;
-            }
+            // Torch cannot be placed on ceiling
+            return false;
         }
 
         // Remember placement direction to build the torch on the right wall
         if(placementFace.HasValue)
         {
-            SetProperty<PlacementFaceProperty>(chunk, localPosition, new PlacementFaceProperty(placementFace.Value));
+            SetProperty<PlacementFaceProperty>(world, globalPos, new PlacementFaceProperty(placementFace.Value));
         }
 
         var data = BlockDataRepository.GetBlockData("Torch");
-        world.SetLight(globalPosition, data.LightColor.Value, true);
+        world.SetLight(globalPos, data.LightColor.Value, true);
 
         return true;
     }

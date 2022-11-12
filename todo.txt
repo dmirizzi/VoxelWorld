@@ -2,6 +2,15 @@
     Refactoring
 ----------------------------------------------------------------------------------------------------------------
 [ ] Use TryGet-Pattern instead of nullable return values
+[ ] Simplify IBlockType?
+    [ ] Should we even provide access to Chunk? Or just go always through World?
+
+[ ] Consistent naming for localPos, globalPos etc!!
+    -> Convention should be: localChunkPos, globalChunkPos, localVoxelPos, globalVoxelPos
+
+[ ] Avoid explicit Rebuild/Non Rebuild and just batch voxel changes & rebuild affected chunks once per frame?
+
+[ ] Reverse implementations for overloads with Vector vs (x,y,z) where unnecessary vector is created
 
 ----------------------------------------------------------------------------------------------------------------
     Graphics / Rendering
@@ -21,6 +30,8 @@
     [x] Recalculating light map on removed solid voxel
     [x] Still some voxels not lit correctly near chunk borders 
         -> Due to lightmap not creating new chunks if they dont exist yet, which caused light values to get lost
+
+    [ ] Removing torch doesn't restore original lighting before it was placed
 
     [ ] Improper color attenuation when using colors with inequal components (something 255, 50, 10) 
         -> Needs to attenuate faster the higher the color is
@@ -154,8 +165,9 @@ Player
 [ ] JUMPING SUCKS - Ground detection doesnt always work (especially on edges, inclines etc)
     -> Use sphere casting instead of raycasting for ground detection?
 
-[ ] Unequipped item after switching item in action bar can be left in world if switching really fast
+[x] Unequipped item after switching item in action bar can be left in world if switching really fast
     (ie press 1 and 2 at the same time)
+    -> held item wasn't removed when selecting the already held item again
 
 [ ] Item Container as Player Inventory
 

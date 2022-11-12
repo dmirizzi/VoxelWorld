@@ -9,10 +9,15 @@ public class PlayerActionBarController : MonoBehaviour
     public ItemData[] ActionBarItems;
 
     public void SelectActionBarSlot(int index)
-    {
+    {       
+        if(CurrentlySelectedItem == ActionBarItems[index])
+        {
+            return;
+        }
+
         if(ActionBarItems[index] != null)
         {
-            if(CurrentlySelectedItem != null && CurrentlySelectedItem != ActionBarItems[index])
+            if(CurrentlySelectedItem != null)
             {
                 _playerHoldingController.RemoveHeldObject();
                 Destroy(_lastEquippedGameObject);
@@ -41,6 +46,7 @@ public class PlayerActionBarController : MonoBehaviour
         ActionBarItems[2] = ItemDataRepository.GetItemData("Dirt");
         ActionBarItems[3] = ItemDataRepository.GetItemData("Cobblestone");
         ActionBarItems[4] = ItemDataRepository.GetItemData("CobblestoneWedge");
+        ActionBarItems[5] = ItemDataRepository.GetItemData("Door");
 
         SelectActionBarSlot(0);
     }

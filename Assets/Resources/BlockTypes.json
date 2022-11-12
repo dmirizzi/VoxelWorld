@@ -55,6 +55,15 @@
             "Name": "CobblestoneWedge",
             "RenderType": "CustomMesh",
             "OpaqueFaces": ["Back", "Bottom"]
+        },
+        {
+            "Name": "Door",
+            "RenderType": "CustomMesh",
+            "OpaqueFaces": ["None"],
+            "FaceTextureTileCoords": {
+                "Top": [5, 0],
+                "Bottom": [5, 1]
+            }            
         }
     ]
 }

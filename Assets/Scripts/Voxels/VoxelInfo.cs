@@ -70,7 +70,7 @@ public static class VoxelInfo
 
         return new Vector2(
             (float)TextureTileSize / TextureAtlasWidth * tilePosCoords[0],
-            (float)TextureTileSize / TextureAtlasHeight * tilePosCoords[1]
+            -(float)TextureTileSize / TextureAtlasHeight * tilePosCoords[1]
         );
     }
     

@@ -15,7 +15,7 @@ public interface IBlockType
         ChunkMesh chunkMesh);
 
     // Called, when the chunk is (re)built. Any GameObject blocks needed shall be added to the chunk in this method.
-    void OnChunkBuild(Chunk chunk, Vector3Int localPosition);
+    void OnChunkBuild(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition);
 
     // Is called when the player attempts to place a block of this type. This will always be called before the build methods,
     // so that voxel auxiliary data can be set for building.

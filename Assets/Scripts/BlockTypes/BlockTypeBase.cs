@@ -23,25 +23,25 @@ public abstract class BlockTypeBase : IBlockType
 
     public abstract void OnChunkVoxelMeshBuild(VoxelWorld world, Chunk chunk, ushort voxelType, Vector3Int globalVoxelPos, Vector3Int localVoxelPos, ChunkMesh chunkMesh);
 
-    public abstract void OnChunkBuild(Chunk chunk, Vector3Int localPosition);
+    public abstract void OnChunkBuild(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition);
 
     public abstract bool OnRemove(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition);
 
     public abstract BlockFace GetForwardFace(VoxelWorld world, Vector3Int globalPosition);
 
-    protected T GetProperty<T>(Chunk chunk, Vector3Int localPos) where T : IBlockProperty
+    protected T GetProperty<T>(VoxelWorld world, Vector3Int globalPos) where T : IBlockProperty
     {
-        var auxData = chunk.GetAuxiliaryData(localPos);
+        var auxData = world.GetVoxelAuxiliaryData(globalPos);
         return auxData != null 
                 ? _blockProperties.Single(x => x is T).GetSerializer<T>().Deserialize(auxData.Value, _propertyTypeOffset[typeof(T)]) 
                 : default(T);
     }
 
-    protected void SetProperty<T>(Chunk chunk, Vector3Int localPos, T property) where T : IBlockProperty
+    protected void SetProperty<T>(VoxelWorld world, Vector3Int globalPos, T property) where T : IBlockProperty
     {
-        var oldAuxData = chunk.GetAuxiliaryData(localPos) ?? 0;
+        var oldAuxData = world.GetVoxelAuxiliaryData(globalPos) ?? 0;
         var newAuxData = property.GetSerializer<T>().Serialize(property, oldAuxData, _propertyTypeOffset[typeof(T)]);
-        chunk.SetAuxiliaryData(localPos, newAuxData);
+        world.SetVoxelAuxiliaryData(globalPos, newAuxData);
     }
 
     private List<IBlockProperty> _blockProperties;

@@ -32,16 +32,19 @@ public class WorldGenerator : MonoBehaviour
 
         VoxelWorld.Clear();
 
-        // for(int x = -64; x < 64; ++x)
-        // {
-        //     for(int z = -64; z < 64; ++z)
-        //     {
-        //         for(int y = 0; y <= 0; ++y)
-        //         {
-        //             VoxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Dirt"));
-        //         }
-        //     }
-        // }
+/*
+        var size = 8;
+        for(int x = -size; x < size; ++x)
+        {
+            for(int z = -size; z < size; ++z)
+            {
+                for(int y = 0; y <= 0; ++y)
+                {
+                    VoxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Dirt"));
+                }
+            }
+        }
+*/
 
         //VoxelWorld.AddLight(new Vector3Int(0, 1, 0), new Color32(255, 78, 203, 255), 20);
         //VoxelWorld.AddLight(new Vector3Int(30, 2, 0), new Color32(50, 255, 50, 255), 20);
@@ -60,7 +63,7 @@ public class WorldGenerator : MonoBehaviour
             _birthNeighbors,
             _deathNeighbors,
             _emptyChance
-        );
+        );       
 
         int numTorches = 10;
         for(int i = 0; i < numTorches; ++i)

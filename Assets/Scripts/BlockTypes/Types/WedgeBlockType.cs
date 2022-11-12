@@ -1,8 +1,9 @@
 using UnityEngine;
 
-class WedgeBlockType : IBlockType
+class WedgeBlockType : BlockTypeBase
 {
     public WedgeBlockType(ushort voxelType, ushort voxelTypeTexture)
+        : base( new PlacementFaceProperty() )
     {
         // Specific type of this voxel (e.g. CobblestoneWedge)
         _voxelType = voxelType;
@@ -12,16 +13,17 @@ class WedgeBlockType : IBlockType
         _voxelTypeTexture = voxelTypeTexture;
     }
 
-    public void OnChunkBuild(Chunk chunk, Vector3Int localPosition)
+    public override void OnChunkBuild(VoxelWorld world, Chunk chunk, Vector3Int globalPos, Vector3Int localPos)
     {
     }
 
-    public void OnChunkVoxelMeshBuild(VoxelWorld world, 
-                                      Chunk chunk, 
-                                      ushort blockType, 
-                                      Vector3Int globalVoxelPos, 
-                                      Vector3Int localVoxelPos, 
-                                      ChunkMesh chunkMesh)
+    public override void OnChunkVoxelMeshBuild(
+        VoxelWorld world, 
+        Chunk chunk, 
+        ushort blockType, 
+        Vector3Int globalVoxelPos, 
+        Vector3Int localVoxelPos, 
+        ChunkMesh chunkMesh)
     {
         var size = VoxelInfo.VoxelSize / 2f;
 
@@ -35,11 +37,11 @@ class WedgeBlockType : IBlockType
             new Vector3(-size, +size, +size)
         };
 
-        var placementFace = chunk.GetAuxiliaryData(localVoxelPos);
+        var placementFace = GetProperty<PlacementFaceProperty>(world, globalVoxelPos);
         var placementDir = Vector3.forward;
-        if(placementFace.HasValue)
+        if(placementFace != null)
         {
-            placementDir = BlockFaceHelper.GetVectorFromBlockFace((BlockFace)placementFace.Value);
+            placementDir = BlockFaceHelper.GetVectorFromBlockFace(placementFace.PlacementFace);
             cornerVertices = VoxelBuildHelper.PointVerticesTowards(cornerVertices, placementDir);
         }
 
@@ -84,12 +86,13 @@ class WedgeBlockType : IBlockType
         );
     }
 
-    public bool OnPlace(VoxelWorld world, 
-                        Chunk chunk, 
-                        Vector3Int globalPosition, 
-                        Vector3Int localPosition, 
-                        BlockFace? placementFace,
-                        BlockFace? lookDir)
+    public override bool OnPlace(
+        VoxelWorld world, 
+        Chunk chunk, 
+        Vector3Int globalPosition, 
+        Vector3Int localPosition, 
+        BlockFace? placementFace,
+        BlockFace? lookDir)
     {
         // Remember placement direction to build the torch on the right wall
         if(placementFace.HasValue)
@@ -102,21 +105,26 @@ class WedgeBlockType : IBlockType
             {
                 placementFace = lookDir;
             }
-            chunk.SetAuxiliaryData(localPosition, (byte)placementFace);
+
+            SetProperty<PlacementFaceProperty>(world, globalPosition, new PlacementFaceProperty(placementFace.Value));
         }
 
         return true;
     }
 
-    public bool OnRemove(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition)
+    public override bool OnRemove(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition)
     {
         return true;
     }
 
-    public BlockFace GetForwardFace(VoxelWorld world, Vector3Int globalPosition)
+    public override BlockFace GetForwardFace(VoxelWorld world, Vector3Int globalPos)
     {
-        var auxData = world.GetVoxelAuxiliaryData(globalPosition);
-        return (BlockFace)auxData;
+        var prop = GetProperty<PlacementFaceProperty>(world, globalPos);
+        if(prop != null)
+        {
+            return prop.PlacementFace;
+        }
+        return BlockFace.Back;
     }
 
     private ushort _voxelType;
