@@ -58,7 +58,6 @@ public class DoorBlockType : BlockTypeBase
     {
         var isSecondaryDoorBlock = GetProperty<DoorStateProperty>(world, globalPosition) != null;
 
-        // Remember placement direction to build the torch on the right wall
         if(lookDir.HasValue)
         {
             SetProperty<PlacementFaceProperty>(world, globalPosition, new PlacementFaceProperty(lookDir.Value));
@@ -70,60 +69,70 @@ public class DoorBlockType : BlockTypeBase
             return true;
         }
 
+        // Door can be placed looking at the floor or the ceiling or at sides of voxels
         bool isTopPart = false;
-        if(placementFace.HasValue)
+        Vector3Int secondaryDoorPartPos = Vector3Int.zero;
+        if(placementFace.HasValue && lookDir.HasValue)
         {
-            if(placementFace.Value == BlockFace.Bottom)
+            var placementFaceRelativeToView = BlockFaceHelper.RotateFaceY(placementFace.Value, lookDir.Value);
+            if(placementFaceRelativeToView == BlockFace.Bottom)
             {
                 isTopPart = false;
+                secondaryDoorPartPos = globalPosition + Vector3Int.up;
             }
-            else if(placementFace.Value == BlockFace.Top)
+            else if(placementFaceRelativeToView == BlockFace.Top)
             {
                 isTopPart = true;
-            }            
-            //TODO: Left/Right
+                secondaryDoorPartPos = globalPosition + Vector3Int.down;
+            }           
+            else if(placementFaceRelativeToView == BlockFace.Left || placementFaceRelativeToView == BlockFace.Right) 
+            {
+                if(world.GetVoxel(globalPosition + Vector3Int.down) != 0)
+                {
+                    isTopPart = false;
+                    secondaryDoorPartPos = globalPosition + Vector3Int.up;
+                }
+                else if(world.GetVoxel(globalPosition + Vector3Int.down * 2) != 0)
+                {
+                    isTopPart = true;
+                    secondaryDoorPartPos = globalPosition + Vector3Int.down;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
         }
 
-        if(isTopPart)
-        {            
-            SetProperty<DoorStateProperty>(world, globalPosition, new DoorStateProperty{
-                IsTopPart = true,
-                OpenState = DoorOpenState.Closed
-            });          
-            SetProperty<DoorStateProperty>(world, globalPosition + Vector3Int.down, new DoorStateProperty{
-                IsTopPart = false,
-                OpenState = DoorOpenState.Closed
-            });   
-       
-            world.SetVoxel(
-                globalPosition + Vector3Int.down,
-                _voxelType,
-                placementFace,
-                lookDir,
-                true);
-        }
-        else
-        {
-            SetProperty<DoorStateProperty>(world, globalPosition, new DoorStateProperty{
-                IsTopPart = false,
-                OpenState = DoorOpenState.Closed
-            });          
-            SetProperty<DoorStateProperty>(world, globalPosition + Vector3Int.up, new DoorStateProperty{
-                IsTopPart = true,
-                OpenState = DoorOpenState.Closed
-            });          
-
-            world.SetVoxel(
-                globalPosition + Vector3Int.up,
-                _voxelType,
-                placementFace,
-                lookDir,
-                true);
+        // Door must be placed on solid ground  
+        Vector3Int bottomPartPos = !isTopPart ? globalPosition : secondaryDoorPartPos;
+        if(world.GetVoxel(bottomPartPos + Vector3Int.down) == 0)
+        {          
+            return false;
         }
 
-        //TODO: Find top and bottom position of door based on placement face
+        SetProperty<DoorStateProperty>(world, globalPosition, new DoorStateProperty{
+            IsTopPart = isTopPart,
+            OpenState = DoorOpenState.Closed
+        });          
+        SetProperty<DoorStateProperty>(world, secondaryDoorPartPos, new DoorStateProperty{
+            IsTopPart = !isTopPart,
+            OpenState = DoorOpenState.Closed
+        });   
+    
+        // Place secondary part of the door
+        world.SetVoxel(
+            secondaryDoorPartPos,
+            _voxelType,
+            placementFace,
+            lookDir,
+            true);
+
         //TODO: Blocks around door have to be solid
-        //TODO: Place secondary door block -> how to avoid second one creating a mesh too? Dont go via OnPlace?
 
         return true;
     }

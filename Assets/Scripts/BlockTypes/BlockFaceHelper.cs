@@ -29,6 +29,12 @@ public static class BlockFaceHelper
         }
     }
 
+    public static BlockFace RotateFaceY(BlockFace face, BlockFace direction)
+    {
+        var angle = GetYAngleBetweenFaces(direction, BlockFace.Back);
+        return RotateFaceY(face, angle);
+    }
+
     public static BlockFace RotateFaceY(BlockFace face, int yAngleDeg)
     {
         var vec = Quaternion.Euler(0, yAngleDeg, 0) * GetVectorFromBlockFace(face);
