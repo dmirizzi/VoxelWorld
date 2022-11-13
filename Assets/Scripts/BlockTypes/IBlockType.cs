@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 // Allows custom logic for voxel geometry, placing, removing etc.
@@ -25,6 +24,9 @@ public interface IBlockType
     // Is called when the player attempts to remove/replace a block of this type.
     // Returns true if it can be removed, false otherwise
     bool OnRemove(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition);
+
+    // Is called when the player looks at and uses a specific voxel
+    bool OnUse(VoxelWorld world, Vector3Int globalPosition, BlockFace lookDir);
 
     // This needs to return the globally forward (i.e. in +z direction) facing voxel face, e.g. if a voxel
     // is rotated right, it needs to return left etc.

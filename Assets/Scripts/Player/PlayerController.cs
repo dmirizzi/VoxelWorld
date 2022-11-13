@@ -37,6 +37,11 @@ public class PlayerController : MonoBehaviour
         _controller.Move(_velocity * Time.deltaTime);
     } 
 
+    void OnGUI()
+    {
+        GUI.Label(new Rect(10, 10, 200, 18), $"LookDir={GetLookDir()}");
+    }
+
     private bool PlayerIntersectsVoxel(Vector3Int voxelPos)
     {
         var voxelSurfaceWorldPos = VoxelPosConverter.GetVoxelTopCenterSurfaceWorldPos(voxelPos);
@@ -83,6 +88,23 @@ public class PlayerController : MonoBehaviour
                 }
             }
         }
+        if(Input.GetButtonDown("Use"))
+        {
+            var world = _worldGen.VoxelWorld;
+            if(world != null)
+            {
+                var voxelPos = GetTargetedVoxelPos(false);
+                if(voxelPos.Item1.HasValue)
+                {
+                    var voxelType = world.GetVoxel(voxelPos.Item1.Value);
+                    var blockType = BlockTypeRegistry.GetBlockType(voxelType);
+                    if(blockType != null)
+                    {
+                        blockType.OnUse(_worldGen.VoxelWorld, voxelPos.Item1.Value, GetLookDir());
+                    }                    
+                }
+            }
+        }        
     }
 
     private void PlaceBlock(string blockType)
@@ -97,17 +119,18 @@ public class PlayerController : MonoBehaviour
                 if(!PlayerIntersectsVoxel(voxelPos.Item1.Value))
                 {
                     var placementDir = voxelPos.Item2.Value;
-                    var lookDir = BlockFaceHelper.GetBlockFaceFromVector(GetClosestCardinalLookDirection()).Value;
 
                     world.SetVoxelAndRebuild(
                         targetVoxelPos, 
                         BlockDataRepository.GetBlockTypeId(blockType), 
                         placementDir,
-                        lookDir);
+                        GetLookDir());
                 }                   
             }
         }
     }
+
+    private BlockFace GetLookDir() => BlockFaceHelper.GetBlockFaceFromVector(GetClosestCardinalLookDirection()).Value;
 
     private Vector3 GetClosestCardinalLookDirection()
     {

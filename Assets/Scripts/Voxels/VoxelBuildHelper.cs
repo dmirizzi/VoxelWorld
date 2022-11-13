@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 public static class VoxelBuildHelper
@@ -17,6 +16,26 @@ public static class VoxelBuildHelper
             result[i] = rotation * vertices[i];
         }
 
+        return result;
+    }
+
+    public static Vector3[] RotateVertices(Vector3[] vertices, Quaternion rotation)
+    {
+        var result = new Vector3[vertices.Length];
+        for(int i = 0; i < vertices.Length; ++i)
+        {
+            result[i] = rotation * vertices[i];
+        }
+        return result;
+    }
+
+    public static Vector3[] TranslateVertices(Vector3[] vertices, Vector3 translation)
+    {
+        var result = new Vector3[vertices.Length];
+        for(int i = 0; i < vertices.Length; ++i)
+        {
+            result[i] = vertices[i] + translation;
+        }
         return result;
     }
 

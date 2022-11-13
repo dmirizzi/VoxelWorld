@@ -74,7 +74,7 @@ public class PlayerActionBarController : MonoBehaviour
             {
                 txt = $"[[{txt}]]";
             }
-            GUI.Label(new Rect(10, 10 + i * 20, 200, 18), txt);
+            GUI.Label(new Rect(10, 40 + i * 20, 200, 18), txt);
         }
     }
 

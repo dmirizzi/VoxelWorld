@@ -27,6 +27,8 @@ public abstract class BlockTypeBase : IBlockType
 
     public abstract bool OnRemove(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition);
 
+    public abstract bool OnUse(VoxelWorld world, Vector3Int globalPosition, BlockFace lookDir);
+
     public abstract BlockFace GetForwardFace(VoxelWorld world, Vector3Int globalPosition);
 
     protected T GetProperty<T>(VoxelWorld world, Vector3Int globalPos) where T : IBlockProperty
@@ -42,6 +44,12 @@ public abstract class BlockTypeBase : IBlockType
         var oldAuxData = world.GetVoxelAuxiliaryData(globalPos) ?? 0;
         var newAuxData = property.GetSerializer<T>().Serialize(property, oldAuxData, _propertyTypeOffset[typeof(T)]);
         world.SetVoxelAuxiliaryData(globalPos, newAuxData);
+    }
+
+    protected void UpdateProperty<T>(VoxelWorld world, Vector3Int globalPos, Func<T, T> updateFunc) where T : IBlockProperty
+    {
+        var newAuxData = updateFunc(GetProperty<T>(world, globalPos));
+        SetProperty(world, globalPos, newAuxData);
     }
 
     private List<IBlockProperty> _blockProperties;

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading.Tasks;
 using UnityEngine;
 
 public class WorldGenerator : MonoBehaviour
@@ -32,7 +31,7 @@ public class WorldGenerator : MonoBehaviour
 
         VoxelWorld.Clear();
 
-/*
+
         var size = 8;
         for(int x = -size; x < size; ++x)
         {
@@ -44,12 +43,28 @@ public class WorldGenerator : MonoBehaviour
                 }
             }
         }
-*/
+
+        VoxelWorld.SetVoxel(-3, 1, 0, BlockDataRepository.GetBlockTypeId("Door"), BlockFace.Bottom, BlockFace.Left);
+        VoxelWorld.SetVoxel(-3, 3, 0, BlockDataRepository.GetBlockTypeId("Dirt"));
+        VoxelWorld.SetVoxel(-3, 4, 0, BlockDataRepository.GetBlockTypeId("Torch"));
+
+        VoxelWorld.SetVoxel(+3, 1, 0, BlockDataRepository.GetBlockTypeId("Door"), BlockFace.Bottom, BlockFace.Right);
+        VoxelWorld.SetVoxel(+3, 3, 0, BlockDataRepository.GetBlockTypeId("Dirt"));
+        VoxelWorld.SetVoxel(+3, 4, 0, BlockDataRepository.GetBlockTypeId("Torch"));
+
+        VoxelWorld.SetVoxel(0, 1, -3, BlockDataRepository.GetBlockTypeId("Door"), BlockFace.Bottom, BlockFace.Front);
+        VoxelWorld.SetVoxel(0, 3, -3, BlockDataRepository.GetBlockTypeId("Dirt"));
+        VoxelWorld.SetVoxel(0, 4, -3, BlockDataRepository.GetBlockTypeId("Torch"));
+
+        VoxelWorld.SetVoxel(0, 1, +3, BlockDataRepository.GetBlockTypeId("Door"), BlockFace.Bottom, BlockFace.Back);
+        VoxelWorld.SetVoxel(0, 3, +3, BlockDataRepository.GetBlockTypeId("Dirt"));
+        VoxelWorld.SetVoxel(0, 4, +3, BlockDataRepository.GetBlockTypeId("Torch"));
 
         //VoxelWorld.AddLight(new Vector3Int(0, 1, 0), new Color32(255, 78, 203, 255), 20);
         //VoxelWorld.AddLight(new Vector3Int(30, 2, 0), new Color32(50, 255, 50, 255), 20);
         //VoxelWorld.AddLight(new Vector3Int(15, 2, -10), new Color32(255, 255, 0, 255), 20);
 
+/*
         GenerateTerrain(64);
 
         GenerateCave(
@@ -80,7 +95,7 @@ public class WorldGenerator : MonoBehaviour
             // );
             PlaceTorch(pos);
         }
-
+*/
         VoxelWorld.BuildChangedChunks();
         PlacePlayer();
 

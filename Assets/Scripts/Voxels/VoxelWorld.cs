@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -249,6 +248,13 @@ public class VoxelWorld
                 return new Vector3Int(x, y.Value, z);
             }
         }
+    }
+
+    public void RebuildVoxel(Vector3Int globalVoxelPos)
+    {
+        var chunkPos = GetChunkFromVoxelPosition(globalVoxelPos, true).ChunkPos;
+        _changedChunks.Add(chunkPos);
+        BuildChangedChunks();
     }
 
     public void BuildChangedChunks()

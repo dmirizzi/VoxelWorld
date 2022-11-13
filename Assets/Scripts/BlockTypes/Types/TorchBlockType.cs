@@ -61,5 +61,10 @@ public class TorchBlockType : BlockTypeBase
         return BlockFace.Back;
     }
 
+    public override bool OnUse(VoxelWorld world, Vector3Int globalPosition, BlockFace lookDir)
+    {
+        return true;
+    }
+
     private GameObject _torchPrefab;
 }

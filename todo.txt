@@ -12,6 +12,13 @@
 
 [ ] Reverse implementations for overloads with Vector vs (x,y,z) where unnecessary vector is created
 
+[ ] Refactor Voxel Mesh Building (e.g. DoorBlockType, WedgeBlockType)
+    -> VoxelMeshBuilder Class
+    -> Add vertices, uvs
+    -> Add triangles, quads
+    -> Rotate, Translate
+    -> Build & add to chunk
+
 ----------------------------------------------------------------------------------------------------------------
     Graphics / Rendering
 ----------------------------------------------------------------------------------------------------------------
@@ -33,11 +40,12 @@
 
     [ ] Removing torch doesn't restore original lighting before it was placed
 
+    [ ] Lights don't propagate properly across chunk borders anymore?!
+
     [ ] Improper color attenuation when using colors with inequal components (something 255, 50, 10) 
         -> Needs to attenuate faster the higher the color is
         -> Or: Instead use a hue/brightness color model?
 
-    [ ] Removing lights
     [ ] Recalculating light map on added solid voxel
 
 [ ] Dynamic Lighting 
@@ -128,6 +136,7 @@ Items / Blocks
 [x] Torch
     [x] Integrate torches into chunk infrastructure
     [x] Torch can be placed on walls
+    [ ] Don't allow placing torches on movable blocks like doors
     [ ] Torch base object not affected by torch light
     [ ] Torch particles should always flow towards global up, regardless of torch rotation
     [ ] Remove torch if block it is attached to is removed
