@@ -1,7 +1,24 @@
 using UnityEngine;
 
-public static class VoxelPosConverter
+public static class VoxelPosHelper
 {
+    public static bool WorldPosIsOnVoxelSurface(Vector3 worldPos)
+    {
+        for(var i = 0; i < 3; ++i)
+        {
+            var fraction = Mathf.Abs(worldPos[i] - Mathf.Floor(worldPos[i]));
+            if(fraction < 0.00001f || fraction > 0.99999f)
+            {
+                // For some reason, sometimes floor(x) rounds down to the lower integer (e.g. 14 -> 13)
+                // which causes (x - floor(x)) to be close to 1, so we need to check both whether the diff
+                // is either close to 0 or close to 1
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public static Vector3Int GetVoxelPosFromWorldPos(Vector3 worldPos)
     {
         // Correct for voxels in negative space - they are offset by 1 compared to positive space

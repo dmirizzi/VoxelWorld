@@ -29,6 +29,18 @@ public static class VoxelBuildHelper
         return result;
     }
 
+    public static Vector3[] RotateVerticesAround(Vector3[] vertices, Vector3 pivotPoint, Vector3 axis, float angle)
+    {
+        var rotation = Quaternion.AngleAxis(angle, axis);
+
+        var result = new Vector3[vertices.Length];
+        for(int i = 0; i < vertices.Length; ++i)
+        {
+            result[i] = rotation * (vertices[i] - pivotPoint) + pivotPoint;
+        }
+        return result;
+    }
+
     public static Vector3[] TranslateVertices(Vector3[] vertices, Vector3 translation)
     {
         var result = new Vector3[vertices.Length];

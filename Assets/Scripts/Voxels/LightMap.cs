@@ -20,7 +20,7 @@ public class LightMap
         {
             return;
         }
-        firstChunk.SetLightChannelValue(VoxelPosConverter.GlobalToChunkLocalVoxelPos(lightPos), channel, intensity);
+        firstChunk.SetLightChannelValue(VoxelPosHelper.GlobalToChunkLocalVoxelPos(lightPos), channel, intensity);
 
         var lightNodes = new Queue<LightNode>();
         lightNodes.Enqueue(new LightNode 
@@ -64,7 +64,7 @@ public class LightMap
         {
             return;
         }
-        var localPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(lightPos);
+        var localPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(lightPos);
         var lightLevel = firstChunk.GetLightChannelValue(localPos, channel);
         firstChunk.SetLightChannelValue(localPos, channel, 0);
 
@@ -96,7 +96,7 @@ public class LightMap
                 var neighborChunk = _world.GetChunkFromVoxelPosition(neighborGlobalPos.x, neighborGlobalPos.y, neighborGlobalPos.z, true);
                 if(neighborChunk != null)
                 {
-                    var localNeighborPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(neighborGlobalPos);
+                    var localNeighborPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(neighborGlobalPos);
                     var neighborLightLevel = neighborChunk.GetLightChannelValue(localNeighborPos, channel);
                     if(neighborLightLevel > 0 && neighborLightLevel < removeLightNode.LightLevel)                
                     {
@@ -129,7 +129,7 @@ public class LightMap
 
             visitedChunks.Add(node.Chunk);
 
-            var localPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(node.GlobalPos);
+            var localPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(node.GlobalPos);
             var currentLightLevel = node.Chunk.GetLightChannelValue(localPos, channel);           
 
             foreach(var dir in fillDirections)
@@ -145,7 +145,7 @@ public class LightMap
                 var neighborChunk = _world.GetChunkFromVoxelPosition(neighborGlobalPos.x, neighborGlobalPos.y, neighborGlobalPos.z, true);
                 if(neighborChunk != null)
                 {
-                    var localNeighborPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(neighborGlobalPos);
+                    var localNeighborPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(neighborGlobalPos);
                     if(neighborChunk.GetLightChannelValue(localNeighborPos, channel) + 2 <= currentLightLevel)
                     {
                         neighborChunk.SetLightChannelValue(localNeighborPos, channel, currentLightLevel * LightAttenuationFactor );

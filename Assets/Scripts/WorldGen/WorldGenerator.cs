@@ -31,7 +31,7 @@ public class WorldGenerator : MonoBehaviour
 
         VoxelWorld.Clear();
 
-
+/*
         var size = 8;
         for(int x = -size; x < size; ++x)
         {
@@ -43,7 +43,9 @@ public class WorldGenerator : MonoBehaviour
                 }
             }
         }
+*/
 
+/*
         VoxelWorld.SetVoxel(-3, 1, 0, BlockDataRepository.GetBlockTypeId("Door"), BlockFace.Bottom, BlockFace.Left);
         VoxelWorld.SetVoxel(-3, 3, 0, BlockDataRepository.GetBlockTypeId("Dirt"));
         VoxelWorld.SetVoxel(-3, 4, 0, BlockDataRepository.GetBlockTypeId("Torch"));
@@ -59,14 +61,15 @@ public class WorldGenerator : MonoBehaviour
         VoxelWorld.SetVoxel(0, 1, +3, BlockDataRepository.GetBlockTypeId("Door"), BlockFace.Bottom, BlockFace.Back);
         VoxelWorld.SetVoxel(0, 3, +3, BlockDataRepository.GetBlockTypeId("Dirt"));
         VoxelWorld.SetVoxel(0, 4, +3, BlockDataRepository.GetBlockTypeId("Torch"));
-
+*/
         //VoxelWorld.AddLight(new Vector3Int(0, 1, 0), new Color32(255, 78, 203, 255), 20);
         //VoxelWorld.AddLight(new Vector3Int(30, 2, 0), new Color32(50, 255, 50, 255), 20);
         //VoxelWorld.AddLight(new Vector3Int(15, 2, -10), new Color32(255, 255, 0, 255), 20);
 
-/*
+
         GenerateTerrain(64);
 
+/*
         GenerateCave(
             new Vector3Int(0, 0, 0),
             new Vector3Int(
@@ -79,6 +82,7 @@ public class WorldGenerator : MonoBehaviour
             _deathNeighbors,
             _emptyChance
         );       
+*/
 
         int numTorches = 10;
         for(int i = 0; i < numTorches; ++i)
@@ -95,7 +99,7 @@ public class WorldGenerator : MonoBehaviour
             // );
             PlaceTorch(pos);
         }
-*/
+
         VoxelWorld.BuildChangedChunks();
         PlacePlayer();
 
@@ -299,7 +303,7 @@ public class WorldGenerator : MonoBehaviour
     private void PlacePlayer()
     {
         var pos = VoxelWorld.GetRandomSolidSurfaceVoxel();
-        var worldPos = VoxelPosConverter.GetVoxelTopCenterSurfaceWorldPos(pos) + Vector3.up;
+        var worldPos = VoxelPosHelper.GetVoxelTopCenterSurfaceWorldPos(pos) + Vector3.up;
 
         var characterController = GameObject.Find("Player").GetComponent<CharacterController>();
         characterController.enabled = false;

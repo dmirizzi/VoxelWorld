@@ -13,6 +13,15 @@ public static class BlockFaceHelper
         { Vector3.left,     BlockFace.Left },
         { Vector3.right,    BlockFace.Right }
     };
+    private static Dictionary<Vector3Int, BlockFace> _mappingInt = new Dictionary<Vector3Int, BlockFace>()
+    {
+        { Vector3Int.up,       BlockFace.Top },
+        { Vector3Int.down,     BlockFace.Bottom },
+        { Vector3Int.back,     BlockFace.Front },
+        { Vector3Int.forward,  BlockFace.Back },
+        { Vector3Int.left,     BlockFace.Left },
+        { Vector3Int.right,    BlockFace.Right }
+    };
 
     public static BlockFaceSelector ToBlockFaceSelector(BlockFace face)
     {
@@ -70,6 +79,11 @@ public static class BlockFaceHelper
     public static Vector3 GetVectorFromBlockFace(BlockFace face)
     {
         return _mapping.Single(kv => kv.Value == face).Key;
+    }
+
+    public static Vector3Int GetVectorIntFromBlockFace(BlockFace face)
+    {
+        return _mappingInt.Single(kv => kv.Value == face).Key;
     }
 
     public static BlockFace GetOppositeFace(BlockFace face)

@@ -35,7 +35,7 @@ public class NpcSpawnController : MonoBehaviour
     {
         if(NumBlobs < TargetNumberBlobs && _worldGen.WorldGenerated)
         {
-            var pos = VoxelPosConverter.GetVoxelTopCenterSurfaceWorldPos(GetRandomSolidSurfaceVoxel());
+            var pos = VoxelPosHelper.GetVoxelTopCenterSurfaceWorldPos(GetRandomSolidSurfaceVoxel());
             pos += Vector3.up * (BlobPrefab.GetComponent<Renderer>().bounds.size.y / 2);
             Instantiate(BlobPrefab, pos, new Quaternion());
             NumBlobs++;

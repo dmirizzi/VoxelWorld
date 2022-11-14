@@ -36,7 +36,7 @@ public class VoxelWorld
     {
         var globalPos = new Vector3Int(x, y, z);
         var chunk = GetChunkFromVoxelPosition(x, y, z, true);
-        var chunkLocalPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(globalPos);
+        var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(globalPos);
 
         var oldVoxelType = chunk.GetVoxel(chunkLocalPos);
         if(!chunk.SetVoxel(chunkLocalPos, type, placementDir, lookDir, useExistingAuxData))
@@ -156,7 +156,7 @@ public class VoxelWorld
         {
             return new Color32(0, 0, 0, 0);
         }
-        var chunkLocalPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(pos);
+        var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(pos);
         return new Color32
         (
             (byte)(Mathf.Clamp(chunk.GetLightChannelValue(chunkLocalPos, 0), 0, 255)),
@@ -169,14 +169,14 @@ public class VoxelWorld
     public void SetVoxelAuxiliaryData(Vector3Int pos, ushort auxData)
     {
         var chunk = GetChunkFromVoxelPosition(pos.x, pos.y, pos.z, true);
-        var chunkLocalPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(pos);
+        var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(pos);
         chunk.SetAuxiliaryData(chunkLocalPos, auxData);
     }
 
     public void ClearVoxelAuxiliaryData(Vector3Int pos)
     {
         var chunk = GetChunkFromVoxelPosition(pos.x, pos.y, pos.z, true);
-        var chunkLocalPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(pos);
+        var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(pos);
         chunk.ClearAuxiliaryData(chunkLocalPos);
     }
 
@@ -192,7 +192,7 @@ public class VoxelWorld
         {
             return null;
         }
-        var chunkLocalPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(new Vector3Int(x, y, z));
+        var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(new Vector3Int(x, y, z));
         return chunk.GetAuxiliaryData(chunkLocalPos);
     }
 
@@ -203,7 +203,7 @@ public class VoxelWorld
         {
             return 0;
         }
-        var chunkLocalPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(new Vector3Int(x, y, z));
+        var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(new Vector3Int(x, y, z));
         return chunk.GetVoxel(chunkLocalPos);
     }
 
@@ -227,8 +227,8 @@ public class VoxelWorld
             maxBound.z = Mathf.Max(maxBound.z, chunkPos.z);
         }
 
-        minBound = VoxelPosConverter.ChunkToBaseVoxelPos(minBound);
-        maxBound = VoxelPosConverter.ChunkToBaseVoxelPos(maxBound) 
+        minBound = VoxelPosHelper.ChunkToBaseVoxelPos(minBound);
+        maxBound = VoxelPosHelper.ChunkToBaseVoxelPos(maxBound) 
                     + new Vector3Int(VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize);
 
         return (minBound, maxBound);
@@ -300,12 +300,12 @@ public class VoxelWorld
     public int? GetHighestVoxelPos(int x, int z)
     {
         var voxelXZPos = new Vector3Int(x, 0, z);
-        var chunkXZPos = VoxelPosConverter.VoxelToChunkPos(voxelXZPos);
+        var chunkXZPos = VoxelPosHelper.VoxelToChunkPos(voxelXZPos);
         var chunkPositions = _chunks.Keys
             .Where(c => c.x == chunkXZPos.x && c.z == chunkXZPos.z)
             .OrderByDescending(c => c.y);
 
-        var localVoxelPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(voxelXZPos);
+        var localVoxelPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(voxelXZPos);
         foreach(var chunkPos in chunkPositions)
         {
             var chunk = _chunks[chunkPos];
@@ -313,7 +313,7 @@ public class VoxelWorld
             {
                 if(chunk.GetVoxel(localVoxelPos.x, y, localVoxelPos.z) != 0)
                 {
-                    return VoxelPosConverter.ChunkLocalVoxelPosToGlobal(
+                    return VoxelPosHelper.ChunkLocalVoxelPosToGlobal(
                         new Vector3Int(localVoxelPos.x, y, localVoxelPos.z),
                         chunkPos
                     ).y;
@@ -332,8 +332,8 @@ public class VoxelWorld
     {
         var adjacentChunks = new List<Vector3Int>();
 
-        var localPos = VoxelPosConverter.GlobalToChunkLocalVoxelPos(voxelPos);
-        var chunkPos = VoxelPosConverter.VoxelToChunkPos(voxelPos);
+        var localPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(voxelPos);
+        var chunkPos = VoxelPosHelper.VoxelToChunkPos(voxelPos);
 
         adjacentChunks.Add(chunkPos);
 
@@ -356,7 +356,7 @@ public class VoxelWorld
     public Chunk GetChunkFromVoxelPosition(int x, int y, int z, bool create)
     {
         var voxelPos = new Vector3Int(x, y, z);
-        var chunkPos = VoxelPosConverter.VoxelToChunkPos(voxelPos);
+        var chunkPos = VoxelPosHelper.VoxelToChunkPos(voxelPos);
 
         lock(_chunkCreationLock)
         {

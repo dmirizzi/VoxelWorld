@@ -53,7 +53,7 @@ public class Chunk
             _blockGameObject.Remove(localPos);
         }
 
-        var globalPos = VoxelPosConverter.ChunkLocalVoxelPosToGlobal(localPos, ChunkPos);
+        var globalPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(localPos, ChunkPos);
 
         // Execute remove logic on old block if available
         var oldVoxelType = _chunkData[localPos.x, localPos.y, localPos.z];
@@ -99,7 +99,7 @@ public class Chunk
         }
         _blockGameObject[localPos] = obj;
         obj.transform.parent = ChunkGameObject.transform;
-        obj.transform.localPosition = VoxelPosConverter.GetVoxelCenterSurfaceWorldPos(localPos);
+        obj.transform.localPosition = VoxelPosHelper.GetVoxelCenterSurfaceWorldPos(localPos);
     }
 
     public void AddVoxelMeshGameObjects(params GameObject[] gameObjects)
@@ -142,7 +142,7 @@ public class Chunk
                     if(blockType != null)
                     {
                         var localPos = new Vector3Int(x, y, z);
-                        var globalPos = VoxelPosConverter.ChunkLocalVoxelPosToGlobal(localPos, ChunkPos);
+                        var globalPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(localPos, ChunkPos);
                         blockType.OnChunkBuild(_voxelWorld, this, globalPos, localPos);
                     }
                 }                
@@ -173,7 +173,7 @@ public class Chunk
     private void CreateNewChunkGameObject()
     {
         _chunkGameObject = new GameObject($"Chunk[{ChunkPos.x}|{ChunkPos.y}|{ChunkPos.z}]");
-        var chunkVoxelPos = VoxelPosConverter.ChunkToBaseVoxelPos(ChunkPos);
+        var chunkVoxelPos = VoxelPosHelper.ChunkToBaseVoxelPos(ChunkPos);
         _chunkGameObject.transform.position = chunkVoxelPos;
     }
 

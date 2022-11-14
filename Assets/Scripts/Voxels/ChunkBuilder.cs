@@ -28,7 +28,7 @@ public class ChunkBuilder
     {
         _world = world;
         ChunkPos = chunkPos;
-        _chunkVoxelPos = VoxelPosConverter.ChunkToBaseVoxelPos(chunkPos);
+        _chunkVoxelPos = VoxelPosHelper.ChunkToBaseVoxelPos(chunkPos);
         _chunk = chunk;
         _textureAtlasMaterial = textureAtlasMaterial;
         _textureAtlasTransparentMaterial = textureAtlasTransparentMaterial;
@@ -134,7 +134,7 @@ public class ChunkBuilder
         for(int vi = 0; vi < _solidMesh.Vertices.Count; ++vi)
         {
             var localVoxelPos = Vector3Int.RoundToInt(_solidMesh.Vertices[vi]);
-            var globalVoxelPos = VoxelPosConverter.ChunkLocalVoxelPosToGlobal(localVoxelPos, _chunk.ChunkPos)
+            var globalVoxelPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(localVoxelPos, _chunk.ChunkPos)
                                     + Vector3Int.FloorToInt(_solidMesh.Normals[vi]);
 
             //TODO: Would be faster to get light value direct from chunk and surrounding chunks

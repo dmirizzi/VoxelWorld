@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using UnityEngine;
 
@@ -39,12 +40,15 @@ public class PlayerController : MonoBehaviour
 
     void OnGUI()
     {
-        GUI.Label(new Rect(10, 10, 200, 18), $"LookDir={GetLookDir()}");
+        var targetedVoxel = GetTargetedVoxelPos(false);
+        var targetedVoxelType = targetedVoxel.Item1.HasValue ? _worldGen?.VoxelWorld.GetVoxel(targetedVoxel.Item1.Value) : null;
+
+        GUI.Label(new Rect(10, 10, 1500, 18), $"LookDir={GetLookDir()} | TargetedVoxelType: {targetedVoxelType}");
     }
 
     private bool PlayerIntersectsVoxel(Vector3Int voxelPos)
     {
-        var voxelSurfaceWorldPos = VoxelPosConverter.GetVoxelTopCenterSurfaceWorldPos(voxelPos);
+        var voxelSurfaceWorldPos = VoxelPosHelper.GetVoxelTopCenterSurfaceWorldPos(voxelPos);
 
         var hits = Physics.BoxCastAll(
             voxelSurfaceWorldPos, 
@@ -119,6 +123,11 @@ public class PlayerController : MonoBehaviour
                 if(!PlayerIntersectsVoxel(voxelPos.Item1.Value))
                 {
                     var placementDir = voxelPos.Item2.Value;
+
+                    if(world.GetVoxel(targetVoxelPos) != 0)
+                    {
+                        return;
+                    }
 
                     world.SetVoxelAndRebuild(
                         targetVoxelPos, 
@@ -211,9 +220,25 @@ public class PlayerController : MonoBehaviour
             if(hitInfo.distance <= MaxInteractionDistance)
             {
                 _debugLastHit = hitInfo.point;
-                var normalDirection = surfaceVoxel ? 0.5f : -0.5f;
-                var voxelCenterWorldPos = hitInfo.point + hitInfo.normal * normalDirection;
-                var voxelPos = VoxelPosConverter.GetVoxelPosFromWorldPos(voxelCenterWorldPos);
+                _debugLastHitNormal = hitInfo.normal;
+
+                Vector3Int voxelPos;
+                _debugTargetingVoxelSurface = VoxelPosHelper.WorldPosIsOnVoxelSurface(hitInfo.point);
+                if(VoxelPosHelper.WorldPosIsOnVoxelSurface(hitInfo.point))
+                {
+                    // If the ray hits right on the grid border between two voxels, the normal determines
+                    // which voxel will be targeted
+                    var normalDirection = surfaceVoxel ? 0.5f : -0.5f;
+                    var voxelCenterWorldPos = hitInfo.point + hitInfo.normal * normalDirection;
+                    voxelPos = VoxelPosHelper.GetVoxelPosFromWorldPos(voxelCenterWorldPos);                    
+                }
+                else
+                {
+                    // Otherwise if our hitpoint is inside a voxel, there is no ambiguity
+                    voxelPos = VoxelPosHelper.GetVoxelPosFromWorldPos(hitInfo.point);
+                }
+
+                _debugLastTargetVoxel = new Vector3(voxelPos.x, voxelPos.y, voxelPos.z);
 
                 var voxelFace = BlockFaceHelper.GetBlockFaceFromVector(hitInfo.normal.normalized);
                 if(voxelFace.HasValue)
@@ -253,12 +278,26 @@ public class PlayerController : MonoBehaviour
 
     private Vector3? _debugLastHit;
 
+    private Vector3? _debugLastTargetVoxel;
+
     private Vector3? _lastPlacedVoxel;
+
+    private Vector3? _debugLastHitNormal;
+
+    private bool _debugTargetingVoxelSurface;
 
     void OnDrawGizmos()
     {
         //if(_lastPlacedVoxel != null) Gizmos.DrawCube(_lastPlacedVoxel.Value, Vector3.one);
-        //if(_debugLastRay != null) Gizmos.DrawRay(_debugLastRay.Value);
-        //if(_debugLastHit != null) Gizmos.DrawSphere(_debugLastHit.Value, .15f);
+        if(_debugLastRay != null) Gizmos.DrawRay(_debugLastRay.Value);
+        if(_debugLastHit != null) 
+        {
+            Gizmos.DrawSphere(_debugLastHit.Value, .075f);
+            if(_debugLastHitNormal != null)
+            {
+                Gizmos.DrawRay(_debugLastHit.Value, _debugLastHitNormal.Value);
+            }
+        }
+        if(_debugLastTargetVoxel != null) Gizmos.DrawWireCube(_debugLastTargetVoxel.Value + Vector3.one * 0.5f, Vector3.one);
     }
 }

@@ -139,13 +139,13 @@ public class BlobController : MonoBehaviour
             return;
         }
 
-        var voxelPos = VoxelPosConverter.GetVoxelPosFromWorldPos(transform.position) + randomOffset;
+        var voxelPos = VoxelPosHelper.GetVoxelPosFromWorldPos(transform.position) + randomOffset;
 
         var y = _worldGen.VoxelWorld.GetHighestVoxelPos(voxelPos.x, voxelPos.z);
 
         if(y.HasValue)
         {
-            Destination = VoxelPosConverter.GetVoxelTopCenterSurfaceWorldPos(new Vector3Int(
+            Destination = VoxelPosHelper.GetVoxelTopCenterSurfaceWorldPos(new Vector3Int(
                 voxelPos.x,
                 y.Value,
                 voxelPos.z
