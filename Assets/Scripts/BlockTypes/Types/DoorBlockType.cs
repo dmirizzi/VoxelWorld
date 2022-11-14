@@ -208,8 +208,6 @@ public class DoorBlockType : BlockTypeBase
             lookDir,
             true);
 
-        //TODO: Blocks around door have to be solid
-
         return true;
     }
 
