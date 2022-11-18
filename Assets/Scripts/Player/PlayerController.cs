@@ -381,8 +381,10 @@ public class PlayerController : MonoBehaviour
         // Movement
         var forward = Input.GetAxis("Vertical");
         var right = Input.GetAxis("Horizontal");
-        var forwardXZ = new Vector3(CameraTransform.forward.x, 0, CameraTransform.forward.z).normalized;
-        var rightXZ = new Vector3(CameraTransform.right.x, 0, CameraTransform.right.z).normalized;
+        var movementY = (_climbingCounter > 0) ? CameraTransform.forward.y : 0;
+
+        var forwardXZ = new Vector3(CameraTransform.forward.x, movementY, CameraTransform.forward.z).normalized;
+        var rightXZ = new Vector3(CameraTransform.right.x, movementY, CameraTransform.right.z).normalized;
         _controller.Move((forwardXZ * forward + rightXZ * right) * WalkingSpeed * Time.deltaTime);
     }
 
@@ -399,6 +401,9 @@ public class PlayerController : MonoBehaviour
         else if(_climbingCounter == 0)
         {
             _velocity += Physics.gravity * Time.deltaTime * GravityFactor;
+        }
+        else{
+            _velocity = Vector3.zero;
         }
     }
 
