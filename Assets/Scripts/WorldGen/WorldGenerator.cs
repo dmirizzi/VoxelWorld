@@ -30,36 +30,19 @@ public class WorldGenerator : MonoBehaviour
         sw.Start();
 
         VoxelWorld.Clear();
-
-        var size = 8;
-        for(int x = -size; x < size; ++x)
-        {
-            for(int z = -size; z < size; ++z)
-            {
-                for(int y = 0; y <= 0; ++y)
+        /*
+                var size = 8;
+                for(int x = -size; x < size; ++x)
                 {
-                    VoxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Dirt"));
+                    for(int z = -size; z < size; ++z)
+                    {
+                        for(int y = 0; y <= 0; ++y)
+                        {
+                            VoxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Dirt"));
+                        }
+                    }
                 }
-            }
-        }
-
-/*
-        VoxelWorld.SetVoxel(-3, 1, 0, BlockDataRepository.GetBlockTypeId("Door"), BlockFace.Bottom, BlockFace.Left);
-        VoxelWorld.SetVoxel(-3, 3, 0, BlockDataRepository.GetBlockTypeId("Dirt"));
-        VoxelWorld.SetVoxel(-3, 4, 0, BlockDataRepository.GetBlockTypeId("Torch"));
-
-        VoxelWorld.SetVoxel(+3, 1, 0, BlockDataRepository.GetBlockTypeId("Door"), BlockFace.Bottom, BlockFace.Right);
-        VoxelWorld.SetVoxel(+3, 3, 0, BlockDataRepository.GetBlockTypeId("Dirt"));
-        VoxelWorld.SetVoxel(+3, 4, 0, BlockDataRepository.GetBlockTypeId("Torch"));
-
-        VoxelWorld.SetVoxel(0, 1, -3, BlockDataRepository.GetBlockTypeId("Door"), BlockFace.Bottom, BlockFace.Front);
-        VoxelWorld.SetVoxel(0, 3, -3, BlockDataRepository.GetBlockTypeId("Dirt"));
-        VoxelWorld.SetVoxel(0, 4, -3, BlockDataRepository.GetBlockTypeId("Torch"));
-
-        VoxelWorld.SetVoxel(0, 1, +3, BlockDataRepository.GetBlockTypeId("Door"), BlockFace.Bottom, BlockFace.Back);
-        VoxelWorld.SetVoxel(0, 3, +3, BlockDataRepository.GetBlockTypeId("Dirt"));
-        VoxelWorld.SetVoxel(0, 4, +3, BlockDataRepository.GetBlockTypeId("Torch"));
-*/
+        */
         //VoxelWorld.AddLight(new Vector3Int(0, 1, 0), new Color32(255, 78, 203, 255), 20);
         //VoxelWorld.AddLight(new Vector3Int(30, 2, 0), new Color32(50, 255, 50, 255), 20);
         //VoxelWorld.AddLight(new Vector3Int(15, 2, -10), new Color32(255, 255, 0, 255), 20);
@@ -67,42 +50,37 @@ public class WorldGenerator : MonoBehaviour
 
         GenerateTerrain(128);
 
-/*
-        GenerateCave(
-            new Vector3Int(0, 0, 0),
-            new Vector3Int(
-                UnityEngine.Random.Range(32, 128),
-                UnityEngine.Random.Range(32, 128), 
-                UnityEngine.Random.Range(32, 128)
-            ),
-            _iterations,
-            _birthNeighbors,
-            _deathNeighbors,
-            _emptyChance
-        );       
-*/
+        /*
+                GenerateCave(
+                    new Vector3Int(0, 0, 0),
+                    new Vector3Int(
+                        UnityEngine.Random.Range(32, 128),
+                        UnityEngine.Random.Range(32, 128), 
+                        UnityEngine.Random.Range(32, 128)
+                    ),
+                    _iterations,
+                    _birthNeighbors,
+                    _deathNeighbors,
+                    _emptyChance
+                );       
+        */
 
-        int numTorches = 10;
-        for(int i = 0; i < numTorches; ++i)
-        {
-            var pos = VoxelWorld.GetRandomSolidSurfaceVoxel();
-            // VoxelWorld.AddLight(
-            //     pos,
-            //     new Color32(
-            //         (byte)UnityEngine.Random.Range(0, 256),
-            //         (byte)UnityEngine.Random.Range(0, 256),
-            //         (byte)UnityEngine.Random.Range(0, 256),
-            //         255),
-            //     16        
-            // );
-            PlaceTorch(pos);
-        }
+        GenerateTorches(32);
 
         VoxelWorld.BuildChangedChunks();
         PlacePlayer();
 
         sw.Stop();
         UnityEngine.Debug.Log($"Generated world in {sw.Elapsed.TotalSeconds} sec");
+    }
+
+    private void GenerateTorches(int numTorches)
+    {
+        for (int i = 0; i < numTorches; ++i)
+        {
+            var worldPos = VoxelWorld.GetRandomSolidSurfaceVoxel() + Vector3Int.up;
+            VoxelWorld.SetVoxel(worldPos, BlockDataRepository.GetBlockTypeId("Torch"));
+        }
     }
 
     private void GenerateTerrain(int size)
@@ -290,12 +268,6 @@ public class WorldGenerator : MonoBehaviour
         }
 
         return (numCells, output);
-    }
-
-    private void PlaceTorch(Vector3Int voxelPos)
-    {
-        var worldPos = voxelPos + Vector3Int.up;
-        VoxelWorld.SetVoxel(worldPos, BlockDataRepository.GetBlockTypeId("Torch"));
     }
 
     private void PlacePlayer()

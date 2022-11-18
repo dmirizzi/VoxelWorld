@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -122,6 +123,10 @@ public class VoxelWorld
             color.b
         };
 
+        var sw = new Stopwatch();
+        sw.Start();
+
+        // Calculate lightmap on a separate task for each color channel
         var taskFactory = new TaskFactory();
         var tasks = new Task[3];
         for(int channel = 0; channel < 3; ++channel)
@@ -136,17 +141,23 @@ public class VoxelWorld
             }
         };
 
-        Task.WhenAll(tasks).ContinueWith( _ => 
+        Task.WaitAll(tasks);
+        sw.Stop();
+        UnityEngine.Debug.Log($"Lightmap update: {sw.ElapsedMilliseconds}ms");
+
+        sw.Restart();
+
+        var allAffectedChunks = affectedChunks.Aggregate((x, y) => x.Union(y).ToHashSet<Chunk>());
+        foreach(var chunk in allAffectedChunks)
         {
-            var lightUpdateTasks = new List<Task>();
-            foreach(var chunk in affectedChunks.OrderByDescending(x => x.Count).First())
+            if(_chunkBuilders.ContainsKey(chunk.ChunkPos))
             {
-                if(_chunkBuilders.ContainsKey(chunk.ChunkPos))
-                {
-                    _chunkBuilders[chunk.ChunkPos].UpdateLightVertexColors();
-                }            
-            }
-        });
+                _chunkBuilders[chunk.ChunkPos].UpdateLightVertexColors();
+            }            
+        }
+
+        sw.Stop();
+        UnityEngine.Debug.Log($"Lightmap Voxel Color update: {sw.ElapsedMilliseconds}ms");
     }
 
     public Color32 GetLightValue(Vector3Int pos)
