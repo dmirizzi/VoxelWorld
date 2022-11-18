@@ -13,10 +13,6 @@ class WedgeBlockType : BlockTypeBase
         _voxelTypeTexture = voxelTypeTexture;
     }
 
-    public override void OnChunkBuild(VoxelWorld world, Chunk chunk, Vector3Int globalPos, Vector3Int localPos)
-    {
-    }
-
     public override void OnChunkVoxelMeshBuild(
         VoxelWorld world, 
         Chunk chunk, 
@@ -42,14 +38,11 @@ class WedgeBlockType : BlockTypeBase
         if(placementFace != null)
         {
             placementDir = BlockFaceHelper.GetVectorFromBlockFace(placementFace.PlacementFace);
-            cornerVertices = VoxelBuildHelper.PointVerticesTowards(cornerVertices, placementDir);
+            VoxelBuildHelper.PointVerticesTowardsInPlace(cornerVertices, placementDir);
         }
 
         var basePos = localVoxelPos + new Vector3(size, size, size);
-        for(int i = 0; i < cornerVertices.Length; ++i)
-        {
-            cornerVertices[i] += basePos;
-        }
+        VoxelBuildHelper.TranslateVerticesInPlace(cornerVertices, basePos);
 
         int vertexBaseIdx = chunkMesh.Vertices.Count;
         var tileUV = VoxelBuildHelper.GetUVsForVoxelType(_voxelTypeTexture, BlockFace.Bottom);
@@ -94,7 +87,7 @@ class WedgeBlockType : BlockTypeBase
         BlockFace? placementFace,
         BlockFace? lookDir)
     {
-        // Remember placement direction to build the torch on the right wall
+        // Remember placement direction to build the wedge on the right wall
         if(placementFace.HasValue)
         {
             if(placementFace == BlockFace.Top)
@@ -112,11 +105,6 @@ class WedgeBlockType : BlockTypeBase
         return true;
     }
 
-    public override bool OnRemove(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition)
-    {
-        return true;
-    }
-
     public override BlockFace GetForwardFace(VoxelWorld world, Vector3Int globalPos)
     {
         var prop = GetProperty<PlacementFaceProperty>(world, globalPos);
@@ -125,11 +113,6 @@ class WedgeBlockType : BlockTypeBase
             return prop.PlacementFace;
         }
         return BlockFace.Back;
-    }
-
-    public override bool OnUse(VoxelWorld world, Vector3Int globalPosition, BlockFace lookDir)
-    {
-        return true;
     }
 
     private ushort _voxelType;

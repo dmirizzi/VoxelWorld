@@ -64,6 +64,14 @@
                 "Top": [5, 0],
                 "Bottom": [5, 1]
             }            
+        },
+        {
+            "Name": "Ladder",
+            "RenderType": "CustomMesh",
+            "OpaqueFaces": ["None"],
+            "FaceTextureTileCoords": {
+                "Default": [6, 0]
+            }            
         }
     ]
 }

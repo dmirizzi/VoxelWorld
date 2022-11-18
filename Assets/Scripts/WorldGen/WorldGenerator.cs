@@ -31,7 +31,6 @@ public class WorldGenerator : MonoBehaviour
 
         VoxelWorld.Clear();
 
-/*
         var size = 8;
         for(int x = -size; x < size; ++x)
         {
@@ -43,7 +42,6 @@ public class WorldGenerator : MonoBehaviour
                 }
             }
         }
-*/
 
 /*
         VoxelWorld.SetVoxel(-3, 1, 0, BlockDataRepository.GetBlockTypeId("Door"), BlockFace.Bottom, BlockFace.Left);
@@ -67,7 +65,7 @@ public class WorldGenerator : MonoBehaviour
         //VoxelWorld.AddLight(new Vector3Int(15, 2, -10), new Color32(255, 255, 0, 255), 20);
 
 
-        GenerateTerrain(64);
+        GenerateTerrain(128);
 
 /*
         GenerateCave(

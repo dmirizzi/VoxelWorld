@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public static class VoxelBuildHelper
@@ -19,35 +20,53 @@ public static class VoxelBuildHelper
         return result;
     }
 
-    public static Vector3[] RotateVertices(Vector3[] vertices, Quaternion rotation)
+    public static void PointVerticesTowardsInPlace(Vector3[] vertices, Vector3 direction)
     {
-        var result = new Vector3[vertices.Length];
+        var rotation = Quaternion.FromToRotation(Vector3.forward, direction);
+        rotation = Quaternion.Euler(0f, rotation.eulerAngles.y, 0f);
+
         for(int i = 0; i < vertices.Length; ++i)
         {
-            result[i] = rotation * vertices[i];
+            vertices[i] = rotation * vertices[i];
         }
-        return result;
     }
 
-    public static Vector3[] RotateVerticesAround(Vector3[] vertices, Vector3 pivotPoint, Vector3 axis, float angle)
+    public static void RotateVertices(Vector3[] vertices, Quaternion rotation)
+    {
+        for(int i = 0; i < vertices.Length; ++i)
+        {
+            vertices[i] = rotation * vertices[i];
+        }
+    }
+
+    public static void RotateVerticesAroundInPlace(Vector3[] vertices, Vector3 pivotPoint, Vector3 axis, float angle)
     {
         var rotation = Quaternion.AngleAxis(angle, axis);
 
-        var result = new Vector3[vertices.Length];
         for(int i = 0; i < vertices.Length; ++i)
         {
-            result[i] = rotation * (vertices[i] - pivotPoint) + pivotPoint;
+            vertices[i] = rotation * (vertices[i] - pivotPoint) + pivotPoint;
         }
-        return result;
+    }
+
+    public static void TranslateVerticesInPlace(Vector3[] vertices, Vector3 translation)
+    {
+        for(int i = 0; i < vertices.Length; ++i)
+        {
+            vertices[i] = vertices[i] + translation;
+        }
     }
 
     public static Vector3[] TranslateVertices(Vector3[] vertices, Vector3 translation)
     {
         var result = new Vector3[vertices.Length];
-        for(int i = 0; i < vertices.Length; ++i)
+        int i = 0;
+
+        foreach(var vertex in vertices)
         {
-            result[i] = vertices[i] + translation;
+            result[i++] = vertex + translation;
         }
+
         return result;
     }
 

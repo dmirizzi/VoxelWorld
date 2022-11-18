@@ -25,8 +25,14 @@ public interface IBlockType
     // Returns true if it can be removed, false otherwise
     bool OnRemove(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition);
 
-    // Is called when the player looks at and uses a specific voxel
+    // Is called when the player looks at and uses a specific block of this type
     bool OnUse(VoxelWorld world, Vector3Int globalPosition, BlockFace lookDir);
+
+    // Called when the player starts touching a specific block of this type
+    void OnTouchStart(VoxelWorld world, Vector3Int globalPosition, PlayerController player);
+
+    // Called when the player stops touching a specific block of this type
+    void OnTouchEnd(VoxelWorld world, Vector3Int globalPosition, PlayerController player);
 
     // This needs to return the globally forward (i.e. in +z direction) facing voxel face, e.g. if a voxel
     // is rotated right, it needs to return left etc.

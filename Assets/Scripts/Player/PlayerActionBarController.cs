@@ -47,6 +47,7 @@ public class PlayerActionBarController : MonoBehaviour
         ActionBarItems[3] = ItemDataRepository.GetItemData("Cobblestone");
         ActionBarItems[4] = ItemDataRepository.GetItemData("CobblestoneWedge");
         ActionBarItems[5] = ItemDataRepository.GetItemData("Door");
+        ActionBarItems[6] = ItemDataRepository.GetItemData("Ladder");
 
         SelectActionBarSlot(0);
     }

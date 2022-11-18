@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
 
@@ -16,6 +18,9 @@ public class PlayerController : MonoBehaviour
 
     public Transform CameraTransform;
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Unity Event Methods
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     void Start()
     {
         _controller = GetComponent<CharacterController>();
@@ -34,17 +39,159 @@ public class PlayerController : MonoBehaviour
         HandleMovement();
         HandleJumping();
         HandleWorldInteractions();
+        
+        //TODO: Maybe a better approach would be to use colliders for custom blocks?
+        //TODO: - Determine potentially touched voxels (via full block size)
+        //TODO: - If not a custom block -> just simple box collision
+        //TODO: - If custom block -> either get collider from BlockType or place colliders in the chunk at build?
+        HandleTouchedVoxels();
+
+        //_dbgVoxelCollider = VoxelPosHelper.GetVoxelPosFromWorldPos(transform.position);
+/*
+        var hits = Physics.CapsuleCastAll(
+            transform.position + Vector3.down * _controller.height * 0.5f,
+            transform.position + Vector3.up * _controller.height * 0.5f,
+            _controller.radius,
+            transform.forward,
+            1.0f,
+            LayerMask.GetMask("Voxels"),
+            QueryTriggerInteraction.Collide
+        );
+*/
 
         _controller.Move(_velocity * Time.deltaTime);
     } 
-
     void OnGUI()
     {
         var targetedVoxel = GetTargetedVoxelPos(false);
         var targetedVoxelType = targetedVoxel.Item1.HasValue ? _worldGen?.VoxelWorld.GetVoxel(targetedVoxel.Item1.Value) : null;
-
+        
         GUI.Label(new Rect(10, 10, 1500, 18), $"LookDir={GetLookDir()} | TargetedVoxelType: {targetedVoxelType}");
     }
+
+    void OnDrawGizmos()
+    {
+        if(_dbgLastRay != null) Gizmos.DrawRay(_dbgLastRay.Value);
+        if(_dbgLastHit != null) 
+        {
+            Gizmos.DrawSphere(_dbgLastHit.Value, .075f);
+            if(_dbgLastHitNormal != null)
+            {
+                Gizmos.DrawRay(_dbgLastHit.Value, _dbgLastHitNormal.Value);
+            }
+        }
+        if(_dbgLastTargetVoxel != null) Gizmos.DrawWireCube(_dbgLastTargetVoxel.Value + Vector3.one * 0.5f, Vector3.one);
+
+        foreach(var point in _dbgCollisionPoints)
+        {
+            Gizmos.DrawCube(point + Vector3.one * 0.5f, Vector3.one);
+        }
+
+        foreach(var ray in _dbgCollisionRays)
+        {
+            Gizmos.DrawRay(ray.Item1, ray.Item2);
+        }
+
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // External access to player control
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    public void UpdateClimbingCounter(int delta)
+    {
+        _climbingCounter += delta;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Voxel-player interactions
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    private void HandleTouchedVoxels()
+    {
+        var currentTouchedVoxelPositions = GetTouchedVoxelPositions();
+        _dbgCollisionPoints = currentTouchedVoxelPositions.Select( x => (Vector3)x).ToList();
+
+        var addedTouchedVoxelPositions = currentTouchedVoxelPositions.Except(_lastTouchedVoxels);
+        foreach(var addedVoxelPos in addedTouchedVoxelPositions)
+        {
+            var voxel = _worldGen.VoxelWorld.GetVoxel(addedVoxelPos);
+            if(voxel != 0)
+            {
+                var blockType = BlockTypeRegistry.GetBlockType(voxel);
+                if(blockType != null)
+                {
+                    blockType.OnTouchStart(_worldGen.VoxelWorld, addedVoxelPos, this);
+                }
+            }
+        }
+
+        var removedTouchedVoxelPositions = _lastTouchedVoxels.Except(currentTouchedVoxelPositions);
+        foreach(var removedVoxelPos in removedTouchedVoxelPositions)
+        {
+            var voxel = _worldGen.VoxelWorld.GetVoxel(removedVoxelPos);
+            if(voxel != 0)
+            {
+                var blockType = BlockTypeRegistry.GetBlockType(voxel);
+                if(blockType != null)
+                {
+                    blockType.OnTouchEnd(_worldGen.VoxelWorld, removedVoxelPos, this);
+                }
+            }
+        }
+
+        _lastTouchedVoxels = currentTouchedVoxelPositions;
+    }
+
+    private HashSet<Vector3Int> GetTouchedVoxelPositions()
+    {                
+        _dbgCollisionRays = new List<(Vector3, Vector3)>();
+
+        int numRays = 8;
+        float anglePerRay = 360f / numRays;
+
+        var voxels = new HashSet<Vector3Int>();
+
+        var position = transform.position + Vector3.up * _controller.height / 4;
+
+        for(int y = 0; y <= 1; ++y )
+        {
+            for(float angle = 0f; angle <= 360f; angle += anglePerRay)
+            {
+                var direction = Quaternion.Euler(0, angle, 0) * Vector3.forward;
+
+/*
+                var hitSomething = Physics.Raycast(
+                    position,
+                    direction,
+                    out var hit,
+                    _controller.radius + 0.1f,
+                    LayerMask.GetMask("Voxels"),
+                    QueryTriggerInteraction.Collide
+
+*/            
+                var hitSomething = Physics.SphereCast(
+                    position,
+                    .2f,
+                    direction,
+                    out var hit,
+                    _controller.radius,
+                    LayerMask.GetMask("Voxels"),
+                    QueryTriggerInteraction.Collide
+                );
+
+                if(hitSomething)
+                {
+                    voxels.Add(GetVoxelPosFromWorldPos(hit.point, hit.normal, false));
+                }
+
+                _dbgCollisionRays.Add((position, direction));
+            }
+
+            position += Vector3.down * _controller.height / 2;
+        }
+
+        return voxels;
+    }    
 
     private bool PlayerIntersectsVoxel(Vector3Int voxelPos)
     {
@@ -57,6 +204,7 @@ public class PlayerController : MonoBehaviour
             Quaternion.identity,
             0.5f
         );
+
         if(hits.Length > 0)
         {
             if(hits.Any(h => h.transform.gameObject == gameObject))
@@ -139,6 +287,64 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private Vector3Int GetVoxelPosFromWorldPos(Vector3 point, Vector3 normal, bool surfaceVoxel)
+    {
+        if(VoxelPosHelper.WorldPosIsOnVoxelSurface(point))
+        {
+            // If the ray hits right on the grid border between two voxels, the normal determines
+            // which voxel will be targeted
+            var normalDirection = surfaceVoxel ? 0.5f : -0.5f;
+            var voxelCenterWorldPos = point + normal * normalDirection;
+            return VoxelPosHelper.GetVoxelPosFromWorldPos(voxelCenterWorldPos);                    
+        }
+        else
+        {
+            // Otherwise if our hitpoint is inside a voxel, there is no ambiguity
+            var voxelPos = VoxelPosHelper.GetVoxelPosFromWorldPos(point);
+            if(surfaceVoxel)
+            {
+                voxelPos += Vector3Int.FloorToInt(normal.normalized);
+            }
+            return voxelPos;
+        }
+    }
+
+    private (Vector3Int?, BlockFace?) GetTargetedVoxelPos(bool surfaceVoxel)
+    {
+        _dbgLastRay = new Ray(CameraTransform.position, CameraTransform.forward);
+        _dbgLastHit = null;
+        if(Physics.Raycast(
+            CameraTransform.position, 
+            CameraTransform.forward, 
+            out var hitInfo, 
+            LayerMask.GetMask("Voxels")))
+        {
+            if(hitInfo.distance <= MaxInteractionDistance)
+            {
+                _dbgLastHit = hitInfo.point;
+                _dbgLastHitNormal = hitInfo.normal;
+
+                var voxelPos = GetVoxelPosFromWorldPos(hitInfo.point, hitInfo.normal, surfaceVoxel);
+                
+                _dbgTargetingVoxelSurface = VoxelPosHelper.WorldPosIsOnVoxelSurface(hitInfo.point);               
+                _dbgLastTargetVoxel = new Vector3(voxelPos.x, voxelPos.y, voxelPos.z);
+
+                var voxelFace = BlockFaceHelper.GetBlockFaceFromVector(hitInfo.normal.normalized);
+                if(voxelFace.HasValue)
+                {
+                    voxelFace = BlockFaceHelper.GetOppositeFace(voxelFace.Value);
+                }
+                else
+                {
+                    voxelFace = BlockFaceHelper.GetBlockFaceFromVector(GetClosestCardinalLookDirection());
+                }
+
+                return (voxelPos, voxelFace);
+            }
+        }
+        return (null, null);
+    }
+
     private BlockFace GetLookDir() => BlockFaceHelper.GetBlockFaceFromVector(GetClosestCardinalLookDirection()).Value;
 
     private Vector3 GetClosestCardinalLookDirection()
@@ -166,6 +372,9 @@ public class PlayerController : MonoBehaviour
         return closestDir;
     }
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Movement
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     private void HandleMouseLook()
     {
         var my = Input.GetAxis("Mouse Y") * Sensitivity;
@@ -201,59 +410,10 @@ public class PlayerController : MonoBehaviour
                 _velocity = Vector3.up * JumpForce;
             }
         }
-        else
+        else if(_climbingCounter == 0)
         {
             _velocity += Physics.gravity * Time.deltaTime * GravityFactor;
         }
-    }
-
-    private (Vector3Int?, BlockFace?) GetTargetedVoxelPos(bool surfaceVoxel)
-    {
-        _debugLastRay = new Ray(CameraTransform.position, CameraTransform.forward);
-        _debugLastHit = null;
-        if(Physics.Raycast(
-            CameraTransform.position, 
-            CameraTransform.forward, 
-            out var hitInfo, 
-            LayerMask.GetMask("Voxels")))
-        {
-            if(hitInfo.distance <= MaxInteractionDistance)
-            {
-                _debugLastHit = hitInfo.point;
-                _debugLastHitNormal = hitInfo.normal;
-
-                Vector3Int voxelPos;
-                _debugTargetingVoxelSurface = VoxelPosHelper.WorldPosIsOnVoxelSurface(hitInfo.point);
-                if(VoxelPosHelper.WorldPosIsOnVoxelSurface(hitInfo.point))
-                {
-                    // If the ray hits right on the grid border between two voxels, the normal determines
-                    // which voxel will be targeted
-                    var normalDirection = surfaceVoxel ? 0.5f : -0.5f;
-                    var voxelCenterWorldPos = hitInfo.point + hitInfo.normal * normalDirection;
-                    voxelPos = VoxelPosHelper.GetVoxelPosFromWorldPos(voxelCenterWorldPos);                    
-                }
-                else
-                {
-                    // Otherwise if our hitpoint is inside a voxel, there is no ambiguity
-                    voxelPos = VoxelPosHelper.GetVoxelPosFromWorldPos(hitInfo.point);
-                }
-
-                _debugLastTargetVoxel = new Vector3(voxelPos.x, voxelPos.y, voxelPos.z);
-
-                var voxelFace = BlockFaceHelper.GetBlockFaceFromVector(hitInfo.normal.normalized);
-                if(voxelFace.HasValue)
-                {
-                    voxelFace = BlockFaceHelper.GetOppositeFace(voxelFace.Value);
-                }
-                else
-                {
-                    voxelFace = BlockFaceHelper.GetBlockFaceFromVector(GetClosestCardinalLookDirection());
-                }
-
-                return (voxelPos, voxelFace);
-            }
-        }
-        return (null, null);
     }
 
     private bool IsGrounded()
@@ -266,6 +426,10 @@ public class PlayerController : MonoBehaviour
             LayerMask.GetMask("Voxels"));
     }
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Private attributes
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     private CharacterController _controller;
 
     private PlayerActionBarController _actionBar;
@@ -274,30 +438,24 @@ public class PlayerController : MonoBehaviour
 
     private WorldGenerator _worldGen;
 
-    private Ray? _debugLastRay;
+    private HashSet<Vector3Int> _lastTouchedVoxels = new HashSet<Vector3Int>();
 
-    private Vector3? _debugLastHit;
+    private int _climbingCounter;
 
-    private Vector3? _debugLastTargetVoxel;
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Debug Gizmo Stuff
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    private Ray? _dbgLastRay;
 
-    private Vector3? _lastPlacedVoxel;
+    private Vector3? _dbgLastHit;
 
-    private Vector3? _debugLastHitNormal;
+    private Vector3? _dbgLastTargetVoxel;
 
-    private bool _debugTargetingVoxelSurface;
+    private Vector3? _dbgLastHitNormal;
 
-    void OnDrawGizmos()
-    {
-        //if(_lastPlacedVoxel != null) Gizmos.DrawCube(_lastPlacedVoxel.Value, Vector3.one);
-        if(_debugLastRay != null) Gizmos.DrawRay(_debugLastRay.Value);
-        if(_debugLastHit != null) 
-        {
-            Gizmos.DrawSphere(_debugLastHit.Value, .075f);
-            if(_debugLastHitNormal != null)
-            {
-                Gizmos.DrawRay(_debugLastHit.Value, _debugLastHitNormal.Value);
-            }
-        }
-        if(_debugLastTargetVoxel != null) Gizmos.DrawWireCube(_debugLastTargetVoxel.Value + Vector3.one * 0.5f, Vector3.one);
-    }
+    private bool _dbgTargetingVoxelSurface;
+
+    private List<(Vector3, Vector3)> _dbgCollisionRays = new List<(Vector3, Vector3)>();
+
+    private List<Vector3> _dbgCollisionPoints = new List<Vector3>();
 }

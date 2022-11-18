@@ -14,6 +14,7 @@ public class BlockTypeRegistry
         _blockTypeMap[5] = new TorchBlockType();
         _blockTypeMap[6] = new WedgeBlockType(6, 4);
         _blockTypeMap[7] = new DoorBlockType(7);
+        _blockTypeMap[8] = new LadderBlockType();
     }
 
     public static IBlockType GetBlockType(ushort type)

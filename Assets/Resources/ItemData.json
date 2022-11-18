@@ -24,6 +24,10 @@
         {
             "Name": "Door",
             "BlockType": "Door"
+        },
+        {
+            "Name": "Ladder",
+            "BlockType": "Ladder"
         }
     ]
 }

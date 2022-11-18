@@ -19,15 +19,19 @@ public abstract class BlockTypeBase : IBlockType
         }
     }
 
-    public abstract bool OnPlace(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition, BlockFace? placementFace, BlockFace? lookDir);
+    public virtual bool OnPlace(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition, BlockFace? placementFace, BlockFace? lookDir) { return true; }
 
-    public abstract void OnChunkVoxelMeshBuild(VoxelWorld world, Chunk chunk, ushort voxelType, Vector3Int globalVoxelPos, Vector3Int localVoxelPos, ChunkMesh chunkMesh);
+    public virtual void OnChunkVoxelMeshBuild(VoxelWorld world, Chunk chunk, ushort voxelType, Vector3Int globalVoxelPos, Vector3Int localVoxelPos, ChunkMesh chunkMesh) {}
 
-    public abstract void OnChunkBuild(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition);
+    public virtual void OnChunkBuild(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition) {}
 
-    public abstract bool OnRemove(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition);
+    public virtual bool OnRemove(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition) { return true; }
 
-    public abstract bool OnUse(VoxelWorld world, Vector3Int globalPosition, BlockFace lookDir);
+    public virtual bool OnUse(VoxelWorld world, Vector3Int globalPosition, BlockFace lookDir) { return true; }
+
+    public virtual void OnTouchStart(VoxelWorld world, Vector3Int globalPosition, PlayerController player) {}
+
+    public virtual void OnTouchEnd(VoxelWorld world, Vector3Int globalPosition, PlayerController player) {}
 
     public abstract BlockFace GetForwardFace(VoxelWorld world, Vector3Int globalPosition);
 

@@ -20,6 +20,19 @@ public class ChunkMesh
 
     public List<int> Triangles { get; }
 
+    public void AddMesh(VoxelMesh mesh, Vector3 localBasePos, Vector3 dir)
+    {
+        int vertexBaseIdx = Vertices.Count;
+
+        var vertices = VoxelBuildHelper.PointVerticesTowards(mesh.Vertices, dir);
+        VoxelBuildHelper.TranslateVerticesInPlace(vertices, localBasePos + new Vector3(0.5f, 0f, 0.5f));
+
+        Vertices.AddRange(vertices);
+        Normals.AddRange(mesh.Normals);
+        UVCoordinates.AddRange(mesh.UVs);
+        Triangles.AddRange(mesh.Triangles.Select( idx => idx + vertexBaseIdx));
+    }
+
     public void AddBox(Vector3 centerPos, Vector3 size, Vector2[] uvCoordinates, Vector3 direction)
     {
         var cornerVertices = new Vector3[]
@@ -34,7 +47,7 @@ public class ChunkMesh
             new Vector3(-size.x, +size.y, +size.z)
         };
 
-        cornerVertices = VoxelBuildHelper.PointVerticesTowards(cornerVertices, direction);
+        VoxelBuildHelper.PointVerticesTowards(cornerVertices, direction);
 
         for(int i = 0; i < cornerVertices.Length; ++i)
         {

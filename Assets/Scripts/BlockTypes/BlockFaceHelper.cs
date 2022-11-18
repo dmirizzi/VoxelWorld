@@ -38,6 +38,11 @@ public static class BlockFaceHelper
         }
     }
 
+    public static Vector3 GetVectorRelativeToFace(BlockFace face, BlockFace dir)
+    {
+        return GetVectorFromBlockFace(RotateFaceY(face, dir));
+    }
+
     public static BlockFace RotateFaceY(BlockFace face, BlockFace direction)
     {
         var angle = GetYAngleBetweenFaces(direction, BlockFace.Back);

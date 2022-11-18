@@ -20,10 +20,6 @@ public class DoorBlockType : BlockTypeBase
         return BlockFace.Back;
     }
 
-    public override void OnChunkBuild(VoxelWorld world, Chunk chunk, Vector3Int globalPos, Vector3Int localPos)
-    {
-    }
-
     public override void OnChunkVoxelMeshBuild(
         VoxelWorld world, 
         Chunk chunk, 
@@ -59,18 +55,18 @@ public class DoorBlockType : BlockTypeBase
         // Rotate door if it's open
         if(doorStateProp.IsOpen)
         {
-            cornerVertices = VoxelBuildHelper.RotateVerticesAround(cornerVertices, Vector3.left, Vector3.up, -90);
-            cornerVertices = VoxelBuildHelper.TranslateVertices(cornerVertices, Vector3.right * (size + depth) + Vector3.back * (size + depth));
+            VoxelBuildHelper.RotateVerticesAroundInPlace(cornerVertices, Vector3.left, Vector3.up, -90);
+            VoxelBuildHelper.TranslateVerticesInPlace(cornerVertices, Vector3.right * (size + depth) + Vector3.back * (size + depth));
         }
 
         // Rotate door according to placement direction
         var placementFaceProp = GetProperty<PlacementFaceProperty>(world, globalPos);
         var placementDir = placementFaceProp != null ? placementFaceProp.PlacementFace : BlockFace.Back;
         var doorBackVec =  BlockFaceHelper.GetVectorFromBlockFace(placementDir);
-        cornerVertices = VoxelBuildHelper.PointVerticesTowards(cornerVertices, doorBackVec);
+        VoxelBuildHelper.PointVerticesTowardsInPlace(cornerVertices, doorBackVec);
 
         var basePos = localPos + new Vector3(size, size, size) - doorBackVec * (size - depth);
-        cornerVertices = VoxelBuildHelper.TranslateVertices(cornerVertices, basePos);
+        VoxelBuildHelper.TranslateVerticesInPlace(cornerVertices, basePos);
 
         var tileUVs = VoxelBuildHelper.GetUVsForVoxelType(_voxelType, doorStateProp.IsTopPart ? BlockFace.Top : BlockFace.Bottom);
 

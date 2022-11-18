@@ -19,6 +19,8 @@
     -> Rotate, Translate
     -> Build & add to chunk
 
+[ ] Force specifying lookDir & placementDir on SetVoxel? All the HasValue checks are annoying
+
 ----------------------------------------------------------------------------------------------------------------
     Graphics / Rendering
 ----------------------------------------------------------------------------------------------------------------

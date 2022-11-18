@@ -7,10 +7,6 @@ public class TorchBlockType : BlockTypeBase
         _torchPrefab = (GameObject)Resources.Load("Prefabs/Torch", typeof(GameObject));
     }
     
-    public override void OnChunkVoxelMeshBuild(VoxelWorld world, Chunk chunk, ushort voxelType, Vector3Int globalVoxelPos, Vector3Int localVoxelPos, ChunkMesh chunkMesh)
-    {
-    }
-
     public override void OnChunkBuild(VoxelWorld world, Chunk chunk, Vector3Int globalPos, Vector3Int localPos)
     {
         var torch = GameObject.Instantiate(_torchPrefab, Vector3.zero, Quaternion.identity);
@@ -59,11 +55,6 @@ public class TorchBlockType : BlockTypeBase
     public override BlockFace GetForwardFace(VoxelWorld world, Vector3Int globalPosition)
     {
         return BlockFace.Back;
-    }
-
-    public override bool OnUse(VoxelWorld world, Vector3Int globalPosition, BlockFace lookDir)
-    {
-        return true;
     }
 
     private GameObject _torchPrefab;
