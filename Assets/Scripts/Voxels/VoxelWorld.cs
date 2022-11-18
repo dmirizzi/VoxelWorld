@@ -14,17 +14,22 @@ public class VoxelWorld
         _lightMap = new LightMap(this);
         _textureAtlasMaterial = textureAtlasMaterial;
         _textureAtlasTransparentMaterial = textureAtlasTransparentMaterial;
+        _queuedChunkLightMapUpdates = new Queue<Vector3Int>();
     }
 
-    public void SetVoxelAndRebuild(Vector3Int pos, ushort type, BlockFace? placementDir = null, BlockFace? lookDir = null)
+    public void Update()
     {
-        SetVoxel(pos.x, pos.y, pos.z, type, placementDir, lookDir);
-        BuildChangedChunks();
-    }
+        lock(_queuedChunkLightMapUpdates)
+        {
+            while(_queuedChunkLightMapUpdates.TryDequeue(out var chunkPos))
+            {
+                if(_chunkBuilders.ContainsKey(chunkPos))
+                {
+                    _chunkBuilders[chunkPos].UpdateLightVertexColors();
+                }            
+            }
+        }
 
-    public void SetVoxelAndRebuild(int x, int y, int z, ushort type, BlockFace? placementDir = null, BlockFace? lookDir = null)
-    {
-        SetVoxel(x, y, z, type, placementDir, lookDir);
         BuildChangedChunks();
     }
 
@@ -123,9 +128,6 @@ public class VoxelWorld
             color.b
         };
 
-        var sw = new Stopwatch();
-        sw.Start();
-
         // Calculate lightmap on a separate task for each color channel
         var taskFactory = new TaskFactory();
         var tasks = new Task[3];
@@ -141,23 +143,11 @@ public class VoxelWorld
             }
         };
 
-        Task.WaitAll(tasks);
-        sw.Stop();
-        UnityEngine.Debug.Log($"Lightmap update: {sw.ElapsedMilliseconds}ms");
-
-        sw.Restart();
-
-        var allAffectedChunks = affectedChunks.Aggregate((x, y) => x.Union(y).ToHashSet<Chunk>());
-        foreach(var chunk in allAffectedChunks)
+        Task.WhenAll(tasks).ContinueWith( _ => 
         {
-            if(_chunkBuilders.ContainsKey(chunk.ChunkPos))
-            {
-                _chunkBuilders[chunk.ChunkPos].UpdateLightVertexColors();
-            }            
-        }
-
-        sw.Stop();
-        UnityEngine.Debug.Log($"Lightmap Voxel Color update: {sw.ElapsedMilliseconds}ms");
+            var allAffectedChunks = affectedChunks.SelectMany(x => x).Select(x => x.ChunkPos).Distinct();
+            QueueChunksForLightmapUpdate(allAffectedChunks);
+        });        
     }
 
     public Color32 GetLightValue(Vector3Int pos)
@@ -265,13 +255,17 @@ public class VoxelWorld
     {
         var chunkPos = GetChunkFromVoxelPosition(globalVoxelPos, true).ChunkPos;
         _changedChunks.Add(chunkPos);
-        BuildChangedChunks();
     }
 
     public void BuildChangedChunks()
     {
         var builders = new List<ChunkBuilder>();
         var builderTasks = new List<Task>();
+
+        if(_changedChunks.Count == 0)
+        {
+            return;
+        }
 
         foreach(var chunkPos in _changedChunks)
         {
@@ -339,6 +333,17 @@ public class VoxelWorld
         return _chunks.Keys;
     }
 
+    private void QueueChunksForLightmapUpdate(IEnumerable<Vector3Int> chunkPositions)
+    {
+        lock(_queuedChunkLightMapUpdates)
+        {
+            foreach(var chunkPos in chunkPositions)
+            {
+                _queuedChunkLightMapUpdates.Enqueue(chunkPos);
+            }
+        }
+    }
+
     private List<Vector3Int> GetChunksAdjacentToVoxel(Vector3Int voxelPos)
     {
         var adjacentChunks = new List<Vector3Int>();
@@ -394,6 +399,8 @@ public class VoxelWorld
     private Dictionary<Vector3Int, ChunkBuilder> _chunkBuilders;
 
     private LightMap _lightMap;
+
+    private Queue<Vector3Int> _queuedChunkLightMapUpdates;
 
     private HashSet<Vector3Int> _changedChunks;
 

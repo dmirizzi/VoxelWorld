@@ -317,6 +317,8 @@ public class WorldGenerator : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        VoxelWorld.Update();
+
         /*
         if((DateTime.Now - lastDrop).Milliseconds >= 10)
         {

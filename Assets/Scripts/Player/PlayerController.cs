@@ -226,7 +226,7 @@ public class PlayerController : MonoBehaviour
                 var voxelPos = GetTargetedVoxelPos(false);
                 if(voxelPos.Item1.HasValue)
                 {
-                    world.SetVoxelAndRebuild(voxelPos.Item1.Value, 0);
+                    world.SetVoxel(voxelPos.Item1.Value, 0);
                 }
             }
         }
@@ -267,7 +267,7 @@ public class PlayerController : MonoBehaviour
                         return;
                     }
 
-                    world.SetVoxelAndRebuild(
+                    world.SetVoxel(
                         targetVoxelPos, 
                         BlockDataRepository.GetBlockTypeId(blockType), 
                         placementDir,
