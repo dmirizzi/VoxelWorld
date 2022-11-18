@@ -45,20 +45,6 @@ public class PlayerController : MonoBehaviour
         //TODO: - If not a custom block -> just simple box collision
         //TODO: - If custom block -> either get collider from BlockType or place colliders in the chunk at build?
         HandleTouchedVoxels();
-
-        //_dbgVoxelCollider = VoxelPosHelper.GetVoxelPosFromWorldPos(transform.position);
-/*
-        var hits = Physics.CapsuleCastAll(
-            transform.position + Vector3.down * _controller.height * 0.5f,
-            transform.position + Vector3.up * _controller.height * 0.5f,
-            _controller.radius,
-            transform.forward,
-            1.0f,
-            LayerMask.GetMask("Voxels"),
-            QueryTriggerInteraction.Collide
-        );
-*/
-
         _controller.Move(_velocity * Time.deltaTime);
     } 
     void OnGUI()

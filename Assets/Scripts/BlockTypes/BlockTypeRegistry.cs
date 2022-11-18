@@ -4,11 +4,11 @@ public class BlockTypeRegistry
 {
     private static BlockTypeRegistry _instance;
 
-    private Dictionary<ushort, IBlockType> _blockTypeMap;
+    private Dictionary<ushort, BlockTypeBase> _blockTypeMap;
 
     private BlockTypeRegistry()
     {
-        _blockTypeMap = new Dictionary<ushort, IBlockType>();
+        _blockTypeMap = new Dictionary<ushort, BlockTypeBase>();
 
         //TODO: map via reflection in config?
         _blockTypeMap[5] = new TorchBlockType();
@@ -17,7 +17,7 @@ public class BlockTypeRegistry
         _blockTypeMap[8] = new LadderBlockType();
     }
 
-    public static IBlockType GetBlockType(ushort type)
+    public static BlockTypeBase GetBlockType(ushort type)
     {
         if(_instance == null)
         {
