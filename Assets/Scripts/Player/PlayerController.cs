@@ -78,6 +78,10 @@ public class PlayerController : MonoBehaviour
             Gizmos.DrawRay(ray.Item1, ray.Item2);
         }
 
+        if(_dbgGroundingSphere.Item1 != null)
+        {
+            Gizmos.DrawSphere(_dbgGroundingSphere.Item1, _dbgGroundingSphere.Item2);
+        }
     }
 
 
@@ -390,24 +394,41 @@ public class PlayerController : MonoBehaviour
 
     private void HandleJumping()
     {
-        if(IsGrounded())
+        if(IsGroundedForJumping() && Input.GetButtonDown("Jump"))
         {
-            _velocity = Vector3.zero;
-            if(Input.GetButtonDown("Jump"))
-            {
-                _velocity = Vector3.up * JumpForce;
-            }
+            _velocity = Vector3.up * JumpForce;
         }
-        else if(_climbingCounter == 0)
+        else if(_climbingCounter == 0 && !IsGroundedForGravity())
         {
+            // Freefall
             _velocity += Physics.gravity * Time.deltaTime * GravityFactor;
         }
-        else{
+        else
+        {
+            // Climbing
             _velocity = Vector3.zero;
         }
     }
 
-    private bool IsGrounded()
+    private (Vector3, float) _dbgGroundingSphere;
+
+    private bool IsGroundedForJumping()
+    {
+        var sphereRadius = _controller.radius * .75f;
+
+        var spherePos = (transform.position + Vector3.down * (_controller.height / 2 - sphereRadius));
+        _dbgGroundingSphere = (spherePos, sphereRadius);
+
+        return Physics.SphereCast(
+            spherePos, 
+            sphereRadius,
+            Vector3.down,
+            out var hitInfo,
+            sphereRadius,
+            LayerMask.GetMask("Voxels"));
+    }
+
+    private bool IsGroundedForGravity()
     {
         var distanceToPlayerBottom = _controller.bounds.size.y / 2f;
         return Physics.Raycast(

@@ -100,6 +100,7 @@ public class Chunk
         _blockGameObject[localPos] = obj;
         obj.transform.parent = ChunkGameObject.transform;
         obj.transform.localPosition = VoxelPosHelper.GetVoxelCenterSurfaceWorldPos(localPos);
+        obj.SetLayer(SceneLayers.Voxels);
     }
 
     public void AddVoxelMeshGameObjects(params GameObject[] gameObjects)
