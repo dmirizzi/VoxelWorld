@@ -2,7 +2,10 @@ using UnityEngine;
 
 public static class SceneLayers
 {
-    public static int Voxels { get; } = LayerMask.NameToLayer("Voxels");
+    public static int VoxelsLayer { get; } = LayerMask.NameToLayer("Voxels");
+
+    public static int VoxelCollidersLayer { get; } = LayerMask.NameToLayer("VoxelColliders");
+
 
     public static void SetLayer(this GameObject gameObject, int layer)
     {

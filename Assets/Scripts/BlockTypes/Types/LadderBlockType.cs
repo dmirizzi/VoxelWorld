@@ -30,7 +30,7 @@ public class LadderBlockType : BlockTypeBase
     {
         var placementDirProp = GetProperty<PlacementFaceProperty>(world, globalVoxelPos);
         var backDir = BlockFaceHelper.GetVectorFromBlockFace(placementDirProp.PlacementFace);
-        chunkMesh.AddMesh(_mesh, localVoxelPos, backDir);
+        chunkMesh.AddMesh(_mesh.Clone(), localVoxelPos, backDir);
     }
 
     public override bool OnPlace(

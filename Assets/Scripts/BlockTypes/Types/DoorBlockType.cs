@@ -8,6 +8,11 @@ public class DoorBlockType : BlockTypeBase
                 new DoorStateProperty() )
     {
         this._voxelType = voxelType;
+
+        var topMeshObj = Resources.Load<GameObject>("Models/Door_Top");
+        _topMesh = new VoxelMesh(topMeshObj.GetComponentInChildren<MeshFilter>().sharedMesh);
+        var bottomMeshObj = Resources.Load<GameObject>("Models/Door_Bottom");
+        _bottomMesh = new VoxelMesh(bottomMeshObj.GetComponentInChildren<MeshFilter>().sharedMesh);
     }
 
     public override BlockFace GetForwardFace(VoxelWorld world, Vector3Int globalPos)
@@ -28,83 +33,29 @@ public class DoorBlockType : BlockTypeBase
         Vector3Int localPos, 
         ChunkMesh chunkMesh)
     {
-        var size = VoxelInfo.VoxelSize / 2f;
-        var depth = VoxelInfo.VoxelSize / 32f;
-
-        //TODO: Fix texture mapping
-
         var doorStateProp = GetProperty<DoorStateProperty>(world, globalPos);
         if(doorStateProp == null)        
         {
             return;
         }
 
-        var doorSize = new Vector3(size, size, depth);
-        var cornerVertices = new Vector3[]
-        {
-            new Vector3(-doorSize.x, -doorSize.y, -doorSize.z),
-            new Vector3(+doorSize.x, -doorSize.y, -doorSize.z),
-            new Vector3(+doorSize.x, -doorSize.y, +doorSize.z),
-            new Vector3(-doorSize.x, -doorSize.y, +doorSize.z),
-            new Vector3(-doorSize.x, +doorSize.y, -doorSize.z),
-            new Vector3(+doorSize.x, +doorSize.y, -doorSize.z),
-            new Vector3(+doorSize.x, +doorSize.y, +doorSize.z),
-            new Vector3(-doorSize.x, +doorSize.y, +doorSize.z)
-        };
+        var placementDirProp = GetProperty<PlacementFaceProperty>(world, globalPos);
+        var doorMesh = doorStateProp.IsTopPart ? _topMesh.Clone() : _bottomMesh.Clone();
 
         // Rotate door if it's open
         if(doorStateProp.IsOpen)
         {
-            VoxelBuildHelper.RotateVerticesAroundInPlace(cornerVertices, Vector3.left, Vector3.up, -90);
-            VoxelBuildHelper.TranslateVerticesInPlace(cornerVertices, Vector3.right * (size + depth) + Vector3.back * (size + depth));
+            var size = VoxelInfo.VoxelSize / 2f;
+            var depth = VoxelInfo.VoxelSize / 32f;
+
+            doorMesh.RotateAround(Vector3.left, Vector3.up, -90);
+            doorMesh.Translate(Vector3.right * (size + depth) + Vector3.back * (size + depth));
         }
+        
+        var backDir = BlockFaceHelper.GetVectorFromBlockFace(placementDirProp.PlacementFace);
+        chunkMesh.AddMesh(doorMesh, localPos, backDir);
 
-        // Rotate door according to placement direction
-        var placementFaceProp = GetProperty<PlacementFaceProperty>(world, globalPos);
-        var placementDir = placementFaceProp != null ? placementFaceProp.PlacementFace : BlockFace.Back;
-        var doorBackVec =  BlockFaceHelper.GetVectorFromBlockFace(placementDir);
-        VoxelBuildHelper.PointVerticesTowardsInPlace(cornerVertices, doorBackVec);
-
-        var basePos = localPos + new Vector3(size, size, size) - doorBackVec * (size - depth);
-        VoxelBuildHelper.TranslateVerticesInPlace(cornerVertices, basePos);
-
-        var tileUVs = VoxelBuildHelper.GetUVsForVoxelType(_voxelType, doorStateProp.IsTopPart ? BlockFace.Top : BlockFace.Bottom);
-
-        // Top
-        chunkMesh.AddQuad(
-            new Vector3[] { cornerVertices[4], cornerVertices[7], cornerVertices[6], cornerVertices[5] },
-            new Vector2[] { tileUVs[2], tileUVs[0], tileUVs[1], tileUVs[3] }
-        );
-
-        // Bottom
-        chunkMesh.AddQuad(
-            new Vector3[] { cornerVertices[0], cornerVertices[1], cornerVertices[2], cornerVertices[3] },
-            new Vector2[] { tileUVs[0], tileUVs[1], tileUVs[3], tileUVs[2] }            
-        );
-
-        // Front
-        chunkMesh.AddQuad(
-            new Vector3[] { cornerVertices[0], cornerVertices[4], cornerVertices[5], cornerVertices[1] },
-            new Vector2[] { tileUVs[2], tileUVs[0], tileUVs[1], tileUVs[3] }
-        );
-
-        // Back
-        chunkMesh.AddQuad(
-            new Vector3[] { cornerVertices[3], cornerVertices[2], cornerVertices[6], cornerVertices[7] },
-            new Vector2[] { tileUVs[3], tileUVs[2], tileUVs[0], tileUVs[1] }
-        );
-
-        // Left
-        chunkMesh.AddQuad(
-            new Vector3[] { cornerVertices[7], cornerVertices[4], cornerVertices[0], cornerVertices[3] },
-            new Vector2[] { tileUVs[0], tileUVs[1], tileUVs[2], tileUVs[3] }
-        );
-
-        // Right
-        chunkMesh.AddQuad(
-            new Vector3[] { cornerVertices[5], cornerVertices[6], cornerVertices[2], cornerVertices[1] },
-            new Vector2[] { tileUVs[0], tileUVs[1], tileUVs[3], tileUVs[2] }
-        );
+        chunk.AddVoxelCollider(localPos, doorMesh.CalculateBounds());
     }
 
     public override bool OnPlace(
@@ -213,6 +164,7 @@ public class DoorBlockType : BlockTypeBase
         Vector3Int globalPosition, 
         Vector3Int localPosition)
     {
+        // Automatically delete the second door part
         var doorStateProp = GetProperty<DoorStateProperty>(world, globalPosition);
         if(doorStateProp != null)
         {
@@ -248,8 +200,14 @@ public class DoorBlockType : BlockTypeBase
         UpdateProperty<DoorStateProperty>(world, secondaryDoorPartPos, switchDoorStateFunc);
 
         world.RebuildVoxel(globalPosition);
+        world.RebuildVoxel(secondaryDoorPartPos);
         return true;
     }
 
     private readonly ushort _voxelType;
+
+    private VoxelMesh _topMesh;
+
+    private VoxelMesh _bottomMesh;
+
 }

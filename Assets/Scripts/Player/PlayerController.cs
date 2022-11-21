@@ -303,36 +303,68 @@ public class PlayerController : MonoBehaviour
     {
         _dbgLastRay = new Ray(CameraTransform.position, CameraTransform.forward);
         _dbgLastHit = null;
+
+        Vector3Int voxelPos = Vector3Int.zero;
+        Vector3 normal = Vector3.zero;
+        Vector3 hitPos = Vector3.zero;
+
+        // First look if there is a custom voxel collider and get the targeted voxel position from that
         if(Physics.Raycast(
             CameraTransform.position, 
             CameraTransform.forward, 
-            out var hitInfo, 
-            LayerMask.GetMask("Voxels")))
+            out var hitInfoCollider,
+            MaxInteractionDistance,
+            LayerMask.GetMask("VoxelColliders")))
         {
-            if(hitInfo.distance <= MaxInteractionDistance)
+            if(hitInfoCollider.distance <= MaxInteractionDistance)
             {
-                _dbgLastHit = hitInfo.point;
-                _dbgLastHitNormal = hitInfo.normal;
+                normal = hitInfoCollider.normal.normalized;
+                hitPos = hitInfoCollider.point;
 
-                var voxelPos = GetVoxelPosFromWorldPos(hitInfo.point, hitInfo.normal, surfaceVoxel);
-                
-                _dbgTargetingVoxelSurface = VoxelPosHelper.WorldPosIsOnVoxelSurface(hitInfo.point);               
-                _dbgLastTargetVoxel = new Vector3(voxelPos.x, voxelPos.y, voxelPos.z);
-
-                var voxelFace = BlockFaceHelper.GetBlockFaceFromVector(hitInfo.normal.normalized);
-                if(voxelFace.HasValue)
+                var voxelCollider = hitInfoCollider.transform.gameObject.GetComponent<VoxelCollider>();
+                if(voxelCollider != null)
                 {
-                    voxelFace = BlockFaceHelper.GetOppositeFace(voxelFace.Value);
+                    voxelPos = voxelCollider.GlobalVoxelPos;                    
                 }
                 else
                 {
-                    voxelFace = BlockFaceHelper.GetBlockFaceFromVector(GetClosestCardinalLookDirection());
+                    UnityEngine.Debug.LogError($"Voxel collider game object {hitInfoCollider.transform} is missing VoxelCollider script!");
                 }
+            }
+        }        
 
-                return (voxelPos, voxelFace);
+        // If not, determine the targeted voxel collision from the hit on the chunk mesh
+        else if(Physics.Raycast(
+            CameraTransform.position, 
+            CameraTransform.forward, 
+            out var hitInfoVoxel,
+            MaxInteractionDistance,
+            LayerMask.GetMask("Voxels")))
+        {
+            if(hitInfoVoxel.distance <= MaxInteractionDistance)
+            {
+                voxelPos = GetVoxelPosFromWorldPos(hitInfoVoxel.point, hitInfoVoxel.normal, surfaceVoxel);
+                normal = hitInfoVoxel.normal.normalized;
+                hitPos = hitInfoVoxel.point;                
             }
         }
-        return (null, null);
+
+        var voxelFace = BlockFaceHelper.GetBlockFaceFromVector(normal);
+        if(voxelFace.HasValue)
+        {
+            voxelFace = BlockFaceHelper.GetOppositeFace(voxelFace.Value);
+        }
+        else
+        {
+            voxelFace = BlockFaceHelper.GetBlockFaceFromVector(GetClosestCardinalLookDirection());
+        }
+
+        _dbgLastHit = hitPos;
+        _dbgLastHitNormal = normal;
+        _dbgTargetingVoxelSurface = VoxelPosHelper.WorldPosIsOnVoxelSurface(hitPos);               
+        _dbgLastTargetVoxel = new Vector3(voxelPos.x, voxelPos.y, voxelPos.z);
+
+        return (voxelPos, voxelFace);
     }
 
     private BlockFace GetLookDir() => BlockFaceHelper.GetBlockFaceFromVector(GetClosestCardinalLookDirection()).Value;

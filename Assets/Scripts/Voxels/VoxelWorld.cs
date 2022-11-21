@@ -14,14 +14,14 @@ public class VoxelWorld
         _lightMap = new LightMap(this);
         _textureAtlasMaterial = textureAtlasMaterial;
         _textureAtlasTransparentMaterial = textureAtlasTransparentMaterial;
-        _queuedChunkLightMapUpdates = new Queue<Vector3Int>();
+        _queuedChunkLightMapUpdates = new HashSet<Vector3Int>();
     }
 
     public void Update()
     {
         lock(_queuedChunkLightMapUpdates)
         {
-            while(_queuedChunkLightMapUpdates.TryDequeue(out var chunkPos))
+            foreach(var chunkPos in _queuedChunkLightMapUpdates)
             {
                 if(_chunkBuilders.ContainsKey(chunkPos))
                 {
@@ -29,6 +29,7 @@ public class VoxelWorld
                 }            
             }
         }
+        _queuedChunkLightMapUpdates.Clear();
 
         BuildChangedChunks();
     }
@@ -272,7 +273,7 @@ public class VoxelWorld
             if(!_chunks.ContainsKey(chunkPos)) continue;
 
             // Delete existing chunk to regenerate it
-            _chunks[chunkPos].DestroyGameObject();
+            _chunks[chunkPos].Reset();
 
             // Queue all builder tasks
             _chunkBuilders[chunkPos] = new ChunkBuilder(this, chunkPos, _chunks[chunkPos], _textureAtlasMaterial, _textureAtlasTransparentMaterial);
@@ -287,6 +288,7 @@ public class VoxelWorld
         {
             _chunks[builder.ChunkPos].AddVoxelMeshGameObjects(builder.GetChunkGameObjects());
             _chunks[builder.ChunkPos].BuildBlockGameObjects();
+            _chunks[builder.ChunkPos].BuildVoxelColliderGameObjects();
         }        
     
         _changedChunks.Clear();
@@ -296,7 +298,7 @@ public class VoxelWorld
     {
         foreach(var chunk in _chunks.Values)
         {
-            chunk.DestroyGameObject();
+            chunk.Reset();
         }
         _chunks.Clear();
         _changedChunks.Clear();
@@ -339,7 +341,7 @@ public class VoxelWorld
         {
             foreach(var chunkPos in chunkPositions)
             {
-                _queuedChunkLightMapUpdates.Enqueue(chunkPos);
+                _queuedChunkLightMapUpdates.Add(chunkPos);
             }
         }
     }
@@ -400,7 +402,7 @@ public class VoxelWorld
 
     private LightMap _lightMap;
 
-    private Queue<Vector3Int> _queuedChunkLightMapUpdates;
+    private HashSet<Vector3Int> _queuedChunkLightMapUpdates;
 
     private HashSet<Vector3Int> _changedChunks;
 

@@ -29,9 +29,6 @@ public class Chunk
         _lightMap = new float[VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, 3];
 
         ChunkPos = chunkPos;
-        //CreateNewChunkGameObject();
-        _blockAuxiliaryData = new Dictionary<Vector3Int, ushort>();
-        _blockGameObject = new Dictionary<Vector3Int, GameObject>();
     }
 
     public ushort GetVoxel(Vector3Int localPos)
@@ -47,20 +44,28 @@ public class Chunk
     public bool SetVoxel(Vector3Int localPos, ushort type, BlockFace? placementFace = null, BlockFace? lookDir = null, bool useExistingAuxData = false)
     {
         // Remove old aux data and gameobjects if it already exists at this voxel position
-        if(_blockGameObject.ContainsKey(localPos))
+        if(_blockGameObjects.ContainsKey(localPos))
         {
-            GameObject.Destroy(_blockGameObject[localPos]);
-            _blockGameObject.Remove(localPos);
+            GameObject.Destroy(_blockGameObjects[localPos]);
+            _blockGameObjects.Remove(localPos);
         }
 
         var globalPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(localPos, ChunkPos);
 
-        // Execute remove logic on old block if available
         var oldVoxelType = _chunkData[localPos.x, localPos.y, localPos.z];
         var oldBlockType = BlockTypeRegistry.GetBlockType(oldVoxelType);
 
+        // Delete old voxel if one already exists at this position
         if(oldBlockType != null)
         {
+            // Remove existing voxel collider at this position if any
+            if(_voxelColliderGameObjects.ContainsKey(localPos))
+            {
+                GameObject.Destroy(_voxelColliderGameObjects[localPos]);
+                _voxelColliderGameObjects.Remove(localPos);
+            }            
+
+            // Execute remove logic on old block if available 
             if(!oldBlockType.OnRemove(_voxelWorld, this, globalPos, localPos))
             {
                  // Block cannot be removed
@@ -91,16 +96,24 @@ public class Chunk
         return true;
     }
 
+    // Bounds should already contain chunk-local voxel position in bounds.center
+    public void AddVoxelCollider(Vector3Int localPos, Bounds bounds)
+    {
+        // We add it to the building queue first for the actual game objects to be created later in BuildVoxelColliderGameObjects
+        // because we are not on the main thread here
+        _voxelCollidersToBuild.Enqueue((localPos, bounds));
+    }
+
     public void AddBlockGameObject(Vector3Int localPos, GameObject obj)
     {
-        if(_blockGameObject.ContainsKey(localPos))
+        if(_blockGameObjects.ContainsKey(localPos))
         {
-            GameObject.Destroy(_blockGameObject[localPos]);
+            GameObject.Destroy(_blockGameObjects[localPos]);
         }
-        _blockGameObject[localPos] = obj;
+        _blockGameObjects[localPos] = obj;
         obj.transform.parent = ChunkGameObject.transform;
         obj.transform.localPosition = VoxelPosHelper.GetVoxelCenterSurfaceWorldPos(localPos);
-        obj.SetLayer(SceneLayers.Voxels);
+        obj.SetLayer(SceneLayers.VoxelsLayer);
     }
 
     public void AddVoxelMeshGameObjects(params GameObject[] gameObjects)
@@ -151,7 +164,30 @@ public class Chunk
         }
     }
 
-    public void DestroyGameObject()
+    public void BuildVoxelColliderGameObjects()
+    {
+        while(_voxelCollidersToBuild.TryDequeue(out var buildCollider))
+        {
+            var globalVoxelPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(buildCollider.LocalVoxelPos, ChunkPos);
+
+            var gameObj = new GameObject($"VoxelCollider{globalVoxelPos}");
+            
+            var collider = gameObj.AddComponent<BoxCollider>();
+            collider.center = buildCollider.Bounds.center;
+            collider.size = buildCollider.Bounds.size;
+
+            var colliderScript = gameObj.AddComponent<VoxelCollider>();
+            colliderScript.GlobalVoxelPos = globalVoxelPos;
+
+            gameObj.transform.parent = ChunkGameObject.transform;
+            gameObj.transform.localPosition = Vector3.zero; // position is already in bounds.center
+            gameObj.SetLayer(SceneLayers.VoxelCollidersLayer);
+        
+            _voxelColliderGameObjects.Add(buildCollider.LocalVoxelPos, gameObj);
+        }
+    }
+
+    public void Reset()
     {
         //TODO: Not destroying!?
         if(ChunkGameObject != null)
@@ -159,6 +195,9 @@ public class Chunk
             GameObject.Destroy(ChunkGameObject);
         }
         CreateNewChunkGameObject();
+
+        _voxelColliderGameObjects.Clear();
+        _blockGameObjects.Clear();
     }
 
     public void SetLightChannelValue(Vector3Int pos, int channel, float intensity)
@@ -187,8 +226,12 @@ public class Chunk
 
     private GameObject _chunkGameObject;
 
-    private Dictionary<Vector3Int, ushort> _blockAuxiliaryData;
+    private Queue<(Vector3Int LocalVoxelPos, Bounds Bounds)> _voxelCollidersToBuild = new Queue<(Vector3Int, Bounds)>();
 
-    private Dictionary<Vector3Int, GameObject> _blockGameObject;
+    private Dictionary<Vector3Int, GameObject> _voxelColliderGameObjects = new Dictionary<Vector3Int, GameObject>();
+
+    private Dictionary<Vector3Int, ushort> _blockAuxiliaryData = new Dictionary<Vector3Int, ushort>();
+
+    private Dictionary<Vector3Int, GameObject> _blockGameObjects = new Dictionary<Vector3Int, GameObject>();
 
 }

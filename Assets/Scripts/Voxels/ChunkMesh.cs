@@ -24,10 +24,10 @@ public class ChunkMesh
     {
         int vertexBaseIdx = Vertices.Count;
 
-        var vertices = VoxelBuildHelper.PointVerticesTowards(mesh.Vertices, dir);
-        VoxelBuildHelper.TranslateVerticesInPlace(vertices, localBasePos + new Vector3(0.5f, 0f, 0.5f));
+        mesh.PointTowards(dir);
+        mesh.Translate(localBasePos + new Vector3(0.5f, 0f, 0.5f));
 
-        Vertices.AddRange(vertices);
+        Vertices.AddRange(mesh.Vertices);
         Normals.AddRange(mesh.Normals);
         UVCoordinates.AddRange(mesh.UVs);
         Triangles.AddRange(mesh.Triangles.Select( idx => idx + vertexBaseIdx));

@@ -126,12 +126,15 @@ Items / Blocks
 ----------------------------------------------------------------------------------------------------------------
 
 [ ] Ladder
+    [ ] Improved climbing -> not just disabling gravity but redirecting any movement towards the ladder upwards/downwards
 
 [ ] Door
-    [ ] Need BlockTypes Door and something generic like Placeholder Just to make sure the second block is not empty
+    [x] Need BlockTypes Door and something generic like Placeholder Just to make sure the second block is not empty
         Then the actual Door block will handle the mesh for upper and lower half
-    [ ] Extend IBlockType interface to handle player interaction
-    [ ] Extend PlayerController to allow block interaction
+    [x] Extend IBlockType interface to handle player interaction
+    [x] Extend PlayerController to allow block interaction
+    [x] FIX: Custom Collider overlaps with chunk mesh collider -> put custom colliders on separate layer
+    [ ] Open/Close Sound
 
 [ ] Quarter Wedge
 
