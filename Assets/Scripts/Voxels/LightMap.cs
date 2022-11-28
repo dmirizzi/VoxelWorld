@@ -119,6 +119,8 @@ public class LightMap
                 }
             }
         }
+
+        PropagateLightNodes(lightNodes, channel, new HashSet<Vector3Int>(), visitedChunks);
     }    
 
     private void PropagateLightNodes(Queue<LightNode> lightNodes, int channel, HashSet<Vector3Int> visitedNodes, HashSet<Chunk> visitedChunks)

@@ -172,6 +172,8 @@ Player
 [x] Player gets stuck in voxel when building voxel below himself
 [x] Attach player held item by setting it as child of player camera + offset
 
+[ ] Handle Voxel Touching separately for voxels with custom colliders? Necessary?
+
 [ ] More user friendly block placing
     -> Live block preview
     -> Rotateable

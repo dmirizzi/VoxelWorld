@@ -149,16 +149,6 @@ public class PlayerController : MonoBehaviour
             {
                 var direction = Quaternion.Euler(0, angle, 0) * Vector3.forward;
 
-/*
-                var hitSomething = Physics.Raycast(
-                    position,
-                    direction,
-                    out var hit,
-                    _controller.radius + 0.1f,
-                    LayerMask.GetMask("Voxels"),
-                    QueryTriggerInteraction.Collide
-
-*/            
                 var hitSomething = Physics.SphereCast(
                     position,
                     .2f,
