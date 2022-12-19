@@ -52,12 +52,17 @@ public class PlayerController : MonoBehaviour
         var targetedVoxel = GetTargetedVoxelPos(false);
         var targetedVoxelType = targetedVoxel.Item1.HasValue ? _worldGen?.VoxelWorld.GetVoxel(targetedVoxel.Item1.Value) : null;
         
-        GUI.Label(new Rect(10, 10, 1500, 18), $"LookDir={GetLookDir()} | TargetedVoxelType: {targetedVoxelType}");
+        var targetedSurfaceVoxel = GetTargetedVoxelPos(true);
+        var lightMapCol = targetedSurfaceVoxel.Item1.HasValue ? _worldGen.VoxelWorld.GetLightValue(targetedSurfaceVoxel.Item1.Value).ToString() : "N/A";
+
+        GUI.Label(new Rect(10, 10, 1500, 18), $"LookDir={GetLookDir()} | TargetedVoxelType: {targetedVoxelType} | TargetedVoxelLightMap: {lightMapCol}");
     }
 
     void OnDrawGizmos()
     {
-        if(_dbgLastRay != null) Gizmos.DrawRay(_dbgLastRay.Value);
+
+        //if(_dbgLastRay != null) Gizmos.DrawRay(_dbgLastRay.Value);
+     
         if(_dbgLastHit != null) 
         {
             Gizmos.DrawSphere(_dbgLastHit.Value, .075f);
@@ -66,8 +71,9 @@ public class PlayerController : MonoBehaviour
                 Gizmos.DrawRay(_dbgLastHit.Value, _dbgLastHitNormal.Value);
             }
         }
-        if(_dbgLastTargetVoxel != null) Gizmos.DrawWireCube(_dbgLastTargetVoxel.Value + Vector3.one * 0.5f, Vector3.one);
+        //if(_dbgLastTargetVoxel != null) Gizmos.DrawWireCube(_dbgLastTargetVoxel.Value + Vector3.one * 0.5f, Vector3.one);
 
+/*
         foreach(var point in _dbgCollisionPoints)
         {
             Gizmos.DrawCube(point + Vector3.one * 0.5f, Vector3.one);
@@ -77,10 +83,18 @@ public class PlayerController : MonoBehaviour
         {
             Gizmos.DrawRay(ray.Item1, ray.Item2);
         }
-
         if(_dbgGroundingSphere.Item1 != null)
         {
             Gizmos.DrawSphere(_dbgGroundingSphere.Item1, _dbgGroundingSphere.Item2);
+        }
+*/
+
+        if(_worldGen?.VoxelWorld?._lightMap?.LastUpdatedVoxels != null)
+        {
+            foreach(var voxelPos in _worldGen?.VoxelWorld?._lightMap?.LastUpdatedVoxels)
+            {
+                Gizmos.DrawWireCube(voxelPos + Vector3.one * 0.5f, Vector3.one * 0.5f);
+            }
         }
     }
 

@@ -39,22 +39,28 @@
     [x] Recalculating light map on removed solid voxel
     [x] Still some voxels not lit correctly near chunk borders 
         -> Due to lightmap not creating new chunks if they dont exist yet, which caused light values to get lost
-
-    [ ] Removing torch doesn't restore original lighting before it was placed
-
-    [ ] Lights don't propagate properly across chunk borders anymore?!
-
-    [ ] Improper color attenuation when using colors with inequal components (something 255, 50, 10) 
-        -> Needs to attenuate faster the higher the color is
-        -> Or: Instead use a hue/brightness color model?
-
+    [x] Removing torch doesn't restore original lighting before it was placed
+        -> "void" left by removing light wasnt being refilled by existing light nodes
+    [x] Lights don't propagate properly across chunk borders anymore?!
+        -> Was due to improper multithreading during light propagation
+    [x] Improper color attenuation when removing voxels
+        -> bug in UpdateOnRemovedSolidVoxel -> only red channel was propagated correctly which excacerbated this effect
+    [x] Removing voxels above a light source causes dark spots until a adjacent voxel (on the xz plane) is UpdateOnRemovedSolidVoxel  
+        -> Was due to improper sampling of light map for vertices, sampling directly on vertexpos+normal (instead of at the center of the face+normal)
+         
+    [ ] Vertices along the diagonals around a light source are brighter
     [ ] Recalculating light map on added solid voxel
 
+[ ] Flood Fill sunlight
+    -> https://web.archive.org/web/20201112022602/https://www.seedofandromeda.com/blogs/30-fast-flood-fill-lighting-in-a-blocky-voxel-game-pt-2
+
 [ ] Dynamic Lighting 
+    [ ] Directional sunlight leaves sides facing away from the side completely dark
     [ ] Lights go through gaps between voxels and cast "light stripes"
     [ ] Lighting is different between chunks / no smooth lighting transition between chunks
     [ ] Ambient Occlusion?
         -> https://web.archive.org/web/20120921194612/http://codeflow.org/entries/2010/dec/09/minecraft-like-rendering-experiments-in-opengl-4/
+        -> https://0fps.net/2013/07/03/ambient-occlusion-for-minecraft-like-worlds/
 
 [ ] Chunk occlusion culling?
     https://tomcc.github.io/2014/08/31/visibility-1.html
@@ -171,6 +177,8 @@ Player
 [x] Avoid clipping of held item with other objects -> Stack cameras
 [x] Player gets stuck in voxel when building voxel below himself
 [x] Attach player held item by setting it as child of player camera + offset
+
+[ ] Jumping against a ceiling doesn't reset upwards force -> player floats at ceiling until gravity pulls him down again
 
 [ ] Handle Voxel Touching separately for voxels with custom colliders? Necessary?
 

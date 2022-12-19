@@ -53,10 +53,10 @@ public class VoxelWorld
         }
 
         // If non-transparent voxel was removed or replaced by a transparent voxel, update light map
-        var chunksAffectedByLightUpdate = new HashSet<Chunk>();
+        var chunksAffectedByLightUpdate = new HashSet<Vector3Int>();
         if(!VoxelInfo.IsTransparent(oldVoxelType) && VoxelInfo.IsTransparent(type))
         { 
-            //TODO:### Only do this for SetVoxelAndRebuild            
+            //TODO: Optimize for large batches of SetVoxel?
             _lightMap.UpdateOnRemovedSolidVoxel(new Vector3Int(x, y, z), chunksAffectedByLightUpdate);
         }
 
@@ -70,21 +70,14 @@ public class VoxelWorld
             _changedChunks.Add(affectedChunkPos);
 
             // Only update light on chunks that are not being rebuilt anyways
-            var affectedChunk = _chunks[affectedChunkPos];
-            if(chunksAffectedByLightUpdate.Contains(affectedChunk))
+            if(chunksAffectedByLightUpdate.Contains(affectedChunkPos))
             {
-                chunksAffectedByLightUpdate.Remove(affectedChunk);
+                chunksAffectedByLightUpdate.Remove(affectedChunkPos);
             }
         }
 
         // Update lighting on affected chunks that won't be rebuilt anyway due to changed voxel
-        foreach(var lightUpdateChunk in chunksAffectedByLightUpdate)
-        {
-            if(_chunkBuilders.ContainsKey(lightUpdateChunk.ChunkPos))
-            {
-                _chunkBuilders[lightUpdateChunk.ChunkPos].UpdateLightVertexColors();
-            }
-        }
+        QueueChunksForLightmapUpdate(chunksAffectedByLightUpdate);
     }
 
     public void SetVoxelSphere(Vector3Int center, int radius, ushort voxelType, bool rebuild)
@@ -117,10 +110,10 @@ public class VoxelWorld
 
     public void SetLight(Vector3Int pos, Color32 color, bool add)
     {
-        var affectedChunks = new HashSet<Chunk>[] {
-            new HashSet<Chunk>(),
-            new HashSet<Chunk>(),
-            new HashSet<Chunk>()
+        var affectedChunks = new HashSet<Vector3Int>[] {
+            new HashSet<Vector3Int>(),
+            new HashSet<Vector3Int>(),
+            new HashSet<Vector3Int>()
         };
 
         var colorChannels = new byte[]{
@@ -146,7 +139,7 @@ public class VoxelWorld
 
         Task.WhenAll(tasks).ContinueWith( _ => 
         {
-            var allAffectedChunks = affectedChunks.SelectMany(x => x).Select(x => x.ChunkPos).Distinct();
+            var allAffectedChunks = affectedChunks.SelectMany(x => x).Distinct();
             QueueChunksForLightmapUpdate(allAffectedChunks);
         });        
     }
@@ -400,7 +393,7 @@ public class VoxelWorld
 
     private Dictionary<Vector3Int, ChunkBuilder> _chunkBuilders;
 
-    private LightMap _lightMap;
+    public LightMap _lightMap;
 
     private HashSet<Vector3Int> _queuedChunkLightMapUpdates;
 
