@@ -148,7 +148,7 @@ public class ChunkBuilder
             var localVoxelPos = VoxelPosHelper.GetVoxelPosFromWorldPos(lightSamplingPoint);
             var globalVoxelPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(localVoxelPos, _chunk.ChunkPos);
 
-            var lightVal = _world.GetLightValue(globalVoxelPos);
+            var lightVal = _world.GetVoxelLightColor(globalVoxelPos);
             colors[vi1] = lightVal;
             colors[vi2] = lightVal;
             colors[vi3] = lightVal;

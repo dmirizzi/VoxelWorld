@@ -53,7 +53,7 @@ public class PlayerController : MonoBehaviour
         var targetedVoxelType = targetedVoxel.Item1.HasValue ? _worldGen?.VoxelWorld.GetVoxel(targetedVoxel.Item1.Value) : null;
         
         var targetedSurfaceVoxel = GetTargetedVoxelPos(true);
-        var lightMapCol = targetedSurfaceVoxel.Item1.HasValue ? _worldGen.VoxelWorld.GetLightValue(targetedSurfaceVoxel.Item1.Value).ToString() : "N/A";
+        var lightMapCol = targetedSurfaceVoxel.Item1.HasValue ? _worldGen.VoxelWorld.GetVoxelLightColor(targetedSurfaceVoxel.Item1.Value).ToString() : "N/A";
 
         GUI.Label(new Rect(10, 10, 1500, 18), $"LookDir={GetLookDir()} | TargetedVoxelType: {targetedVoxelType} | TargetedVoxelLightMap: {lightMapCol}");
     }

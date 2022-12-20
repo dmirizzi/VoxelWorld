@@ -138,41 +138,30 @@ public class VoxelWorld
 
     private void ProcessLightUpdate(LightUpdate lightUpdate)
     {
-        var affectedChunks = new HashSet<Vector3Int>[] {
-            new HashSet<Vector3Int>(),
-            new HashSet<Vector3Int>(),
-            new HashSet<Vector3Int>()
-        };
+        var affectedChunks = new HashSet<Vector3Int>();
 
         var colorChannels = new byte[]{
-            lightUpdate.Color.r,
-            lightUpdate.Color.g,
-            lightUpdate.Color.b
+            (byte)(lightUpdate.Color.r >> 4),
+            (byte)(lightUpdate.Color.g >> 4),
+            (byte)(lightUpdate.Color.b >> 4)
         };
 
-        // Calculate lightmap on a separate task for each color channel
-        var taskFactory = new TaskFactory();
-        var tasks = new Task[3];
         for(int channel = 0; channel < 3; ++channel)
         {            
             if(lightUpdate.Add)
             {
-                tasks[channel] = taskFactory.StartNew(c => _lightMap.AddLight(lightUpdate.Position, (int)c, colorChannels[(int)c], affectedChunks[(int)c]), channel);
+                _lightMap.AddLight(lightUpdate.Position, channel, colorChannels[channel], affectedChunks);
             }
             else
             {
-                tasks[channel] = taskFactory.StartNew(c => _lightMap.RemoveLight(lightUpdate.Position, (int)c, colorChannels[(int)c], affectedChunks[(int)c]), channel);
+                _lightMap.RemoveLight(lightUpdate.Position, channel, colorChannels[channel], affectedChunks);                
             }
-        };
+        }
 
-        Task.WhenAll(tasks).ContinueWith( _ => 
-        {
-            var allAffectedChunks = affectedChunks.SelectMany(x => x).Distinct();
-            QueueChunksForLightmapUpdate(allAffectedChunks);
-        });            
+        QueueChunksForLightmapUpdate(affectedChunks);
     }
 
-    public Color32 GetLightValue(Vector3Int pos)
+    public Color32 GetVoxelLightColor(Vector3Int pos)
     {
         var chunk = GetChunkFromVoxelPosition(pos.x, pos.y, pos.z, false);
         if(chunk == null)
@@ -182,9 +171,9 @@ public class VoxelWorld
         var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(pos);
         return new Color32
         (
-            (byte)(Mathf.Clamp(chunk.GetLightChannelValue(chunkLocalPos, 0), 0, 255)),
-            (byte)(Mathf.Clamp(chunk.GetLightChannelValue(chunkLocalPos, 1), 0, 255)),
-            (byte)(Mathf.Clamp(chunk.GetLightChannelValue(chunkLocalPos, 2), 0, 255)),
+            (byte)(chunk.GetLightChannelValue(chunkLocalPos, 0) << 4),
+            (byte)(chunk.GetLightChannelValue(chunkLocalPos, 1) << 4),
+            (byte)(chunk.GetLightChannelValue(chunkLocalPos, 2) << 4),
             255
         );
     }

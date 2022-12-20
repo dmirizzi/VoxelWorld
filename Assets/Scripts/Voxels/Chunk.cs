@@ -26,7 +26,7 @@ public class Chunk
     {
         _voxelWorld = voxelWorld;
         _chunkData = new ushort[VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize];
-        _lightMap = new float[VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, 3];
+        _lightMap = new ushort[VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize];
 
         ChunkPos = chunkPos;
     }
@@ -200,14 +200,17 @@ public class Chunk
         _blockGameObjects.Clear();
     }
 
-    public void SetLightChannelValue(Vector3Int pos, int channel, float intensity)
-    {
-        _lightMap[pos.x, pos.y, pos.z, channel] = intensity;
+    public void SetLightChannelValue(Vector3Int pos, int channel, byte intensity)
+    {        
+        var mask = (ushort)~(0xF << (channel * 4));
+        var maskedOldValue = (_lightMap[pos.x, pos.y, pos.z] & mask);
+        var newValue = (ushort)((intensity & 0xF) << (channel * 4));
+        _lightMap[pos.x, pos.y, pos.z] = (ushort)(maskedOldValue | newValue);
     }
 
-    public float GetLightChannelValue(Vector3Int pos, int channel)
+    public byte GetLightChannelValue(Vector3Int pos, int channel)
     {
-        return _lightMap[pos.x, pos.y, pos.z, channel];
+        return (byte)((_lightMap[pos.x, pos.y, pos.z] >> (channel * 4)) & 0xF);
     }
     
     private void CreateNewChunkGameObject()
@@ -217,8 +220,9 @@ public class Chunk
         _chunkGameObject.transform.position = chunkVoxelPos;
     }
 
-    // 5-bit for each color channel (RGB)
-    private float[,,,] _lightMap;
+    // SSSS.RRRR.GGGG.BBBB
+    // Where S = Sunlight level
+    private ushort[,,] _lightMap;
 
     private ushort[,,] _chunkData;
 

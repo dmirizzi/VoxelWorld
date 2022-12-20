@@ -34,8 +34,8 @@ public class WorldGenerator : MonoBehaviour
         VoxelWorld.Clear();
         
         //GenerateCubeRoom(3);
-        GenerateCuboidByCorners(new Vector3Int(-16, 0, -16), new Vector3Int(16, -16, 16), BlockDataRepository.GetBlockTypeId("Dirt"));
-        GenerateCuboidByCorners(new Vector3Int(0, 0, -2), new Vector3Int(1, -3, 0), 0);
+        //GenerateCuboidByCorners(new Vector3Int(-16, 0, -16), new Vector3Int(16, -16, 16), BlockDataRepository.GetBlockTypeId("Dirt"));
+        //GenerateCuboidByCorners(new Vector3Int(0, 0, -2), new Vector3Int(1, -3, 0), 0);
 
         //VoxelWorld.SetVoxel(new Vector3Int(-2, 0, 0), BlockDataRepository.GetBlockTypeId("Torch"));
         
@@ -43,7 +43,7 @@ public class WorldGenerator : MonoBehaviour
         //VoxelWorld.AddLight(new Vector3Int(30, 2, 0), new Color32(50, 255, 50, 255), 20);
         //VoxelWorld.AddLight(new Vector3Int(15, 2, -10), new Color32(255, 255, 0, 255), 20);
 
-        //GenerateTerrain(128);
+        GenerateTerrain(256);
 
         /*
                 GenerateCave(
@@ -60,7 +60,7 @@ public class WorldGenerator : MonoBehaviour
                 );       
         */
 
-        GenerateTorches(1);
+        GenerateTorches(100);
 
         VoxelWorld.BuildChangedChunks();
         PlacePlayer();

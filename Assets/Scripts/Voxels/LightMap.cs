@@ -6,8 +6,6 @@ using UnityEngine;
 // https://web.archive.org/web/20210429192404/https://www.seedofandromeda.com/blogs/29-fast-flood-fill-lighting-in-a-blocky-voxel-game-pt-1
 public class LightMap
 {
-    private const float LightAttenuationFactor = 0.75f;
-
     public List<Vector3Int> LastUpdatedVoxels = new List<Vector3Int>();
 
     public LightMap(VoxelWorld world)
@@ -131,13 +129,6 @@ public class LightMap
 
         LastUpdatedVoxels.Clear();
 
-        int totalNodesProcessed = 0;
-
-        //UnityEngine.Debug.Log($"Processing channel {channel}, {lightNodes.Count} nodes, {visitedNodes.Count} already visited");
-
-        var sw = new Stopwatch();
-        sw.Start();
-
         while(lightNodes.Count > 0)
         {
             var node = lightNodes.Dequeue();
@@ -165,19 +156,15 @@ public class LightMap
 
                 var localNeighborPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(neighborGlobalPos);
 
-                var newLightLevel = currentLightLevel * LightAttenuationFactor;
+                var newLightLevel = (byte)(currentLightLevel - 1);
 
                 if(neighborChunk != null 
                     && !VoxelBuildHelper.IsVoxelNeighborOpaque(_world, node.GlobalPos, neighborDir)
-
-                    // Should this check via LightAttenuationFactor instead of +2?
                     && neighborChunk.GetLightChannelValue(localNeighborPos, channel) + 2 <= currentLightLevel)
                 {
                     visitedNodes.Add(neighborGlobalPos);
                     LastUpdatedVoxels.Add(neighborGlobalPos);
 
-                    totalNodesProcessed++;
-                    
                     neighborChunk.SetLightChannelValue(localNeighborPos, channel, newLightLevel);
 
                     lightNodes.Enqueue(new LightNode
@@ -188,10 +175,6 @@ public class LightMap
                 }
             }            
         }
-
-        sw.Stop();
-
-        //UnityEngine.Debug.Log($"Total Nodes Processed = {totalNodesProcessed} in {sw.ElapsedMilliseconds}ms");
     }
 
     private IEnumerable<Vector3Int> GetAffectedChunks(Vector3Int chunkPos, Vector3Int localVoxelPos)
