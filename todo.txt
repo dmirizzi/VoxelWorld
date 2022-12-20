@@ -49,6 +49,9 @@
         -> Was due to improper sampling of light map for vertices, sampling directly on vertexpos+normal (instead of at the center of the face+normal)         
     [x] Lights are not updated correctly across vertical chunk borders
         -> Chunk's vertex light values were not updated if light value at neighboring voxel was updated
+    [ ] Wedge causes lighting problems: set wedge, then light nearby, some surrounding voxels are then too dark
+        -> then when removing wedge and placing it again, it looks fine
+
 
     [ ] Vertices along the diagonals around a light source are brighter
     [ ] Recalculating light map on added solid voxel
