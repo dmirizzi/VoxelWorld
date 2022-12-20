@@ -51,8 +51,6 @@ public class LightMap
             });
         }
 
-        UnityEngine.Debug.Log($"Removed solid voxel: {_world.GetVoxel(globalRemovedVoxelPos)}");
-
         for(int channel = 0; channel < 3; ++channel)
         {
             var visitedNodes = new HashSet<Vector3Int>();
@@ -135,7 +133,7 @@ public class LightMap
 
         int totalNodesProcessed = 0;
 
-        UnityEngine.Debug.Log($"Processing channel {channel}, {lightNodes.Count} nodes, {visitedNodes.Count} already visited");
+        //UnityEngine.Debug.Log($"Processing channel {channel}, {lightNodes.Count} nodes, {visitedNodes.Count} already visited");
 
         var sw = new Stopwatch();
         sw.Start();
@@ -144,10 +142,15 @@ public class LightMap
         {
             var node = lightNodes.Dequeue();
 
-            //TODO: Should we only do this for chunks where a light value was actually changed below?
-            visitedChunks.Add(node.Chunk.ChunkPos);
-
             var localPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(node.GlobalPos);
+
+            //TODO: Should we only do this for chunks where a light value was actually changed below?
+            //visitedChunks.Add(node.Chunk.ChunkPos);
+            foreach(var chunk in GetAffectedChunks(node.Chunk.ChunkPos, localPos))
+            {
+                visitedChunks.Add(chunk);
+            }
+
             var currentLightLevel = node.Chunk.GetLightChannelValue(localPos, channel);           
 
             foreach(var neighborDir in fillDirections)
@@ -188,7 +191,23 @@ public class LightMap
 
         sw.Stop();
 
-        UnityEngine.Debug.Log($"Total Nodes Processed = {totalNodesProcessed} in {sw.ElapsedMilliseconds}ms");
+        //UnityEngine.Debug.Log($"Total Nodes Processed = {totalNodesProcessed} in {sw.ElapsedMilliseconds}ms");
+    }
+
+    private IEnumerable<Vector3Int> GetAffectedChunks(Vector3Int chunkPos, Vector3Int localVoxelPos)
+    {
+        var chunks = new List<Vector3Int>();
+
+        chunks.Add(chunkPos);
+
+        if(localVoxelPos.x == 0)                           chunks.Add(chunkPos + Vector3Int.left);
+        if(localVoxelPos.x == VoxelInfo.ChunkSize - 1)     chunks.Add(chunkPos + Vector3Int.right);
+        if(localVoxelPos.y == 0)                           chunks.Add(chunkPos + Vector3Int.up);
+        if(localVoxelPos.y == VoxelInfo.ChunkSize - 1)     chunks.Add(chunkPos + Vector3Int.down);
+        if(localVoxelPos.z == 0)                           chunks.Add(chunkPos + Vector3Int.back);
+        if(localVoxelPos.z == VoxelInfo.ChunkSize - 1)     chunks.Add(chunkPos + Vector3Int.forward);
+
+        return chunks;
     }
 
     private VoxelWorld _world;

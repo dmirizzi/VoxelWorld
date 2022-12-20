@@ -34,7 +34,8 @@ public class WorldGenerator : MonoBehaviour
         VoxelWorld.Clear();
         
         //GenerateCubeRoom(3);
-        GenerateCube(8);
+        GenerateCuboidByCorners(new Vector3Int(-16, 0, -16), new Vector3Int(16, -16, 16), BlockDataRepository.GetBlockTypeId("Dirt"));
+        GenerateCuboidByCorners(new Vector3Int(0, 0, -2), new Vector3Int(1, -3, 0), 0);
 
         //VoxelWorld.SetVoxel(new Vector3Int(-2, 0, 0), BlockDataRepository.GetBlockTypeId("Torch"));
         
@@ -68,18 +69,45 @@ public class WorldGenerator : MonoBehaviour
         UnityEngine.Debug.Log($"Generated world in {sw.Elapsed.TotalSeconds} sec");
     }
 
-    private void GenerateCube(int size)
+    private void GenerateCuboidByCorners(Vector3Int p1, Vector3Int p2, ushort type)
     {
-        for(int x = -size; x < size; ++x)
+        var xs = Math.Min(p1.x, p2.x);
+        var xe = Math.Max(p1.x, p2.x);
+        var ys = Math.Min(p1.y, p2.y);
+        var ye = Math.Max(p1.y, p2.y);
+        var zs = Math.Min(p1.z, p2.z);
+        var ze = Math.Max(p1.z, p2.z);
+
+        for(int x = xs; x <= xe; ++x)
         {
-            for(int z = -size; z < size; ++z)
+            for(int z = zs; z <= ze; ++z)
             {
-                for(int y = -size; y <= size; ++y)
+                for(int y = ys; y <= ye; ++y)
                 {
-                    VoxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Dirt"));
+                    VoxelWorld.SetVoxel(x, y, z, type);
                 }
             }
         }
+    }
+
+
+    private void GenerateCuboid(Vector3Int pos, Vector3Int size, ushort type)
+    {
+        for(int x = -size.x; x < size.x; ++x)
+        {
+            for(int z = -size.z; z < size.z; ++z)
+            {
+                for(int y = -size.y; y <= size.y; ++y)
+                {
+                    VoxelWorld.SetVoxel(pos.x + x, pos.y + y, pos.z + z, type);
+                }
+            }
+        }
+    }
+
+    private void GenerateCube(Vector3Int pos, int size, ushort type)
+    {
+        GenerateCuboid(pos, new Vector3Int(size, size, size), type);
     }
 
     private void GenerateCubeRoom(int size)

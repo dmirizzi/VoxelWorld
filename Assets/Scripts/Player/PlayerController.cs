@@ -308,7 +308,7 @@ public class PlayerController : MonoBehaviour
         _dbgLastRay = new Ray(CameraTransform.position, CameraTransform.forward);
         _dbgLastHit = null;
 
-        Vector3Int voxelPos = Vector3Int.zero;
+        Vector3Int? voxelPos = null;
         Vector3 normal = Vector3.zero;
         Vector3 hitPos = Vector3.zero;
 
@@ -365,8 +365,11 @@ public class PlayerController : MonoBehaviour
 
         _dbgLastHit = hitPos;
         _dbgLastHitNormal = normal;
-        _dbgTargetingVoxelSurface = VoxelPosHelper.WorldPosIsOnVoxelSurface(hitPos);               
-        _dbgLastTargetVoxel = new Vector3(voxelPos.x, voxelPos.y, voxelPos.z);
+        _dbgTargetingVoxelSurface = VoxelPosHelper.WorldPosIsOnVoxelSurface(hitPos);
+        if(voxelPos.HasValue)
+        {               
+            _dbgLastTargetVoxel = new Vector3(voxelPos.Value.x, voxelPos.Value.y, voxelPos.Value.z);
+        }
 
         return (voxelPos, voxelFace);
     }
