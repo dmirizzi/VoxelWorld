@@ -46,8 +46,10 @@
     [x] Improper color attenuation when removing voxels
         -> bug in UpdateOnRemovedSolidVoxel -> only red channel was propagated correctly which excacerbated this effect
     [x] Removing voxels above a light source causes dark spots until a adjacent voxel (on the xz plane) is UpdateOnRemovedSolidVoxel  
-        -> Was due to improper sampling of light map for vertices, sampling directly on vertexpos+normal (instead of at the center of the face+normal)
-         
+        -> Was due to improper sampling of light map for vertices, sampling directly on vertexpos+normal (instead of at the center of the face+normal)         
+    [x] Lights are not updated correctly across vertical chunk borders
+        -> Chunk's vertex light values were not updated if light value at neighboring voxel was updated
+
     [ ] Vertices along the diagonals around a light source are brighter
     [ ] Recalculating light map on added solid voxel
 
