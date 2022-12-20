@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class VoxelWorld
 {
-    public VoxelWorld(Material textureAtlasMaterial, Material textureAtlasTransparentMaterial)
+    public VoxelWorld(Material textureAtlasMaterial, Material textureAtlasTransparentMaterial, PlayerController playerController)
     {
         _chunks = new Dictionary<Vector3Int, Chunk>();
         _chunkBuilders = new Dictionary<Vector3Int, ChunkBuilder>();
@@ -15,10 +15,14 @@ public class VoxelWorld
         _textureAtlasMaterial = textureAtlasMaterial;
         _textureAtlasTransparentMaterial = textureAtlasTransparentMaterial;
         _queuedChunkLightMapUpdates = new HashSet<Vector3Int>();
+        _queuedLightUpdates = new PriorityQueue<LightUpdate, float>();
+        _playerController = playerController;
     }
 
     public void Update()
     {
+        BuildChangedChunks();
+
         lock(_queuedChunkLightMapUpdates)
         {
             foreach(var chunkPos in _queuedChunkLightMapUpdates)
@@ -28,10 +32,16 @@ public class VoxelWorld
                     _chunkBuilders[chunkPos].UpdateLightVertexColors();
                 }            
             }
-        }
+        }        
         _queuedChunkLightMapUpdates.Clear();
 
-        BuildChangedChunks();
+        lock(_queuedLightUpdates)
+        {
+            if(_queuedLightUpdates.TryDequeue(out var update))
+            {
+                ProcessLightUpdate(update);
+            }
+        }
     }
 
     public void SetVoxel(Vector3Int globalPos, ushort type, BlockFace? placementDir = null, BlockFace? lookDir = null, bool useExistingAuxData = false)
@@ -110,6 +120,24 @@ public class VoxelWorld
 
     public void SetLight(Vector3Int pos, Color32 color, bool add)
     {
+        lock(_queuedLightUpdates)
+        {
+            var lightWorldPos = new Vector3(pos.x, pos.y, pos.z);
+            var distToPlayer = (_playerController.transform.position - lightWorldPos).sqrMagnitude;
+
+            _queuedLightUpdates.Enqueue(
+                new LightUpdate{
+                    Position = pos,
+                    Color = color,
+                    Add = add
+                },
+                distToPlayer
+            );    
+        }
+    }
+
+    private void ProcessLightUpdate(LightUpdate lightUpdate)
+    {
         var affectedChunks = new HashSet<Vector3Int>[] {
             new HashSet<Vector3Int>(),
             new HashSet<Vector3Int>(),
@@ -117,9 +145,9 @@ public class VoxelWorld
         };
 
         var colorChannels = new byte[]{
-            color.r,
-            color.g,
-            color.b
+            lightUpdate.Color.r,
+            lightUpdate.Color.g,
+            lightUpdate.Color.b
         };
 
         // Calculate lightmap on a separate task for each color channel
@@ -127,13 +155,13 @@ public class VoxelWorld
         var tasks = new Task[3];
         for(int channel = 0; channel < 3; ++channel)
         {            
-            if(add)
+            if(lightUpdate.Add)
             {
-                tasks[channel] = taskFactory.StartNew(c => _lightMap.AddLight(pos, (int)c, colorChannels[(int)c], affectedChunks[(int)c]), channel);
+                tasks[channel] = taskFactory.StartNew(c => _lightMap.AddLight(lightUpdate.Position, (int)c, colorChannels[(int)c], affectedChunks[(int)c]), channel);
             }
             else
             {
-                tasks[channel] = taskFactory.StartNew(c => _lightMap.RemoveLight(pos, (int)c, colorChannels[(int)c], affectedChunks[(int)c]), channel);
+                tasks[channel] = taskFactory.StartNew(c => _lightMap.RemoveLight(lightUpdate.Position, (int)c, colorChannels[(int)c], affectedChunks[(int)c]), channel);
             }
         };
 
@@ -141,7 +169,7 @@ public class VoxelWorld
         {
             var allAffectedChunks = affectedChunks.SelectMany(x => x).Distinct();
             QueueChunksForLightmapUpdate(allAffectedChunks);
-        });        
+        });            
     }
 
     public Color32 GetLightValue(Vector3Int pos)
@@ -387,6 +415,15 @@ public class VoxelWorld
         }
     }
 
+    private struct LightUpdate
+    {
+        public Vector3Int Position { get; set; }
+
+        public Color32 Color { get; set; }
+
+        public bool Add { get; set; }
+    }
+
     private object _chunkCreationLock = new object();
 
     private Dictionary<Vector3Int, Chunk> _chunks;
@@ -395,6 +432,8 @@ public class VoxelWorld
 
     public LightMap _lightMap;
 
+    private PriorityQueue<LightUpdate, float> _queuedLightUpdates;
+
     private HashSet<Vector3Int> _queuedChunkLightMapUpdates;
 
     private HashSet<Vector3Int> _changedChunks;
@@ -402,4 +441,6 @@ public class VoxelWorld
     private Material _textureAtlasMaterial;
 
     private Material _textureAtlasTransparentMaterial;
+
+    private PlayerController _playerController;
 }

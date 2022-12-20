@@ -17,7 +17,9 @@ public class WorldGenerator : MonoBehaviour
 
     void Start()
     {
-        VoxelWorld = new VoxelWorld(TextureAtlasMaterial, TextureAtlasTransparentMaterial);
+        var player = GameObject.Find("Player").GetComponent<PlayerController>();
+
+        VoxelWorld = new VoxelWorld(TextureAtlasMaterial, TextureAtlasTransparentMaterial, player);
 
         GenerateWorld();
 
