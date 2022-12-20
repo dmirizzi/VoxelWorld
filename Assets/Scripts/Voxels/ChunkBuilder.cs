@@ -130,7 +130,8 @@ public class ChunkBuilder
     private Color32[] GetLightVertexColors()
     {
         var colors = new Color32[_solidMesh.Vertices.Count];
-
+/*
+        // Blocky lighting model
         for(int ti = 0; ti < _solidMesh.Triangles.Count; ti += 3)
         {
             var vi1 = _solidMesh.Triangles[ti];
@@ -152,6 +153,43 @@ public class ChunkBuilder
             colors[vi1] = lightVal;
             colors[vi2] = lightVal;
             colors[vi3] = lightVal;
+        }
+*/
+        // Smooth lighting model
+        for(int vi = 0; vi < _solidMesh.Vertices.Count; ++vi)
+        {
+            var vp = _solidMesh.Vertices[vi];
+
+            var globalVoxelPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(VoxelPosHelper.GetVoxelPosFromWorldPos(vp), _chunk.ChunkPos);
+            int r = 0, g = 0, b = 0;
+            int numVoxels = 0;
+            for(int x = -1; x < 1; ++x)
+            {
+                for(int z = -1; z < 1; ++z)
+                {   
+                    for(int y = -1; y < 1; ++y)
+                    {   
+                        var neighborPos = globalVoxelPos + new Vector3Int(x, y, z);
+
+                        // Enable this check to avoid darker shaded corners/edges (which kind of looks like SSAO)
+                        //if(_world.GetVoxel(neighborPos) != 0) continue;
+
+                        var voxelColor = _world.GetVoxelLightColor(neighborPos);
+                        r += voxelColor.r;
+                        g += voxelColor.g;
+                        b += voxelColor.b;
+                        numVoxels++;
+                    }
+                }
+            }
+
+            if(numVoxels > 0)
+            {
+                r /= numVoxels;
+                g /= numVoxels;
+                b /= numVoxels;
+            }
+            colors[vi] = new Color32((byte)r, (byte)g, (byte)b, 255);
         }
 
         return colors;
