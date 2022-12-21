@@ -60,7 +60,7 @@ public class WorldGenerator : MonoBehaviour
                 );       
         */
 
-        GenerateTorches(100);
+        GenerateTorches(50);
 
         VoxelWorld.BuildChangedChunks();
         PlacePlayer();
