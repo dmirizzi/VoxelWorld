@@ -51,6 +51,7 @@
         -> Chunk's vertex light values were not updated if light value at neighboring voxel was updated
     [ ] Wedge causes lighting problems: set wedge, then light nearby, some surrounding voxels are then too dark
         -> then when removing wedge and placing it again, it looks fine
+    [ ] Ladder is not lit correctly, e.g. when building a vertical tunnel with a ladder and adding a torch at the bottom and/or top
 
 
     [ ] Vertices along the diagonals around a light source are brighter
@@ -59,10 +60,14 @@
 [ ] Flood Fill sunlight
     -> https://web.archive.org/web/20201112022602/https://www.seedofandromeda.com/blogs/30-fast-flood-fill-lighting-in-a-blocky-voxel-game-pt-2
 
+[ ] Light Filters, e.g. stained glass?     
+
 [ ] Dynamic Lighting 
     [ ] Directional sunlight leaves sides facing away from the side completely dark
     [ ] Lights go through gaps between voxels and cast "light stripes"
-    [ ] Lighting is different between chunks / no smooth lighting transition between chunks
+    [x] Lighting is different between chunks / no smooth lighting transition between chunks
+        -> Increased light range & fixed bug in voxel shader where distance voxels are lit by hand held torch
+        -> This was because light mapping was being applied for every light, not just once
     [ ] Ambient Occlusion?
         -> https://web.archive.org/web/20120921194612/http://codeflow.org/entries/2010/dec/09/minecraft-like-rendering-experiments-in-opengl-4/
         -> https://0fps.net/2013/07/03/ambient-occlusion-for-minecraft-like-worlds/

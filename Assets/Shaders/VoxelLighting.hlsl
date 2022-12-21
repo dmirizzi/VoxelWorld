@@ -15,11 +15,20 @@ struct CustomLightingData
 #ifndef SHADERGRAPH_PREVIEW
     float4 CustomLightHandling(CustomLightingData d, Light light)
     {
-        float3 radiance = clamp(light.color * (sqrt(light.distanceAttenuation) * light.shadowAttenuation) * 1.25, 0, 1.25);
+        float3 radiance = light.color * sqrt(light.distanceAttenuation) * light.shadowAttenuation;
         float diffuse = saturate(dot(d.normalWS, light.direction));
 
-        // Combine voxel light mapping (via vertexColor) with dynamic lighting
-        float3 colorRGB = d.albedo.xyz * d.vertexColor + d.albedo.xyz * radiance * diffuse;
+        float3 colorRGB = radiance * diffuse * d.albedo.xyz;
+
+        float4 color;
+        color.xyz = colorRGB.xyz;
+        color.w = d.albedo.w;
+
+        return color;     
+    }
+    float4 GetLightMappingColor(CustomLightingData d)
+    {
+        float3 colorRGB = d.albedo.xyz * d.vertexColor;
 
         float4 color;
         color.xyz = colorRGB.xyz;
@@ -34,17 +43,21 @@ float4 CalculateCustomLighting(CustomLightingData d)
     float4 color = 0;
 
     #ifndef SHADERGRAPH_PREVIEW
-        Light mainLight = GetMainLight(d.shadowCoord, d.positionWS, 1);
-        color += CustomLightHandling(d, mainLight);
+        //Light mainLight = GetMainLight(d.shadowCoord, d.positionWS, 1);
+        //color += CustomLightHandling(d, mainLight);
+
+        color += GetLightMappingColor(d) * 3;
 
         #ifdef _ADDITIONAL_LIGHTS
             uint numAdditionalLights = GetAdditionalLightsCount();
             for (uint lightIdx = 0; lightIdx < numAdditionalLights; lightIdx++)
             {
                 Light light = GetAdditionalLight(lightIdx, d.positionWS, 1);
-                color += CustomLightHandling(d, light);
+                color += CustomLightHandling(d, light) * 2;
             }
         #endif
+
+        color = clamp(color, float4(0, 0, 0, 0), float4(1, 1, 1, 1));
 
     #else
         color = d.albedo;
