@@ -23,6 +23,14 @@ public class VoxelWorld
     {
         BuildChangedChunks();
 
+        lock(_queuedLightUpdates)
+        {
+            if(_queuedLightUpdates.TryDequeue(out var update))
+            {
+                ProcessLightUpdate(update);
+            }
+        }
+
         lock(_queuedChunkLightMapUpdates)
         {
             foreach(var chunkPos in _queuedChunkLightMapUpdates)
@@ -33,15 +41,7 @@ public class VoxelWorld
                 }            
             }
         }        
-        _queuedChunkLightMapUpdates.Clear();
-
-        lock(_queuedLightUpdates)
-        {
-            if(_queuedLightUpdates.TryDequeue(out var update))
-            {
-                ProcessLightUpdate(update);
-            }
-        }
+        _queuedChunkLightMapUpdates.Clear();        
     }
 
     public void SetVoxel(Vector3Int globalPos, ushort type, BlockFace? placementDir = null, BlockFace? lookDir = null, bool useExistingAuxData = false)
