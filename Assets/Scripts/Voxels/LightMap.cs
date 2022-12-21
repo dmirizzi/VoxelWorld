@@ -6,8 +6,6 @@ using UnityEngine;
 // https://web.archive.org/web/20210429192404/https://www.seedofandromeda.com/blogs/29-fast-flood-fill-lighting-in-a-blocky-voxel-game-pt-1
 public class LightMap
 {
-    public List<Vector3Int> LastUpdatedVoxels = new List<Vector3Int>();
-
     public LightMap(VoxelWorld world)
     {
         _world = world;
@@ -125,10 +123,6 @@ public class LightMap
 
     private void PropagateLightNodes(Queue<LightNode> lightNodes, int channel, HashSet<Vector3Int> visitedNodes, HashSet<Vector3Int> visitedChunks)
     {
-        //TODO: Do we even need to pass visitedNodes into here? We always pass in a new hashset!!
-
-        LastUpdatedVoxels.Clear();
-
         while(lightNodes.Count > 0)
         {
             var node = lightNodes.Dequeue();
@@ -163,7 +157,6 @@ public class LightMap
                     && neighborChunk.GetLightChannelValue(localNeighborPos, channel) + 2 <= currentLightLevel)
                 {
                     visitedNodes.Add(neighborGlobalPos);
-                    LastUpdatedVoxels.Add(neighborGlobalPos);
 
                     neighborChunk.SetLightChannelValue(localNeighborPos, channel, newLightLevel);
 

@@ -1,6 +1,8 @@
 ----------------------------------------------------------------------------------------------------------------
     Refactoring
 ----------------------------------------------------------------------------------------------------------------
+[x] Avoid explicit Rebuild/Non Rebuild and just batch voxel changes & rebuild affected chunks once per frame
+
 [ ] Use TryGet-Pattern instead of nullable return values
 [ ] Simplify IBlockType?
     [ ] Should we even provide access to Chunk? Or just go always through World?
@@ -8,7 +10,6 @@
 [ ] Consistent naming for localPos, globalPos etc!!
     -> Convention should be: localChunkPos, globalChunkPos, localVoxelPos, globalVoxelPos
 
-[ ] Avoid explicit Rebuild/Non Rebuild and just batch voxel changes & rebuild affected chunks once per frame?
 
 [ ] Reverse implementations for overloads with Vector vs (x,y,z) where unnecessary vector is created
 

@@ -88,14 +88,6 @@ public class PlayerController : MonoBehaviour
             Gizmos.DrawSphere(_dbgGroundingSphere.Item1, _dbgGroundingSphere.Item2);
         }
 */
-
-        if(_worldGen?.VoxelWorld?._lightMap?.LastUpdatedVoxels != null)
-        {
-            foreach(var voxelPos in _worldGen?.VoxelWorld?._lightMap?.LastUpdatedVoxels)
-            {
-                Gizmos.DrawWireCube(voxelPos + Vector3.one * 0.5f, Vector3.one * 0.5f);
-            }
-        }
     }
 
 

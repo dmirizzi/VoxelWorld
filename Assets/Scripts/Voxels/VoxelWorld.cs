@@ -296,7 +296,7 @@ public class VoxelWorld
         // GameObjects must be generated on main thread
         foreach(var builder in builders)
         {
-            _chunks[builder.ChunkPos].AddVoxelMeshGameObjects(builder.GetChunkGameObjects());
+            _chunks[builder.ChunkPos].AddVoxelMeshGameObjects(builder.CreateChunkGameObjects());
             _chunks[builder.ChunkPos].BuildBlockGameObjects();
             _chunks[builder.ChunkPos].BuildVoxelColliderGameObjects();
         }        

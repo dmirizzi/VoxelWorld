@@ -47,6 +47,7 @@ public class Torch : MonoBehaviour, IPlayerHoldable
         _light = GetComponentInChildren<Light>(true);
         if(_light != null)
         {
+            _light.color = BlockDataRepository.GetBlockData("Torch").LightColor.Value;
             _lightTransform = _light.gameObject.transform;
         }
         

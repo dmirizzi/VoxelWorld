@@ -6,22 +6,6 @@ using UnityEngine;
 
 public class ChunkBuilder
 {
-    private VoxelWorld _world;
-
-    private Chunk _chunk;
-
-    private readonly Material _textureAtlasMaterial;
-
-    private readonly Material _textureAtlasTransparentMaterial;
-
-    private ChunkMesh _solidMesh;
-
-    private ChunkMesh _transparentMesh;
-
-    private Vector3Int _chunkVoxelPos;
-
-    private GameObject _solidChunk;
-
     public Vector3Int ChunkPos { get; private set; }
 
     public ChunkBuilder(VoxelWorld world, Vector3Int chunkPos, Chunk chunk, Material textureAtlasMaterial, Material textureAtlasTransparentMaterial)
@@ -36,44 +20,39 @@ public class ChunkBuilder
         _transparentMesh = new ChunkMesh();
     }
 
-    public GameObject[] GetChunkGameObjects()
+    private void AddChunkMeshToGameObject(ChunkMesh chunkMesh, GameObject gameObject)
+    {
+        gameObject.AddComponent<MeshRenderer>();
+        var meshFilter = gameObject.AddComponent<MeshFilter>().mesh;
+
+        meshFilter.Clear();
+        meshFilter.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+        meshFilter.vertices = chunkMesh.Vertices.ToArray();
+        meshFilter.colors32 = GetSmoothLightVertexColorMapping(chunkMesh);
+        meshFilter.triangles = chunkMesh.Triangles.ToArray();
+        meshFilter.normals = chunkMesh.Normals.ToArray();
+        meshFilter.uv = chunkMesh.UVCoordinates.ToArray();
+        meshFilter.Optimize();
+    }
+
+    public GameObject[] CreateChunkGameObjects()
     {
         _solidChunk = new GameObject($"SolidVoxelMesh");
-        _solidChunk.AddComponent<MeshRenderer>();
-        var solidMeshFilter = _solidChunk.AddComponent<MeshFilter>().mesh;
 
-        solidMeshFilter.Clear();
-        solidMeshFilter.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-        solidMeshFilter.vertices = _solidMesh.Vertices.ToArray();
-        solidMeshFilter.colors32 = GetLightVertexColors();
-        solidMeshFilter.triangles = _solidMesh.Triangles.ToArray();
-        solidMeshFilter.normals = _solidMesh.Normals.ToArray();
-        solidMeshFilter.uv = _solidMesh.UVCoordinates.ToArray();
-        solidMeshFilter.Optimize();
-
+        AddChunkMeshToGameObject(_solidMesh, _solidChunk);
         _solidChunk.GetComponent<Renderer>().material = _textureAtlasMaterial;
-        GenerateMeshCollider(_solidChunk);
+        _solidChunk.AddComponent<MeshCollider>();
         _solidChunk.layer = LayerMask.NameToLayer("Voxels");
 
-        var transparentChunk = new GameObject($"TransparentVoxelMesh");
-        transparentChunk.AddComponent<MeshRenderer>();
-        var transparentMeshFilter = transparentChunk.AddComponent<MeshFilter>().mesh;
-
-        transparentMeshFilter.Clear();
-        transparentMeshFilter.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-        transparentMeshFilter.vertices = _transparentMesh.Vertices.ToArray();
-        transparentMeshFilter.triangles = _transparentMesh.Triangles.ToArray();
-        transparentMeshFilter.normals = _transparentMesh.Normals.ToArray();
-        transparentMeshFilter.uv = _transparentMesh.UVCoordinates.ToArray();
-        transparentMeshFilter.Optimize();
-
-        transparentChunk.GetComponent<Renderer>().material = _textureAtlasTransparentMaterial;
-        GenerateMeshCollider(transparentChunk);
-        transparentChunk.layer = LayerMask.NameToLayer("Voxels");
+        _transparentChunk = new GameObject($"TransparentVoxelMesh");
+        AddChunkMeshToGameObject(_transparentMesh, _transparentChunk);
+        _transparentChunk.GetComponent<Renderer>().material = _textureAtlasTransparentMaterial;
+        _transparentChunk.AddComponent<MeshCollider>();
+        _transparentChunk.layer = LayerMask.NameToLayer("Voxels");
 
         return new GameObject[] {
             _solidChunk,
-            transparentChunk
+            _transparentChunk
         };
     }
 
@@ -124,25 +103,26 @@ public class ChunkBuilder
 
     public void UpdateLightVertexColors()
     {
-        _solidChunk.GetComponent<MeshFilter>().mesh.colors32 = GetLightVertexColors();
+        _solidChunk.GetComponent<MeshFilter>().mesh.colors32 = GetSmoothLightVertexColorMapping(_solidMesh);
+        _transparentChunk.GetComponent<MeshFilter>().mesh.colors32 = GetSmoothLightVertexColorMapping(_transparentMesh);
     }
 
-    private Color32[] GetLightVertexColors()
+
+    private Color32[] GetBlockyLightVertexColorMapping(ChunkMesh mesh)
     {
-        var colors = new Color32[_solidMesh.Vertices.Count];
-/*
-        // Blocky lighting model
-        for(int ti = 0; ti < _solidMesh.Triangles.Count; ti += 3)
+        var colors = new Color32[mesh.Vertices.Count];
+
+        for(int ti = 0; ti < mesh.Triangles.Count; ti += 3)
         {
-            var vi1 = _solidMesh.Triangles[ti];
-            var vi2 = _solidMesh.Triangles[ti + 1];
-            var vi3 = _solidMesh.Triangles[ti + 2];
+            var vi1 = mesh.Triangles[ti];
+            var vi2 = mesh.Triangles[ti + 1];
+            var vi3 = mesh.Triangles[ti + 2];
 
-            var v1 = _solidMesh.Vertices[vi1];
-            var v2 = _solidMesh.Vertices[vi2];
-            var v3 = _solidMesh.Vertices[vi3];
+            var v1 = mesh.Vertices[vi1];
+            var v2 = mesh.Vertices[vi2];
+            var v3 = mesh.Vertices[vi3];
 
-            var normal = _solidMesh.Normals[vi1];
+            var normal = mesh.Normals[vi1];
 
             var lightSamplingPoint = (v1 + v2 + v3) / 3f + normal * 0.5f;
 
@@ -154,11 +134,17 @@ public class ChunkBuilder
             colors[vi2] = lightVal;
             colors[vi3] = lightVal;
         }
-*/
-        // Smooth lighting model
-        for(int vi = 0; vi < _solidMesh.Vertices.Count; ++vi)
+
+        return colors;
+    }
+
+    private Color32[] GetSmoothLightVertexColorMapping(ChunkMesh mesh)
+    {
+        var colors = new Color32[mesh.Vertices.Count];
+
+        for(int vi = 0; vi < mesh.Vertices.Count; ++vi)
         {
-            var vp = _solidMesh.Vertices[vi];
+            var vp = mesh.Vertices[vi];
 
             var globalVoxelPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(VoxelPosHelper.GetVoxelPosFromWorldPos(vp), _chunk.ChunkPos);
             int r = 0, g = 0, b = 0;
@@ -171,7 +157,7 @@ public class ChunkBuilder
                     {   
                         var neighborPos = globalVoxelPos + new Vector3Int(x, y, z);
 
-                        // Enable this check to avoid darker shaded corners/edges (which kind of looks like SSAO)
+                        // Enable this check to avoid darker shaded corners/edges (which provide a SSAO look)
                         //if(_world.GetVoxel(neighborPos) != 0) continue;
 
                         var voxelColor = _world.GetVoxelLightColor(neighborPos);
@@ -211,7 +197,6 @@ public class ChunkBuilder
                 localVoxelPos + new Vector3(VoxelInfo.VoxelSize, 0, 0),
                 localVoxelPos + new Vector3(VoxelInfo.VoxelSize, 0, VoxelInfo.VoxelSize),
                 localVoxelPos + new Vector3(0, 0, VoxelInfo.VoxelSize),
-
                 localVoxelPos + new Vector3(0, VoxelInfo.VoxelSize - heightOffset, 0),
                 localVoxelPos + new Vector3(VoxelInfo.VoxelSize, VoxelInfo.VoxelSize - heightOffset, 0),
                 localVoxelPos + new Vector3(VoxelInfo.VoxelSize, VoxelInfo.VoxelSize - heightOffset, VoxelInfo.VoxelSize),
@@ -253,8 +238,21 @@ public class ChunkBuilder
         }
     }
 
-    private void GenerateMeshCollider(GameObject chunkObject)
-    {
-        var collider = chunkObject.AddComponent<MeshCollider>();
-    }
+    private VoxelWorld _world;
+
+    private Chunk _chunk;
+
+    private readonly Material _textureAtlasMaterial;
+
+    private readonly Material _textureAtlasTransparentMaterial;
+
+    private ChunkMesh _solidMesh;
+
+    private ChunkMesh _transparentMesh;
+
+    private Vector3Int _chunkVoxelPos;
+
+    private GameObject _solidChunk;
+
+    private GameObject _transparentChunk;    
 }
