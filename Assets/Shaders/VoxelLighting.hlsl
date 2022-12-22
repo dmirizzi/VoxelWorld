@@ -8,9 +8,11 @@ struct CustomLightingData
     float3 normalWS;
     float4 albedo;
     float3 positionWS;
-    float3 vertexColor;
+    float4 vertexColor;
     float4 shadowCoord;
 };
+
+extern float3 _SunlightColor;
 
 #ifndef SHADERGRAPH_PREVIEW
     float4 CustomLightHandling(CustomLightingData d, Light light)
@@ -28,11 +30,11 @@ struct CustomLightingData
     }
     float4 GetLightMappingColor(CustomLightingData d)
     {
-        float3 colorRGB = d.albedo.xyz * d.vertexColor;
+        float3 colorRGB = d.albedo.xyz * clamp(d.vertexColor.xyz + d.vertexColor.w * _SunlightColor, float4(0, 0, 0, 0), float4(1, 1, 1, 1));
 
         float4 color;
         color.xyz = colorRGB.xyz;
-        color.w = d.albedo.w;
+        color.w = 1.0;
 
         return color;     
     }
@@ -67,7 +69,7 @@ float4 CalculateCustomLighting(CustomLightingData d)
 }
 
 #ifdef SHADERGRAPH_PREVIEW
-    void CalculateCustomLighting_float(float3 Position, float3 Normal, float4 Albedo, float3 VertexColor, out float4 Color)
+    void CalculateCustomLighting_float(float3 Position, float3 Normal, float4 Albedo, float4 VertexColor, out float4 Color)
     {
         CustomLightingData d;
         d.normalWS = Normal;
@@ -81,7 +83,7 @@ float4 CalculateCustomLighting(CustomLightingData d)
 
 #else
     // Using float4 for colors in case we need to add support for transparency later
-    void CalculateCustomLighting_float(float3 Position, float3 Normal, float4 Albedo, float3 VertexColor, out float4 Color)
+    void CalculateCustomLighting_float(float3 Position, float3 Normal, float4 Albedo, float4 VertexColor, out float4 Color)
     {
         CustomLightingData d;
         d.normalWS = Normal;

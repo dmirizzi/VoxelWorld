@@ -9,6 +9,7 @@ public class VoxelWorld
     public VoxelWorld(Material textureAtlasMaterial, Material textureAtlasTransparentMaterial, PlayerController playerController)
     {
         _chunks = new Dictionary<Vector3Int, Chunk>();
+        _topMostChunks = new Dictionary<Vector2Int, Chunk>();
         _chunkBuilders = new Dictionary<Vector3Int, ChunkBuilder>();
         _changedChunks = new HashSet<Vector3Int>();
         _lightMap = new LightMap(this);
@@ -171,6 +172,13 @@ public class VoxelWorld
         }
     }
 
+    public void InitializeSunlight()
+    {
+        var affectedChunks = new HashSet<Vector3Int>();
+        _lightMap.InitializeSunlight(_topMostChunks.Values, affectedChunks);
+        QueueChunksForLightMappingUpdate(affectedChunks);
+    }
+
     public void SetLight(Vector3Int pos, Color32 color, bool add)
     {
         lock(_queuedLightUpdates)
@@ -227,7 +235,7 @@ public class VoxelWorld
             (byte)(chunk.GetLightChannelValue(chunkLocalPos, 0) << 4),
             (byte)(chunk.GetLightChannelValue(chunkLocalPos, 1) << 4),
             (byte)(chunk.GetLightChannelValue(chunkLocalPos, 2) << 4),
-            255
+            (byte)(chunk.GetLightChannelValue(chunkLocalPos, 3) << 4)
         );
     }
 
@@ -445,7 +453,14 @@ public class VoxelWorld
             {
                 if(create)
                 {
-                    _chunks.Add(chunkPos, new Chunk(this, chunkPos));
+                    var chunk = new Chunk(this, chunkPos);
+                    _chunks.Add(chunkPos, chunk);
+
+                    var chunkXZPos = new Vector2Int(x, z);
+                    if(!_topMostChunks.ContainsKey(chunkXZPos) || y > _topMostChunks[chunkXZPos].ChunkPos.y)
+                    {
+                        _topMostChunks[chunkXZPos] = chunk;
+                    }
                 }
                 else
                 {
@@ -469,6 +484,8 @@ public class VoxelWorld
     private object _chunkCreationLock = new object();
 
     private Dictionary<Vector3Int, Chunk> _chunks;
+
+    private Dictionary<Vector2Int, Chunk> _topMostChunks;
 
     private Dictionary<Vector3Int, ChunkBuilder> _chunkBuilders;
 

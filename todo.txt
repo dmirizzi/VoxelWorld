@@ -10,7 +10,6 @@
 [ ] Consistent naming for localPos, globalPos etc!!
     -> Convention should be: localChunkPos, globalChunkPos, localVoxelPos, globalVoxelPos
 
-
 [ ] Reverse implementations for overloads with Vector vs (x,y,z) where unnecessary vector is created
 
 [ ] Refactor Voxel Mesh Building (e.g. DoorBlockType, WedgeBlockType)
@@ -103,13 +102,13 @@ VoxelWorld
         [ ] Store light map for mesh in 2d array & pass to (fragment?) shader?
         [ ] Or only merge if they have the same light value?
 
-[ ] Custom models as custom voxel mesh (e.g. stairs)
+[x] Custom models as custom voxel mesh (e.g. stairs)
 
 [ ] Voxel Sprites
 
 [ ] Voxel Prefabs (e.g. village houses, tents etc.)
 
-[ ] Allow for arbitrary rotations of custom mesh voxels (not just on y axis)
+[ ] Allow for arbitrary rotations of custom mesh voxels (not just on y axis)?
 
 [ ] Refactor ChunkBuilder
     [ ] Reserve lists used for voxel building to avoid internal re-copying?
@@ -144,6 +143,7 @@ Items / Blocks
 
 [ ] Ladder
     [ ] Improved climbing -> not just disabling gravity but redirecting any movement towards the ladder upwards/downwards
+    [ ] Not lightmapped correctly, e.g. when building a vertical tunnel with a ladder and adding a torch at the bottom and/or top
 
 [ ] Door
     [x] Need BlockTypes Door and something generic like Placeholder Just to make sure the second block is not empty
@@ -152,6 +152,9 @@ Items / Blocks
     [x] Extend PlayerController to allow block interaction
     [x] FIX: Custom Collider overlaps with chunk mesh collider -> put custom colliders on separate layer
     [ ] Open/Close Sound
+    [ ] Incorrectly lit with dynamic lights
+        -> normals incorrect?
+        -> normals need to be rotated as well!
 
 [ ] Quarter Wedge
 
@@ -225,12 +228,3 @@ Misc
     [ ] Rain
     [ ] Snow
     [ ] Lightning & Thunder
-
-----------------------------------------------------------------------------------------------------------------
-    Optimization
-----------------------------------------------------------------------------------------------------------------
-
-[ ] Optimize mesh generation to merge adjoining voxel faces with same Texture
-    -> Does that work with texture atlas UVs?
-
-[x] Player obj w/ FPS Camera Controller

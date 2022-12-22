@@ -44,7 +44,7 @@ public class WorldGenerator : MonoBehaviour
         //VoxelWorld.AddLight(new Vector3Int(30, 2, 0), new Color32(50, 255, 50, 255), 20);
         //VoxelWorld.AddLight(new Vector3Int(15, 2, -10), new Color32(255, 255, 0, 255), 20);
 
-        GenerateTerrain(256);
+        GenerateTerrain(64);
 
         /*
                 GenerateCave(
@@ -64,6 +64,7 @@ public class WorldGenerator : MonoBehaviour
         GenerateTorches(10);
 
         VoxelWorld.BuildChangedChunks();
+        VoxelWorld.InitializeSunlight();
         PlacePlayer();
 
         sw.Stop();

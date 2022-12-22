@@ -13,8 +13,6 @@ public class DayNightController : MonoBehaviour
 
     public float SunLightIntensityFactor = 1.5f;
 
-    public Light SunLight;
-
     public Texture2D SkyGradient;
 
     public Texture2D SunLightGradient;
@@ -37,10 +35,7 @@ public class DayNightController : MonoBehaviour
         RenderSettings.skybox.SetFloat("_Exposure", skyBoxBrightness);
         
         var sunLightColor = GetColorForTime(SunLightGradient);
-        SunLight.color = sunLightColor;
-
-        var sunLightBrightness = (sunLightColor.r + sunLightColor.g + sunLightColor.b) / 3.0f;
-        SunLight.intensity = sunLightBrightness * SunLightIntensityFactor;
+        Shader.SetGlobalVector("_SunlightColor", new Vector4(sunLightColor.r, sunLightColor.g, sunLightColor.b, 1.0f));
     }
 
     private Color GetColorForTime(Texture2D gradient)

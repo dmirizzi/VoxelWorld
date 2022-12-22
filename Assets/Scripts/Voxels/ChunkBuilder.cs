@@ -147,7 +147,7 @@ public class ChunkBuilder
             var vp = mesh.Vertices[vi];
 
             var globalVoxelPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(VoxelPosHelper.GetVoxelPosFromWorldPos(vp), _chunk.ChunkPos);
-            int r = 0, g = 0, b = 0;
+            int r = 0, g = 0, b = 0, sun = 0;
             int numVoxels = 0;
             for(int x = -1; x < 1; ++x)
             {
@@ -164,6 +164,7 @@ public class ChunkBuilder
                         r += voxelColor.r;
                         g += voxelColor.g;
                         b += voxelColor.b;
+                        sun += voxelColor.a;
                         numVoxels++;
                     }
                 }
@@ -174,8 +175,9 @@ public class ChunkBuilder
                 r /= numVoxels;
                 g /= numVoxels;
                 b /= numVoxels;
+                sun /= numVoxels;
             }
-            colors[vi] = new Color32((byte)r, (byte)g, (byte)b, 255);
+            colors[vi] = new Color32((byte)r, (byte)g, (byte)b, (byte)sun);
         }
 
         return colors;
