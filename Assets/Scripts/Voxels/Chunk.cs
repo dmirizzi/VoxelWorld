@@ -41,7 +41,12 @@ public class Chunk
         return _chunkData[localX, localY, localZ];
     }
 
-    public bool SetVoxel(Vector3Int localPos, ushort type, BlockFace? placementFace = null, BlockFace? lookDir = null, bool useExistingAuxData = false)
+    public bool SetVoxel(
+        Vector3Int localPos, 
+        ushort type, 
+        BlockFace? placementFace = null, 
+        BlockFace? lookDir = null, 
+        bool useExistingAuxData = false)
     {
         // Remove old aux data and gameobjects if it already exists at this voxel position
         if(_blockGameObjects.ContainsKey(localPos))

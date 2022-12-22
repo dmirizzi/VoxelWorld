@@ -52,10 +52,11 @@
         -> Chunk's vertex light values were not updated if light value at neighboring voxel was updated
     [x] Vertices along the diagonals around a light source are brighter
         -> Solved with smooth lighting model    
+    [x] Recalculating light map on added solid voxel
+        -> Removed light at position of added solid voxel
+    [ ] Ladder is not lit correctly, e.g. when building a vertical tunnel with a ladder and adding a torch at the bottom and/or top
     [ ] Wedge causes lighting problems: set wedge, then light nearby, some surrounding voxels are then too dark
         -> then when removing wedge and placing it again, it looks fine
-    [ ] Ladder is not lit correctly, e.g. when building a vertical tunnel with a ladder and adding a torch at the bottom and/or top
-    [ ] Recalculating light map on added solid voxel
 
 [ ] Flood Fill sunlight
     -> https://web.archive.org/web/20201112022602/https://www.seedofandromeda.com/blogs/30-fast-flood-fill-lighting-in-a-blocky-voxel-game-pt-2

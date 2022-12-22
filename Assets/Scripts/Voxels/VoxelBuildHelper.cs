@@ -70,7 +70,7 @@ public static class VoxelBuildHelper
         return result;
     }
 
-    public static bool IsVoxelNeighborOpaque(VoxelWorld world, Vector3Int globalVoxelPos, Vector3Int direction)
+    public static bool NeighborVoxelHasOpaqueSide(VoxelWorld world, Vector3Int globalVoxelPos, Vector3Int direction)
     {
         var neighbor = world.GetVoxel(globalVoxelPos + direction);
         var neighborFace = BlockFaceHelper.GetBlockFaceFromVector(-direction);

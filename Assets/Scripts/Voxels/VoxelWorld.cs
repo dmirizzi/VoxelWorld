@@ -14,7 +14,7 @@ public class VoxelWorld
         _lightMap = new LightMap(this);
         _textureAtlasMaterial = textureAtlasMaterial;
         _textureAtlasTransparentMaterial = textureAtlasTransparentMaterial;
-        _queuedChunkLightMapUpdates = new HashSet<Vector3Int>();
+        _queuedChunkLightMappingUpdates = new HashSet<Vector3Int>();
         _queuedLightUpdates = new PriorityQueue<LightUpdate, float>();
         _playerController = playerController;
     }
@@ -31,9 +31,9 @@ public class VoxelWorld
             }
         }
 
-        lock(_queuedChunkLightMapUpdates)
+        lock(_queuedChunkLightMappingUpdates)
         {
-            foreach(var chunkPos in _queuedChunkLightMapUpdates)
+            foreach(var chunkPos in _queuedChunkLightMappingUpdates)
             {
                 if(_chunkBuilders.ContainsKey(chunkPos))
                 {
@@ -41,15 +41,25 @@ public class VoxelWorld
                 }            
             }
         }        
-        _queuedChunkLightMapUpdates.Clear();        
+        _queuedChunkLightMappingUpdates.Clear();        
     }
 
-    public void SetVoxel(Vector3Int globalPos, ushort type, BlockFace? placementDir = null, BlockFace? lookDir = null, bool useExistingAuxData = false)
+    public void SetVoxel(
+        Vector3Int globalPos, 
+        ushort type, 
+        BlockFace? placementDir = null, 
+        BlockFace? lookDir = null, 
+        bool useExistingAuxData = false)
     {
         SetVoxel(globalPos.x, globalPos.y, globalPos.z, type, placementDir, lookDir, useExistingAuxData);
     }
 
-    public void SetVoxel(int x, int y, int z, ushort type, BlockFace? placementDir = null, BlockFace? lookDir = null, bool useExistingAuxData = false)
+    public void SetVoxel(
+        int x, int y, int z, 
+        ushort type, 
+        BlockFace? placementDir = null, 
+        BlockFace? lookDir = null, 
+        bool useExistingAuxData = false)
     {
         var globalPos = new Vector3Int(x, y, z);
         var chunk = GetChunkFromVoxelPosition(x, y, z, true);
@@ -62,14 +72,6 @@ public class VoxelWorld
             return;
         }
 
-        // If non-transparent voxel was removed or replaced by a transparent voxel, update light map
-        var chunksAffectedByLightUpdate = new HashSet<Vector3Int>();
-        if(!VoxelInfo.IsTransparent(oldVoxelType) && VoxelInfo.IsTransparent(type))
-        { 
-            //TODO: Optimize for large batches of SetVoxel?
-            _lightMap.UpdateOnRemovedSolidVoxel(new Vector3Int(x, y, z), chunksAffectedByLightUpdate);
-        }
-
         foreach(var affectedChunkPos in GetChunksAdjacentToVoxel(globalPos))
         {
             // Remember affected chunks for rebuilding in batches later
@@ -78,16 +80,67 @@ public class VoxelWorld
                 continue;
             }
             _changedChunks.Add(affectedChunkPos);
+        }
+    }
 
+    public void SetVoxelAndUpdateLightMap(
+        Vector3Int globalVoxelPos, 
+        ushort type, 
+        BlockFace? placementDir = null, 
+        BlockFace? lookDir = null, 
+        bool useExistingAuxData = false)
+    {
+        SetVoxelAndUpdateLightMap(
+            globalVoxelPos.x, 
+            globalVoxelPos.y, 
+            globalVoxelPos.z,
+            type, 
+            placementDir, 
+            lookDir,
+            useExistingAuxData);
+    }
+
+    public void SetVoxelAndUpdateLightMap(
+        int x, int y, int z, 
+        ushort type, 
+        BlockFace? placementDir = null, 
+        BlockFace? lookDir = null, 
+        bool useExistingAuxData = false)
+    {
+        var globalPos = new Vector3Int(x, y, z);
+        var chunk = GetChunkFromVoxelPosition(x, y, z, true);
+        var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(globalPos);
+
+        var oldVoxelType = chunk.GetVoxel(chunkLocalPos);
+
+        var chunksAffectedByLightUpdate = new HashSet<Vector3Int>();
+
+        // If a transparent voxel was replaced by a non-transparent voxel, remove the light value at this location
+        if(VoxelInfo.IsTransparent(oldVoxelType) && !VoxelInfo.IsTransparent(type))
+        { 
+            SetLight(globalPos, new Color32(0, 0, 0, 255), false);
+        }
+
+        SetVoxel(x, y, z, type, placementDir, lookDir, useExistingAuxData);        
+
+        // If non-transparent voxel was removed or replaced by a transparent voxel, update light map to propagate the light
+        // through this new gap
+        if(!VoxelInfo.IsTransparent(oldVoxelType) && VoxelInfo.IsTransparent(type))
+        { 
+            _lightMap.UpdateOnRemovedSolidVoxel(globalPos, chunksAffectedByLightUpdate);
+        }
+
+        foreach(var affectedChunkPos in GetChunksAdjacentToVoxel(globalPos))
+        {
             // Only update light on chunks that are not being rebuilt anyways
-            if(chunksAffectedByLightUpdate.Contains(affectedChunkPos))
+            if(_changedChunks.Contains(affectedChunkPos))
             {
                 chunksAffectedByLightUpdate.Remove(affectedChunkPos);
             }
         }
 
         // Update lighting on affected chunks that won't be rebuilt anyway due to changed voxel
-        QueueChunksForLightmapUpdate(chunksAffectedByLightUpdate);
+        QueueChunksForLightMappingUpdate(chunksAffectedByLightUpdate);
     }
 
     public void SetVoxelSphere(Vector3Int center, int radius, ushort voxelType, bool rebuild)
@@ -123,9 +176,9 @@ public class VoxelWorld
         lock(_queuedLightUpdates)
         {
             var lightWorldPos = new Vector3(pos.x, pos.y, pos.z);
-            var distToPlayer = (_playerController.transform.position - lightWorldPos).sqrMagnitude;
+            var distToPlayer = (_playerController.transform.position - lightWorldPos).sqrMagnitude;          
 
-            _queuedLightUpdates.Enqueue(
+            _queuedLightUpdates.EnqueueUnique(
                 new LightUpdate{
                     Position = pos,
                     Color = color,
@@ -158,7 +211,7 @@ public class VoxelWorld
             }
         }
 
-        QueueChunksForLightmapUpdate(affectedChunks);
+        QueueChunksForLightMappingUpdate(affectedChunks);
     }
 
     public Color32 GetVoxelLightColor(Vector3Int pos)
@@ -345,13 +398,13 @@ public class VoxelWorld
         return _chunks.Keys;
     }
 
-    private void QueueChunksForLightmapUpdate(IEnumerable<Vector3Int> chunkPositions)
+    private void QueueChunksForLightMappingUpdate(IEnumerable<Vector3Int> chunkPositions)
     {
-        lock(_queuedChunkLightMapUpdates)
+        lock(_queuedChunkLightMappingUpdates)
         {
             foreach(var chunkPos in chunkPositions)
             {
-                _queuedChunkLightMapUpdates.Add(chunkPos);
+                _queuedChunkLightMappingUpdates.Add(chunkPos);
             }
         }
     }
@@ -423,7 +476,7 @@ public class VoxelWorld
 
     private PriorityQueue<LightUpdate, float> _queuedLightUpdates;
 
-    private HashSet<Vector3Int> _queuedChunkLightMapUpdates;
+    private HashSet<Vector3Int> _queuedChunkLightMappingUpdates;
 
     private HashSet<Vector3Int> _changedChunks;
 

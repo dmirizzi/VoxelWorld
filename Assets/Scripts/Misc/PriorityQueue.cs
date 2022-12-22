@@ -22,7 +22,19 @@ public class PriorityQueue<TValue, TPriority> where TPriority : IComparable
             }
             _list.AddLast((value, priority));
         }
+
+        _containedValues.Add(value);
     }
+
+    public void EnqueueUnique(TValue value, TPriority priority)
+    {
+        if(!Contains(value))
+        {
+            Enqueue(value, priority);
+        }
+    }
+
+    public bool Contains(TValue value) => _containedValues.Contains(value);
 
     public bool TryDequeue(out TValue value)
     {
@@ -30,6 +42,7 @@ public class PriorityQueue<TValue, TPriority> where TPriority : IComparable
         {
             value = _list.First.Value.Value;
             _list.RemoveFirst();
+            _containedValues.Remove(value);
             return true;
         }
         value = default(TValue);
@@ -37,4 +50,6 @@ public class PriorityQueue<TValue, TPriority> where TPriority : IComparable
     }
 
     private LinkedList<(TValue Value, TPriority Priority)> _list = new LinkedList<(TValue, TPriority)>();
+
+    private HashSet<TValue> _containedValues = new HashSet<TValue>();
 }

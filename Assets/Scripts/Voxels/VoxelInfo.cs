@@ -49,6 +49,11 @@ public static class VoxelInfo
 
     public const int TextureAtlasHeight = 128;
 
+    public static bool IsLightEmitting(ushort blockType)
+    {
+        return BlockDataRepository.GetBlockData(blockType).LightColor.HasValue;
+    }
+
     public static bool IsTransparent(ushort blockType)
     {
         return BlockDataRepository.GetBlockData(blockType).Transparent;

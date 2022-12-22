@@ -222,7 +222,7 @@ public class PlayerController : MonoBehaviour
                 var voxelPos = GetTargetedVoxelPos(false);
                 if(voxelPos.Item1.HasValue)
                 {
-                    world.SetVoxel(voxelPos.Item1.Value, 0);
+                    world.SetVoxelAndUpdateLightMap(voxelPos.Item1.Value, 0);
                 }
             }
         }
@@ -263,7 +263,7 @@ public class PlayerController : MonoBehaviour
                         return;
                     }
 
-                    world.SetVoxel(
+                    world.SetVoxelAndUpdateLightMap(
                         targetVoxelPos, 
                         BlockDataRepository.GetBlockTypeId(blockType), 
                         placementDir,

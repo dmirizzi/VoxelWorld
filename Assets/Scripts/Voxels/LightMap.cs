@@ -80,7 +80,10 @@ public class LightMap
         while(removeLightNodes.Count > 0)
         {
             var removeLightNode = removeLightNodes.Dequeue();
-            visitedChunks.Add(removeLightNode.Chunk.ChunkPos);
+            foreach(var chunk in GetAffectedChunks(removeLightNode.Chunk.ChunkPos, localPos))
+            {
+                visitedChunks.Add(chunk);
+            }
 
             foreach(var dir in fillDirections)
             {
@@ -130,7 +133,6 @@ public class LightMap
             var localPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(node.GlobalPos);
 
             //TODO: Should we only do this for chunks where a light value was actually changed below?
-            //visitedChunks.Add(node.Chunk.ChunkPos);
             foreach(var chunk in GetAffectedChunks(node.Chunk.ChunkPos, localPos))
             {
                 visitedChunks.Add(chunk);
@@ -153,13 +155,15 @@ public class LightMap
                 var newLightLevel = (byte)(currentLightLevel - 1);
 
                 if(neighborChunk != null 
-                    && !VoxelBuildHelper.IsVoxelNeighborOpaque(_world, node.GlobalPos, neighborDir)
+                    && !VoxelBuildHelper.NeighborVoxelHasOpaqueSide(_world, node.GlobalPos, neighborDir)
                     && neighborChunk.GetLightChannelValue(localNeighborPos, channel) + 2 <= currentLightLevel)
                 {
                     visitedNodes.Add(neighborGlobalPos);
 
                     neighborChunk.SetLightChannelValue(localNeighborPos, channel, newLightLevel);
 
+                    //TODO: Do we actually need to store the chunk in the light node? Seems like we 
+                    //TODO: fetch it for each neighbor anyways (compare performance with & without)
                     lightNodes.Enqueue(new LightNode
                     {
                         GlobalPos = neighborGlobalPos,
