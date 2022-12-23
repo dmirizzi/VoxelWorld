@@ -55,7 +55,7 @@ public class LightMap
         }
     }
 
-    public void RemoveLight(Vector3Int lightPos, int channel, byte intensity, HashSet<Vector3Int> visitedChunks)
+    public void RemoveLight(Vector3Int lightPos, int channel, HashSet<Vector3Int> visitedChunks)
     {
         var firstChunk = _world.GetChunkFromVoxelPosition(lightPos.x, lightPos.y, lightPos.z, true);
         if(firstChunk == null)
@@ -99,7 +99,10 @@ public class LightMap
                 {
                     var localNeighborPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(neighborGlobalPos);
                     var neighborLightLevel = neighborChunk.GetLightChannelValue(localNeighborPos, channel);
-                    if(neighborLightLevel > 0 && neighborLightLevel < removeLightNode.LightLevel)                
+                    if(neighborLightLevel > 0 && neighborLightLevel < removeLightNode.LightLevel
+
+                        // Remove sunlight downwards as long as its at max level
+                        || (dir == Vector3Int.down && channel == Chunk.SunlightChannel && removeLightNode.LightLevel == 15))                
                     {
                         neighborChunk.SetLightChannelValue(localNeighborPos, channel, 0);
                         removeLightNodes.Enqueue(new RemoveLightNode

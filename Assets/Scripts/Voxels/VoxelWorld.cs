@@ -119,7 +119,8 @@ public class VoxelWorld
         // If a transparent voxel was replaced by a non-transparent voxel, remove the light value at this location
         if(VoxelInfo.IsTransparent(oldVoxelType) && !VoxelInfo.IsTransparent(type))
         { 
-            SetLight(globalPos, new Color32(0, 0, 0, 255), false);
+            RemoveLight(globalPos, false);
+            RemoveLight(globalPos, true);
         }
 
         SetVoxel(x, y, z, type, placementDir, lookDir, useExistingAuxData);        
@@ -197,25 +198,54 @@ public class VoxelWorld
         }
     }
 
+    public void RemoveLight(Vector3Int pos, bool sunlight)
+    {
+        lock(_queuedLightUpdates)
+        {
+            var lightWorldPos = new Vector3(pos.x, pos.y, pos.z);
+            var distToPlayer = (_playerController.transform.position - lightWorldPos).sqrMagnitude;          
+
+            _queuedLightUpdates.EnqueueUnique(
+                new LightUpdate{
+                    Position = pos,
+                    Color = new Color32(0, 0, 0, 255),
+                    Add = false,
+                    Sunlight = sunlight
+                },
+                distToPlayer
+            );    
+        }        
+    }
+
     private void ProcessLightUpdate(LightUpdate lightUpdate)
     {
         var affectedChunks = new HashSet<Vector3Int>();
 
-        var colorChannels = new byte[]{
-            (byte)(lightUpdate.Color.r >> 4),
-            (byte)(lightUpdate.Color.g >> 4),
-            (byte)(lightUpdate.Color.b >> 4)
-        };
-
-        for(int channel = 0; channel < 3; ++channel)
-        {            
-            if(lightUpdate.Add)
+        if(lightUpdate.Sunlight)
+        {
+            if(!lightUpdate.Add)
             {
-                _lightMap.AddLight(lightUpdate.Position, channel, colorChannels[channel], affectedChunks);
+                _lightMap.RemoveLight(lightUpdate.Position, Chunk.SunlightChannel, affectedChunks);                
             }
-            else
-            {
-                _lightMap.RemoveLight(lightUpdate.Position, channel, colorChannels[channel], affectedChunks);                
+        }
+        else
+        {
+            var colorChannels = new byte[]{
+                (byte)(lightUpdate.Color.r >> 4),
+                (byte)(lightUpdate.Color.g >> 4),
+                (byte)(lightUpdate.Color.b >> 4)
+            };
+
+            for(int channel = 0; channel < 3; ++channel)
+            {            
+                if(lightUpdate.Add)
+                {
+                    _lightMap.AddLight(lightUpdate.Position, channel, colorChannels[channel], affectedChunks);
+                }
+                else
+                {
+                    _lightMap.RemoveLight(lightUpdate.Position, channel, affectedChunks);                
+                }
             }
         }
 
@@ -479,6 +509,8 @@ public class VoxelWorld
         public Color32 Color { get; set; }
 
         public bool Add { get; set; }
+
+        public bool Sunlight { get; set; }
     }
 
     private object _chunkCreationLock = new object();
