@@ -47,11 +47,11 @@ public class LightMap
             });
         }
 
-        for(int channel = 0; channel < 3; ++channel)
+        for(int channel = 0; channel < 4; ++channel)
         {
             var visitedNodes = new HashSet<Vector3Int>();
             var nodes = new Queue<LightNode>(lightNodes);
-            PropagateLightNodes(nodes, channel, visitedNodes, visitedChunks);
+            PropagateLightNodes(nodes, channel, visitedNodes, visitedChunks, channel == 3);
         }
     }
 

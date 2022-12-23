@@ -135,20 +135,6 @@
                 },
                 "m_SlotId": -2122885271
             }
-        },
-        {
-            "m_OutputSlot": {
-                "m_Node": {
-                    "m_Id": "f5eb83ac590f4c60b71a54aae24a90e5"
-                },
-                "m_SlotId": 0
-            },
-            "m_InputSlot": {
-                "m_Node": {
-                    "m_Id": "43eefe43e4d84a47b74b1deac54db602"
-                },
-                "m_SlotId": -276735236
-            }
         }
     ],
     "m_VertexContext": {
@@ -511,9 +497,6 @@
         },
         {
             "m_Id": "1f2b7f65e17d48aaa65d4dc1cadafce4"
-        },
-        {
-            "m_Id": "fbe56fe8c24d4ef0abdb5e1b7e5265b0"
         },
         {
             "m_Id": "325f0339d62741e38380dcf085d512fb"
@@ -1239,29 +1222,6 @@
     "m_StageCapability": 2,
     "m_Value": 0.0,
     "m_DefaultValue": 0.0,
-    "m_Labels": []
-}
-
-{
-    "m_SGVersion": 0,
-    "m_Type": "UnityEditor.ShaderGraph.Vector3MaterialSlot",
-    "m_ObjectId": "fbe56fe8c24d4ef0abdb5e1b7e5265b0",
-    "m_Id": -276735236,
-    "m_DisplayName": "SunlightColor",
-    "m_SlotType": 0,
-    "m_Hidden": false,
-    "m_ShaderOutputName": "_SunlightColor",
-    "m_StageCapability": 3,
-    "m_Value": {
-        "x": 0.0,
-        "y": 0.0,
-        "z": 0.0
-    },
-    "m_DefaultValue": {
-        "x": 0.0,
-        "y": 0.0,
-        "z": 0.0
-    },
     "m_Labels": []
 }
 

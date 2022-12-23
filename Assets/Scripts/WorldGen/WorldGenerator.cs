@@ -44,23 +44,22 @@ public class WorldGenerator : MonoBehaviour
         //VoxelWorld.AddLight(new Vector3Int(30, 2, 0), new Color32(50, 255, 50, 255), 20);
         //VoxelWorld.AddLight(new Vector3Int(15, 2, -10), new Color32(255, 255, 0, 255), 20);
 
-        GenerateTerrain(64);
+        GenerateTerrain(256);
 
-        /*
-                GenerateCave(
-                    new Vector3Int(0, 0, 0),
-                    new Vector3Int(
-                        UnityEngine.Random.Range(32, 128),
-                        UnityEngine.Random.Range(32, 128), 
-                        UnityEngine.Random.Range(32, 128)
-                    ),
-                    _iterations,
-                    _birthNeighbors,
-                    _deathNeighbors,
-                    _emptyChance
-                );       
-        */
-
+/*
+        GenerateCave(
+            new Vector3Int(0, 0, 0),
+            new Vector3Int(
+                32,//UnityEngine.Random.Range(32, 128),
+                32,//UnityEngine.Random.Range(32, 128), 
+                32//UnityEngine.Random.Range(32, 128)
+            ),
+            _iterations,
+            _birthNeighbors,
+            _deathNeighbors,
+            _emptyChance
+        );       
+*/
         GenerateTorches(10);
 
         VoxelWorld.BuildChangedChunks();

@@ -30,7 +30,12 @@ extern float3 _SunlightColor;
     }
     float4 GetLightMappingColor(CustomLightingData d)
     {
-        float3 colorRGB = d.albedo.xyz * clamp(d.vertexColor.xyz + d.vertexColor.w * _SunlightColor, float4(0, 0, 0, 0), float4(1, 1, 1, 1));
+        float3 blockLightColor = d.vertexColor.xyz;
+        float3 sunLightColor = d.vertexColor.w * _SunlightColor;
+
+        float3 maxLightColor = max(blockLightColor, sunLightColor);
+
+        float3 colorRGB = d.albedo.xyz * maxLightColor;
 
         float4 color;
         color.xyz = colorRGB.xyz;
@@ -59,7 +64,8 @@ float4 CalculateCustomLighting(CustomLightingData d)
             }
         #endif
 
-        color = clamp(color, float4(0, 0, 0, 0), float4(1, 1, 1, 1));
+        color = clamp(color, float4(0, 0, 0, 0), float4(d.albedo.xyz * 1.5, 1));
+        //color = clamp(color, float4(0, 0, 0, 0), float4(1, 1, 1, 1));
 
     #else
         color = d.albedo;
