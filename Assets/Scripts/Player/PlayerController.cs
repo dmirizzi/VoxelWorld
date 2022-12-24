@@ -25,7 +25,7 @@ public class PlayerController : MonoBehaviour
     {
         _controller = GetComponent<CharacterController>();
         CameraTransform = GameObject.Find("Main Camera").transform;
-        _worldGen = GameObject.FindObjectsOfType<WorldGenerator>()[0];
+        _voxelWorld = GameObject.FindObjectsOfType<VoxelWorld>()[0];
         _actionBar = GetComponent<PlayerActionBarController>();
     }
 
@@ -50,10 +50,10 @@ public class PlayerController : MonoBehaviour
     void OnGUI()
     {
         var targetedVoxel = GetTargetedVoxelPos(false);
-        var targetedVoxelType = targetedVoxel.Item1.HasValue ? _worldGen?.VoxelWorld.GetVoxel(targetedVoxel.Item1.Value) : null;
+        var targetedVoxelType = targetedVoxel.Item1.HasValue ? _voxelWorld.GetVoxel(targetedVoxel.Item1.Value).ToString() : "N/A";
         
         var targetedSurfaceVoxel = GetTargetedVoxelPos(true);
-        var lightMapCol = targetedSurfaceVoxel.Item1.HasValue ? _worldGen.VoxelWorld.GetVoxelLightColor(targetedSurfaceVoxel.Item1.Value).ToString() : "N/A";
+        var lightMapCol = targetedSurfaceVoxel.Item1.HasValue ? _voxelWorld.GetVoxelLightColor(targetedSurfaceVoxel.Item1.Value).ToString() : "N/A";
 
         GUI.Label(new Rect(10, 10, 1500, 18), $"LookDir={GetLookDir()} | TargetedVoxelType: {targetedVoxelType} | TargetedVoxelLightMap: {lightMapCol}");
     }
@@ -110,13 +110,13 @@ public class PlayerController : MonoBehaviour
         var addedTouchedVoxelPositions = currentTouchedVoxelPositions.Except(_lastTouchedVoxels);
         foreach(var addedVoxelPos in addedTouchedVoxelPositions)
         {
-            var voxel = _worldGen.VoxelWorld.GetVoxel(addedVoxelPos);
+            var voxel = _voxelWorld.GetVoxel(addedVoxelPos);
             if(voxel != 0)
             {
                 var blockType = BlockTypeRegistry.GetBlockType(voxel);
                 if(blockType != null)
                 {
-                    blockType.OnTouchStart(_worldGen.VoxelWorld, addedVoxelPos, this);
+                    blockType.OnTouchStart(_voxelWorld, addedVoxelPos, this);
                 }
             }
         }
@@ -124,13 +124,13 @@ public class PlayerController : MonoBehaviour
         var removedTouchedVoxelPositions = _lastTouchedVoxels.Except(currentTouchedVoxelPositions);
         foreach(var removedVoxelPos in removedTouchedVoxelPositions)
         {
-            var voxel = _worldGen.VoxelWorld.GetVoxel(removedVoxelPos);
+            var voxel = _voxelWorld.GetVoxel(removedVoxelPos);
             if(voxel != 0)
             {
                 var blockType = BlockTypeRegistry.GetBlockType(voxel);
                 if(blockType != null)
                 {
-                    blockType.OnTouchEnd(_worldGen.VoxelWorld, removedVoxelPos, this);
+                    blockType.OnTouchEnd(_voxelWorld, removedVoxelPos, this);
                 }
             }
         }
@@ -216,7 +216,7 @@ public class PlayerController : MonoBehaviour
         }
         if(Input.GetButtonDown("Fire2"))
         {
-            var world = _worldGen.VoxelWorld;
+            var world = _voxelWorld;
             if(world != null)
             {
                 var voxelPos = GetTargetedVoxelPos(false);
@@ -228,7 +228,7 @@ public class PlayerController : MonoBehaviour
         }
         if(Input.GetButtonDown("Use"))
         {
-            var world = _worldGen.VoxelWorld;
+            var world = _voxelWorld;
             if(world != null)
             {
                 var voxelPos = GetTargetedVoxelPos(false);
@@ -238,7 +238,7 @@ public class PlayerController : MonoBehaviour
                     var blockType = BlockTypeRegistry.GetBlockType(voxelType);
                     if(blockType != null)
                     {
-                        blockType.OnUse(_worldGen.VoxelWorld, voxelPos.Item1.Value, GetLookDir());
+                        blockType.OnUse(_voxelWorld, voxelPos.Item1.Value, GetLookDir());
                     }                    
                 }
             }
@@ -247,7 +247,7 @@ public class PlayerController : MonoBehaviour
 
     private void PlaceBlock(string blockType)
     {
-        var world = _worldGen.VoxelWorld;
+        var world = _voxelWorld;
         if(world != null)
         {
             var voxelPos = GetTargetedVoxelPos(true);                
@@ -479,7 +479,7 @@ public class PlayerController : MonoBehaviour
 
     private Vector3 _velocity;
 
-    private WorldGenerator _worldGen;
+    private VoxelWorld _voxelWorld;
 
     private HashSet<Vector3Int> _lastTouchedVoxels = new HashSet<Vector3Int>();
 

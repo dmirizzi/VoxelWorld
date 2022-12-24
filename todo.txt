@@ -116,12 +116,14 @@ VoxelWorld
 World Gen
 ----------------------------------------------------------------------------------------------------------------
 
-[ ] World Seed -> Deterministic world gen based on seed + position
+[ ] Serialization / Deserialization
 
 [ ] Infinite World Gen
     -> Generate world when moving towards empty chunks & unload chunks behind player
 
-[ ] Serialization / Deserialization
+
+[ ] World Seed -> Deterministic world gen based on seed + position
+
 
 [x] Simple cave generator based on cellular automata
 

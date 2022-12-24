@@ -13,16 +13,14 @@ public class WorldGenerator : MonoBehaviour
 
     public bool WorldGenerated { get; private set; }
 
-    public VoxelWorld VoxelWorld { get; private set; }
+    void Awake()
+    {
+        _voxelWorld = FindObjectOfType<VoxelWorld>();
+    }
 
     void Start()
     {
-        var player = GameObject.Find("Player").GetComponent<PlayerController>();
-
-        VoxelWorld = new VoxelWorld(TextureAtlasMaterial, TextureAtlasTransparentMaterial, player);
-
         GenerateWorld();
-
         WorldGenerated = true;
     }
 
@@ -31,7 +29,7 @@ public class WorldGenerator : MonoBehaviour
         var sw = new Stopwatch();
         sw.Start();
 
-        VoxelWorld.Clear();
+        _voxelWorld.Clear();
         
         //GenerateCubeRoom(3);
         //GenerateCuboidByCorners(new Vector3Int(-16, 0, -16), new Vector3Int(16, -16, 16), BlockDataRepository.GetBlockTypeId("Dirt"));
@@ -69,8 +67,8 @@ public class WorldGenerator : MonoBehaviour
 */
         //GenerateTorches(10);
 
-        VoxelWorld.BuildChangedChunks();
-        VoxelWorld.InitializeSunlight();
+        _voxelWorld.BuildChangedChunks();
+        _voxelWorld.InitializeSunlight();
         PlacePlayer();
 
         sw.Stop();
@@ -92,7 +90,7 @@ public class WorldGenerator : MonoBehaviour
             {
                 for(int y = ys; y <= ye; ++y)
                 {
-                    VoxelWorld.SetVoxel(x, y, z, type);
+                    _voxelWorld.SetVoxel(x, y, z, type);
                 }
             }
         }
@@ -107,7 +105,7 @@ public class WorldGenerator : MonoBehaviour
             {
                 for(int y = -size.y; y <= size.y; ++y)
                 {
-                    VoxelWorld.SetVoxel(pos.x + x, pos.y + y, pos.z + z, type);
+                    _voxelWorld.SetVoxel(pos.x + x, pos.y + y, pos.z + z, type);
                 }
             }
         }
@@ -128,7 +126,7 @@ public class WorldGenerator : MonoBehaviour
                 {
                     if(x == -size || x == size-1 || y == -size || y == size-1 || z == -size || z == size-1)
                     {
-                        VoxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Dirt"));
+                        _voxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Dirt"));
                     }
                 }
             }
@@ -139,8 +137,8 @@ public class WorldGenerator : MonoBehaviour
     {
         for (int i = 0; i < numTorches; ++i)
         {
-            var worldPos = VoxelWorld.GetRandomSolidSurfaceVoxel() + Vector3Int.up;
-            VoxelWorld.SetVoxel(worldPos, BlockDataRepository.GetBlockTypeId("Torch"));
+            var worldPos = _voxelWorld.GetRandomSolidSurfaceVoxel() + Vector3Int.up;
+            _voxelWorld.SetVoxel(worldPos, BlockDataRepository.GetBlockTypeId("Torch"));
         }
     }
 
@@ -164,22 +162,22 @@ public class WorldGenerator : MonoBehaviour
                 {
                     if(y == -64)
                     {
-                        VoxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Cobblestone"));
+                        _voxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Cobblestone"));
                     }
                     else if(isWater)
                     {
 
-                        VoxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Water"));
+                        _voxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Water"));
                     }
                     else
                     {
                         if(y < height)
                         {
-                            VoxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Dirt"));
+                            _voxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Dirt"));
                         }
                         else
                         {
-                            VoxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Grass"));
+                            _voxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Grass"));
                         }
                     }                    
                 }
@@ -281,7 +279,7 @@ public class WorldGenerator : MonoBehaviour
                 {
                     if(cells[x, y, z])
                     {
-                        VoxelWorld.SetVoxel(
+                        _voxelWorld.SetVoxel(
                             position.x + x - size.x / 2, 
                             position.y - y, 
                             position.z + z - size.z / 2, 
@@ -333,7 +331,7 @@ public class WorldGenerator : MonoBehaviour
 
     private void PlacePlayer(Vector3Int? startPos = null)
     {
-        var pos = startPos.HasValue ? startPos.Value : VoxelWorld.GetRandomSolidSurfaceVoxel();
+        var pos = startPos.HasValue ? startPos.Value : _voxelWorld.GetRandomSolidSurfaceVoxel();
         var worldPos = VoxelPosHelper.GetVoxelTopCenterSurfaceWorldPos(pos) + Vector3.up;
 
         var characterController = GameObject.Find("Player").GetComponent<CharacterController>();
@@ -378,8 +376,6 @@ public class WorldGenerator : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        VoxelWorld.Update();
-
         /*
         if((DateTime.Now - lastDrop).Milliseconds >= 10)
         {
@@ -396,4 +392,6 @@ public class WorldGenerator : MonoBehaviour
         }
         */
     }
+
+    private VoxelWorld _voxelWorld;
 }

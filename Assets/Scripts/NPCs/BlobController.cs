@@ -26,14 +26,14 @@ public class BlobController : MonoBehaviour
     [field: SerializeField]
     public BlobActionState CurrentActionState { get; private set; }
 
-    private WorldGenerator _worldGen;
+    private VoxelWorld _voxelWorld;
 
     private Vector3 _jumpOffPoint;
 
     // Start is called before the first frame update
     void Start()
     {
-        _worldGen = GameObject.FindObjectsOfType<WorldGenerator>()[0];
+        _voxelWorld = FindObjectOfType<VoxelWorld>();
     }
 
     // Update is called once per frame
@@ -141,7 +141,7 @@ public class BlobController : MonoBehaviour
 
         var voxelPos = VoxelPosHelper.GetVoxelPosFromWorldPos(transform.position) + randomOffset;
 
-        var y = _worldGen.VoxelWorld.GetHighestVoxelPos(voxelPos.x, voxelPos.z);
+        var y = _voxelWorld.GetHighestVoxelPos(voxelPos.x, voxelPos.z);
 
         if(y.HasValue)
         {

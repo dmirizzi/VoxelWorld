@@ -4,23 +4,29 @@ using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 
-public class VoxelWorld
+public class VoxelWorld : MonoBehaviour
 {
-    public VoxelWorld(Material textureAtlasMaterial, Material textureAtlasTransparentMaterial, PlayerController playerController)
+    public Material TextureAtlasMaterial;
+
+    public Material TextureAtlasTransparentMaterial;
+
+    public VoxelWorld()
     {
         _chunks = new Dictionary<Vector3Int, Chunk>();
         _topMostChunks = new Dictionary<Vector2Int, Chunk>();
         _chunkBuilders = new Dictionary<Vector3Int, ChunkBuilder>();
         _changedChunks = new HashSet<Vector3Int>();
         _lightMap = new LightMap(this);
-        _textureAtlasMaterial = textureAtlasMaterial;
-        _textureAtlasTransparentMaterial = textureAtlasTransparentMaterial;
         _queuedChunkLightMappingUpdates = new HashSet<Vector3Int>();
         _queuedLightUpdates = new PriorityQueue<LightUpdate, float>();
-        _playerController = playerController;
     }
 
-    public void Update()
+    void Awake()
+    {
+        _player = FindObjectOfType<PlayerController>();
+    }
+
+    void Update()
     {
         BuildChangedChunks();
 
@@ -185,7 +191,7 @@ public class VoxelWorld
         lock(_queuedLightUpdates)
         {
             var lightWorldPos = new Vector3(pos.x, pos.y, pos.z);
-            var distToPlayer = (_playerController.transform.position - lightWorldPos).sqrMagnitude;          
+            var distToPlayer = (_player.transform.position - lightWorldPos).sqrMagnitude;          
 
             _queuedLightUpdates.EnqueueUnique(
                 new LightUpdate{
@@ -203,7 +209,7 @@ public class VoxelWorld
         lock(_queuedLightUpdates)
         {
             var lightWorldPos = new Vector3(pos.x, pos.y, pos.z);
-            var distToPlayer = (_playerController.transform.position - lightWorldPos).sqrMagnitude;          
+            var distToPlayer = (_player.transform.position - lightWorldPos).sqrMagnitude;          
 
             _queuedLightUpdates.EnqueueUnique(
                 new LightUpdate{
@@ -377,7 +383,7 @@ public class VoxelWorld
             _chunks[chunkPos].Reset();
 
             // Queue all builder tasks
-            _chunkBuilders[chunkPos] = new ChunkBuilder(this, chunkPos, _chunks[chunkPos], _textureAtlasMaterial, _textureAtlasTransparentMaterial);
+            _chunkBuilders[chunkPos] = new ChunkBuilder(this, chunkPos, _chunks[chunkPos], TextureAtlasMaterial, TextureAtlasTransparentMaterial);
             builders.Add(_chunkBuilders[chunkPos]);
             builderTasks.Add(_chunkBuilders[chunkPos].Build());           
         }
@@ -529,9 +535,5 @@ public class VoxelWorld
 
     private HashSet<Vector3Int> _changedChunks;
 
-    private Material _textureAtlasMaterial;
-
-    private Material _textureAtlasTransparentMaterial;
-
-    private PlayerController _playerController;
+    private PlayerController _player;
 }

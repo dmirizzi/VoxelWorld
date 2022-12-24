@@ -4,6 +4,8 @@ public class NpcSpawnController : MonoBehaviour
 {
     public GameObject BlobPrefab;
 
+    private VoxelWorld _voxelWorld;
+
     private WorldGenerator _worldGen;
 
     public int TargetNumberBlobs { get; set; }
@@ -12,18 +14,19 @@ public class NpcSpawnController : MonoBehaviour
 
     void Start()
     {
-        _worldGen = GameObject.FindObjectsOfType<WorldGenerator>()[0];
+        _voxelWorld = GameObject.FindObjectOfType<VoxelWorld>();
+        _worldGen = GameObject.FindObjectOfType<WorldGenerator>();
     }
 
     Vector3Int GetRandomSolidSurfaceVoxel()
     {
-        var bounds = _worldGen.VoxelWorld.GetWorldBoundaries();
+        var bounds = _voxelWorld.GetWorldBoundaries();
 
         while(true)
         {
             var x = Random.Range(bounds.Item1.x, bounds.Item2.x);
             var z = Random.Range(bounds.Item1.z, bounds.Item2.z);
-            var y = _worldGen.VoxelWorld.GetHighestVoxelPos(x, z);
+            var y = _voxelWorld.GetHighestVoxelPos(x, z);
             if(y.HasValue)
             {
                 return new Vector3Int(x, y.Value, z);
