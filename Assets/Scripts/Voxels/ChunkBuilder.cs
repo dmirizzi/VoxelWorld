@@ -8,6 +8,8 @@ public class ChunkBuilder
 {
     public Vector3Int ChunkPos { get; private set; }
 
+    public bool MeshFinishedBuilding { get; private set; }
+
     public ChunkBuilder(VoxelWorld world, Vector3Int chunkPos, Chunk chunk, Material textureAtlasMaterial, Material textureAtlasTransparentMaterial)
     {
         _world = world;
@@ -49,6 +51,8 @@ public class ChunkBuilder
         _transparentChunk.GetComponent<Renderer>().material = _textureAtlasTransparentMaterial;
         _transparentChunk.AddComponent<MeshCollider>();
         _transparentChunk.layer = LayerMask.NameToLayer("Voxels");
+
+        MeshFinishedBuilding = true;
 
         return new GameObject[] {
             _solidChunk,

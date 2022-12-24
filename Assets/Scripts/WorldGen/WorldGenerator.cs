@@ -108,10 +108,6 @@ public class WorldGenerator : MonoBehaviour
                     num1++;
 
                     var sqrDistToPlayer = WorldGenUtil.GetChunkSqrDistanceToWorldPos(_player.transform.position, chunkPos);
-                    if(centerChunkPos != Vector3Int.zero)
-                    {        
-                        UnityEngine.Debug.Log($"PlayerChunkPos={centerChunkPos} ChunkPos={chunkPos} SqrDist={sqrDistToPlayer} Thresh={_chunkGenerationRadiusSqr}");
-                    }
                     if(sqrDistToPlayer <= _chunkGenerationRadiusSqr)
                     {
                         num2++;

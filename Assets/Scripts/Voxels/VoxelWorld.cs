@@ -58,7 +58,7 @@ public class VoxelWorld : MonoBehaviour
         {
             foreach(var chunkPos in _queuedChunkLightMappingUpdates)
             {
-                if(_chunkBuilders.ContainsKey(chunkPos))
+                if(_chunkBuilders.ContainsKey(chunkPos) && _chunkBuilders[chunkPos].MeshFinishedBuilding)
                 {
                     _chunkBuilders[chunkPos].UpdateLightVertexColors();
                 }            
