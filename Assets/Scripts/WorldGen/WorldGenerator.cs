@@ -35,7 +35,14 @@ public class WorldGenerator : MonoBehaviour
         
         //GenerateCubeRoom(3);
         //GenerateCuboidByCorners(new Vector3Int(-16, 0, -16), new Vector3Int(16, -16, 16), BlockDataRepository.GetBlockTypeId("Dirt"));
-        //GenerateCuboidByCorners(new Vector3Int(0, 0, -2), new Vector3Int(1, -3, 0), 0);
+        
+        /*
+        for(int x = 0; x < 17; ++x)
+        {
+            GenerateCuboidByCorners(new Vector3Int(x, 0, 0), new Vector3Int(x, x, 4), BlockDataRepository.GetBlockTypeId("Dirt"));
+        }
+        */
+        
         //GenerateCube(new Vector3Int(0, 0, 0), 32, BlockDataRepository.GetBlockTypeId("Dirt"));
 
         //VoxelWorld.SetVoxel(new Vector3Int(-2, 0, 0), BlockDataRepository.GetBlockTypeId("Torch"));
@@ -60,7 +67,7 @@ public class WorldGenerator : MonoBehaviour
             _emptyChance
         );       
 */
-        GenerateTorches(10);
+        //GenerateTorches(10);
 
         VoxelWorld.BuildChangedChunks();
         VoxelWorld.InitializeSunlight();

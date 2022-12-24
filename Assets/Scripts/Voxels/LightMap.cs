@@ -35,6 +35,7 @@ public class LightMap
 
     public void UpdateOnRemovedSolidVoxel(Vector3Int globalRemovedVoxelPos, HashSet<Vector3Int> visitedChunks)
     {
+        // Fill in the gap in the light map left by the removed solid voxel by propagating the surrounding light nodes
         var lightNodes = new Queue<LightNode>();
         foreach(var dir in fillDirections)
         {
@@ -139,14 +140,14 @@ public class LightMap
                 {
                     var localVoxelPos = new Vector3Int(x, VoxelInfo.ChunkSize - 1, z);
                     var voxelType = chunk.GetVoxel(localVoxelPos);
-                    if(!VoxelInfo.IsOpaque(voxelType, BlockFace.Top, 0) && !VoxelInfo.IsOpaque(voxelType, BlockFace.Bottom, 0))
-                    {
-                        chunk.SetLightChannelValue(localVoxelPos, Chunk.SunlightChannel, 15);
-                        lightNodes.Enqueue(new LightNode{
-                            Chunk = chunk,
-                            GlobalPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(localVoxelPos, chunk.ChunkPos)
-                        });
-                    }
+
+                    // Start off by setting all top most voxels in the top most chunks to the max sunlight level
+                    // and then propagate downwards from there
+                    chunk.SetLightChannelValue(localVoxelPos, Chunk.SunlightChannel, 15);
+                    lightNodes.Enqueue(new LightNode{
+                        Chunk = chunk,
+                        GlobalPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(localVoxelPos, chunk.ChunkPos)
+                    });
                 }
             }
         }
@@ -184,10 +185,6 @@ public class LightMap
             foreach(var neighborDir in fillDirections)
             {
                 var neighborGlobalPos = node.GlobalPos + neighborDir;
-                if(visitedNodes.Contains(neighborGlobalPos))
-                {
-                    continue;
-                }
                 
                 byte newLightLevel;
                 if(isSunlight && neighborDir == Vector3Int.down && currentLightLevel == 15)
@@ -197,15 +194,34 @@ public class LightMap
                 }
                 else
                 {
+                    // For normal block light, reduce light level by 1 for every step away from the light source
                     newLightLevel = (byte)(currentLightLevel - 1);
                 }
 
                 var localNeighborPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(neighborGlobalPos);
-                var neighborChunk = _world.GetChunkFromVoxelPosition(neighborGlobalPos.x, neighborGlobalPos.y, neighborGlobalPos.z, true);
-                 
+                var neighborChunk = _world.GetChunkFromVoxelPosition(neighborGlobalPos.x, neighborGlobalPos.y, neighborGlobalPos.z, false);                 
+                if(neighborChunk == null)
+                {
+                    visitedNodes.Add(neighborGlobalPos);
+                    continue;
+                }
+
+                var neighborLightLevel = neighborChunk.GetLightChannelValue(localNeighborPos, channel);
+
+                // In case of sunlight, allow a light node to be set again if it is being lit directly by the sun and only 
+                // indirectly before
+                if(!isSunlight || currentLightLevel < 15 || neighborLightLevel == 15 )
+                {
+                    // Otherwise, skip already processed nodes
+                    if(visitedNodes.Contains(neighborGlobalPos))
+                    {
+                        continue;
+                    }
+                }
+
                 if(neighborChunk != null 
                     && !VoxelBuildHelper.NeighborVoxelHasOpaqueSide(_world, node.GlobalPos, neighborDir)
-                    && neighborChunk.GetLightChannelValue(localNeighborPos, channel) + 2 <= currentLightLevel)
+                    && neighborLightLevel + 2 <= currentLightLevel)
                 {
                     visitedNodes.Add(neighborGlobalPos);
 
