@@ -1,28 +1,246 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class WorldGenerator : MonoBehaviour
 {
-    public Material TextureAtlasMaterial;
+    public int ChunkGenerationRadius = 4;
 
-    public Material TextureAtlasTransparentMaterial;
+    public int MaxNumChunkGenerationTasks = 4;
 
-    public GameObject TorchPrefab;
+    public int MaxNumChunksCreatedPerFrame = 1;
+
+    public int WorldSeed = 123456789;
 
     public bool WorldGenerated { get; private set; }
+
+    public WorldGenerator()
+    {
+        _chunkGenerationRadiusSqr = ChunkGenerationRadius * ChunkGenerationRadius;
+    }
 
     void Awake()
     {
         _voxelWorld = FindObjectOfType<VoxelWorld>();
+        _player = FindObjectOfType<PlayerController>();
     }
 
     void Start()
     {
-        GenerateWorld();
+        var sw = new Stopwatch();
+        sw.Start();
+
+        GenerateInitialWorld();
+        int num = 0;
+        while(AnyChunksPending())
+        {
+            num++;
+            ProcessChunkGenerationQueue();
+            HandleChunkGenerationTasks();
+            ProcessChunkCreationQueue();
+        }
+        _voxelWorld.BuildChangedChunks();
+        PlacePlayer(Vector3Int.zero);
         WorldGenerated = true;
+
+        sw.Stop();
+        UnityEngine.Debug.Log($"Initial world in {sw.Elapsed.TotalSeconds} sec");
     }
+
+
+    void Update()
+    {        
+        if(AnyChunksPending())
+        {
+            ProcessChunkGenerationQueue();
+            HandleChunkGenerationTasks();
+            ProcessChunkCreationQueue();
+        }
+
+        /*
+        if((DateTime.Now - lastDrop).Milliseconds >= 10)
+        {
+            lastDrop = DateTime.Now;
+            var x = UnityEngine.Random.Range(-256, 256);
+            var z = UnityEngine.Random.Range(-256, 256);
+            
+            var highestPoint = VoxelWorld.GetHighestVoxelPos(x, z);
+            if(highestPoint.HasValue)
+            {
+                //_world.SetVoxel(x, highestPoint.Value, z, VoxelType.Empty, true);
+                VoxelWorld.SetVoxelSphere(new Vector3Int(x, highestPoint.Value, z), 5, VoxelType.Empty, true);
+            }
+        }
+        */
+    }
+
+    /*
+
+        - GenerateInitialWorld
+            - Generate a radius of chunks around the player via GenerateChunk
+
+        - IsChunkWithinPlayerRadius
+
+        - GenerateChunk
+            - Generate voxel data and set via QueueVoxel
+
+        - QueueVoxel
+            - Assigns SetVoxel action to chunk in chunk creation queue if it is within player chunk radius
+            - If it is outside radius, add it to voxel creation backlog instead
+
+
+
+        - Update
+            - Maintain player chunk radius
+                - Remember last position, where chunks where loaded/unloaded
+                - If distance to last position is > 1 chunk, establish new chunk radius around player and remember new position
+            - Process chunk generation queue
+            - Process chunk creation queue
+                - SetVoxel calls
+                - Update sunlight
+    */
+
+    private void GenerateInitialWorld()
+    {
+        for(int z = -ChunkGenerationRadius; z <= ChunkGenerationRadius; ++z)
+        {
+            for(int y = -ChunkGenerationRadius; y <= ChunkGenerationRadius; ++y)
+            {
+                for(int x = -ChunkGenerationRadius; x <= ChunkGenerationRadius; ++x)
+                {
+                    var chunkPos = new Vector3Int(x, y, z);
+                    var sqrDistToPlayer = WorldGenUtil.GetChunkSqrDistanceToWorldPos(_player.transform.position, chunkPos);
+                    if(sqrDistToPlayer <= _chunkGenerationRadiusSqr)
+                    {
+                        _chunkGenerationQueue.Enqueue(chunkPos, sqrDistToPlayer);
+                    }
+                }                
+            }
+        }
+    }
+
+    private void ProcessChunkGenerationQueue()
+    {
+        var playerPos = _player.transform.position;
+        while(_chunkGenerationTasks.Count < MaxNumChunkGenerationTasks && _chunkGenerationQueue.TryDequeue(out var chunkPos))
+        {
+            _chunkGenerationTasks.Add(Task.Run<ChunkUpdate>(() => GenerateChunk(chunkPos, playerPos)));
+        }
+    }
+
+    private ChunkUpdate GenerateChunk(Vector3Int chunkPos, Vector3 playerPos)
+    {
+        var chunkDistToPlayer = WorldGenUtil.GetChunkSqrDistanceToWorldPos(playerPos, chunkPos);
+
+        var builder = new ChunkUpdateBuilder(chunkPos, chunkDistToPlayer, playerPos, _chunkGenerationRadiusSqr);
+
+        var chunkBasePos = VoxelPosHelper.ChunkPosToGlobalChunkBaseVoxelPos(chunkPos);
+
+        var dirtType = BlockDataRepository.GetBlockTypeId("Dirt");
+        var grassType = BlockDataRepository.GetBlockTypeId("Grass");
+        var torchType = BlockDataRepository.GetBlockTypeId("Torch");
+
+        for(int z = 0; z < VoxelInfo.ChunkSize; ++z)
+        {
+            for(int y = 0; y <= VoxelInfo.ChunkSize; ++y)
+            {
+                for(int x = 0; x <= VoxelInfo.ChunkSize; ++x)
+                {
+                    var localVoxelpos = new Vector3Int(x, y, z);
+                    var globalVoxelPos = chunkBasePos + localVoxelpos;
+                    var terrainHeight = GetTerrainHeight(globalVoxelPos);
+
+                    if(globalVoxelPos.y < terrainHeight)
+                    {
+                        builder.QueueVoxel(globalVoxelPos, dirtType);
+                    }
+                    else if(globalVoxelPos.y == terrainHeight)
+                    {
+                        builder.QueueVoxel(globalVoxelPos, grassType);
+                    }
+                    else if(globalVoxelPos.y == terrainHeight + 1)
+                    {
+                        var rand = new System.Random();
+                        if(rand.NextDouble() > 0.95)
+                        {
+                            builder.QueueVoxel(globalVoxelPos, torchType);
+                        }
+                    }
+                }
+            }
+        }
+
+        return builder.GetChunkUpdate();
+    }
+
+    private void HandleChunkGenerationTasks()
+    {
+        var tasksToRemove = new HashSet<Task<ChunkUpdate>>();
+
+        foreach(var task in _chunkGenerationTasks)
+        {
+            if(task.IsCompleted)
+            {
+                var chunkUpdate = task.Result;
+
+                _chunkCreationMap[chunkUpdate.ChunkPos] = chunkUpdate.Voxels;
+                _chunkCreationQueue.Enqueue(chunkUpdate.ChunkPos, chunkUpdate.ChunkDistanceToPlayer);
+
+                foreach(var chunkUpdateBacklog in chunkUpdate.Backlog)
+                {
+                    if(_chunkCreationBacklog.ContainsKey(chunkUpdateBacklog.Key))
+                    {
+                        // Merge new chunk update backlog into existing backlog
+                        _chunkCreationBacklog[chunkUpdateBacklog.Key].AddRange(chunkUpdateBacklog.Value);
+                    }
+                    else
+                    {
+                        // If no backlog exists for this chunk yet, take over the one from the chunk update
+                        _chunkCreationBacklog[chunkUpdateBacklog.Key] = chunkUpdateBacklog.Value;
+                    }    
+                }
+
+                tasksToRemove.Add(task);
+            }
+        }
+
+        _chunkGenerationTasks.RemoveAll(x => tasksToRemove.Contains(x));
+    }
+
+    private void ProcessChunkCreationQueue()
+    {
+        int numChunksToCreate = MaxNumChunksCreatedPerFrame;
+        while(numChunksToCreate > 0 && _chunkCreationQueue.TryDequeue(out var chunkPos))
+        {
+            numChunksToCreate--;
+
+            var voxels = _chunkCreationMap[chunkPos];
+            foreach(var voxel in voxels)
+            {
+                _voxelWorld.SetVoxel(voxel.GlobalVoxelPos, voxel.Type);
+            }
+
+            _chunkCreationMap.Remove(chunkPos);
+        }
+    }
+
+    private bool AnyChunksPending() => 
+        _chunkGenerationQueue.Count > 0 
+        || _chunkCreationQueue.Count > 0 
+        || _chunkGenerationTasks.Count > 0
+        || _chunkCreationMap.Count > 0;
+
+    private void UnloadChunk(Vector3Int chunkPos)
+    {
+
+    }
+
+    private int GetTerrainHeight(Vector3Int globalVoxelPos)
+        => (int)(Mathf.PerlinNoise(WorldSeed + globalVoxelPos.x / 20.0f, WorldSeed + globalVoxelPos.z / 20.0f) * 32) - 5;
+
+    
 
     private void GenerateWorld()
     {
@@ -95,7 +313,6 @@ public class WorldGenerator : MonoBehaviour
             }
         }
     }
-
 
     private void GenerateCuboid(Vector3Int pos, Vector3Int size, ushort type)
     {
@@ -331,7 +548,9 @@ public class WorldGenerator : MonoBehaviour
 
     private void PlacePlayer(Vector3Int? startPos = null)
     {
-        var pos = startPos.HasValue ? startPos.Value : _voxelWorld.GetRandomSolidSurfaceVoxel();
+        var pos = startPos.HasValue 
+            ? new Vector3Int(startPos.Value.x, _voxelWorld.GetHighestVoxelPos(startPos.Value.x, startPos.Value.z).Value, startPos.Value.z) 
+            : _voxelWorld.GetRandomSolidSurfaceVoxel();
         var worldPos = VoxelPosHelper.GetVoxelTopCenterSurfaceWorldPos(pos) + Vector3.up;
 
         var characterController = GameObject.Find("Player").GetComponent<CharacterController>();
@@ -373,25 +592,26 @@ public class WorldGenerator : MonoBehaviour
 */
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        /*
-        if((DateTime.Now - lastDrop).Milliseconds >= 10)
-        {
-            lastDrop = DateTime.Now;
-            var x = UnityEngine.Random.Range(-256, 256);
-            var z = UnityEngine.Random.Range(-256, 256);
-            
-            var highestPoint = VoxelWorld.GetHighestVoxelPos(x, z);
-            if(highestPoint.HasValue)
-            {
-                //_world.SetVoxel(x, highestPoint.Value, z, VoxelType.Empty, true);
-                VoxelWorld.SetVoxelSphere(new Vector3Int(x, highestPoint.Value, z), 5, VoxelType.Empty, true);
-            }
-        }
-        */
-    }
+    public int _chunkGenerationRadiusSqr;
 
     private VoxelWorld _voxelWorld;
+
+    private PlayerController _player;
+
+    // Chunks to be generated
+    private PriorityQueue<Vector3Int, float> _chunkGenerationQueue = new PriorityQueue<Vector3Int, float>();
+
+    // The voxels in the chunks to be created in the VoxelWorld after being generated
+    private Dictionary<Vector3Int, List<VoxelCreationAction>> _chunkCreationMap = new Dictionary<Vector3Int, List<VoxelCreationAction>>();
+
+    // The order of the chunks to be created in the VoxelWorld after being generated
+    private PriorityQueue<Vector3Int, float> _chunkCreationQueue = new PriorityQueue<Vector3Int, float>();
+
+    // Holds queued voxel creation actions that are outside of the player radius and will be applied, once the chunks they are in are loaded/generated
+    private Dictionary<Vector3Int, List<VoxelCreationAction>> _chunkCreationBacklog = new Dictionary<Vector3Int, List<VoxelCreationAction>>();
+
+    // Chunks to be unloaded
+    private PriorityQueue<Vector3Int, float> _chunkUnloadingQueue = new PriorityQueue<Vector3Int, float>();
+
+    private List<Task<ChunkUpdate>> _chunkGenerationTasks = new List<Task<ChunkUpdate>>();
 }

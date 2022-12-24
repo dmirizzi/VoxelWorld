@@ -12,7 +12,7 @@ public class ChunkBuilder
     {
         _world = world;
         ChunkPos = chunkPos;
-        _chunkVoxelPos = VoxelPosHelper.ChunkToBaseVoxelPos(chunkPos);
+        _chunkVoxelPos = VoxelPosHelper.ChunkPosToGlobalChunkBaseVoxelPos(chunkPos);
         _chunk = chunk;
         _textureAtlasMaterial = textureAtlasMaterial;
         _textureAtlasTransparentMaterial = textureAtlasTransparentMaterial;
@@ -126,7 +126,7 @@ public class ChunkBuilder
 
             var lightSamplingPoint = (v1 + v2 + v3) / 3f + normal * 0.5f;
 
-            var localVoxelPos = VoxelPosHelper.GetVoxelPosFromWorldPos(lightSamplingPoint);
+            var localVoxelPos = VoxelPosHelper.WorldPosToGlobalVoxelPos(lightSamplingPoint);
             var globalVoxelPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(localVoxelPos, _chunk.ChunkPos);
 
             var lightVal = _world.GetVoxelLightColor(globalVoxelPos);
@@ -146,7 +146,7 @@ public class ChunkBuilder
         {
             var vp = mesh.Vertices[vi];
 
-            var globalVoxelPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(VoxelPosHelper.GetVoxelPosFromWorldPos(vp), _chunk.ChunkPos);
+            var globalVoxelPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(VoxelPosHelper.WorldPosToGlobalVoxelPos(vp), _chunk.ChunkPos);
             int r = 0, g = 0, b = 0, sun = 0;
             int numVoxels = 0;
             for(int x = -1; x < 1; ++x)

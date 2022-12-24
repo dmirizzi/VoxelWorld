@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -152,6 +153,10 @@ public class Chunk
         return null;
     }
 
+    public IReadOnlyDictionary<Vector3Int, ushort> GetAllAuxiliaryData() => _blockAuxiliaryData;
+
+    public ReadOnly3DArray<ushort> GetAllVoxelData() => new ReadOnly3DArray<ushort>(_chunkData);
+
     public void BuildBlockGameObjects()
     {
         for(int z = 0; z < VoxelInfo.ChunkSize; ++z)
@@ -224,7 +229,7 @@ public class Chunk
     private void CreateNewChunkGameObject()
     {
         _chunkGameObject = new GameObject($"Chunk[{ChunkPos.x}|{ChunkPos.y}|{ChunkPos.z}]");
-        var chunkVoxelPos = VoxelPosHelper.ChunkToBaseVoxelPos(ChunkPos);
+        var chunkVoxelPos = VoxelPosHelper.ChunkPosToGlobalChunkBaseVoxelPos(ChunkPos);
         _chunkGameObject.transform.position = chunkVoxelPos;
     }
 

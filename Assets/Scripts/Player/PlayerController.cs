@@ -281,12 +281,12 @@ public class PlayerController : MonoBehaviour
             // which voxel will be targeted
             var normalDirection = surfaceVoxel ? 0.5f : -0.5f;
             var voxelCenterWorldPos = point + normal * normalDirection;
-            return VoxelPosHelper.GetVoxelPosFromWorldPos(voxelCenterWorldPos);                    
+            return VoxelPosHelper.WorldPosToGlobalVoxelPos(voxelCenterWorldPos);                    
         }
         else
         {
             // Otherwise if our hitpoint is inside a voxel, there is no ambiguity
-            var voxelPos = VoxelPosHelper.GetVoxelPosFromWorldPos(point);
+            var voxelPos = VoxelPosHelper.WorldPosToGlobalVoxelPos(point);
             if(surfaceVoxel)
             {
                 voxelPos += Vector3Int.FloorToInt(normal.normalized);

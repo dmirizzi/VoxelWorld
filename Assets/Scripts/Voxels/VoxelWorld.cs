@@ -336,8 +336,8 @@ public class VoxelWorld : MonoBehaviour
             maxBound.z = Mathf.Max(maxBound.z, chunkPos.z);
         }
 
-        minBound = VoxelPosHelper.ChunkToBaseVoxelPos(minBound);
-        maxBound = VoxelPosHelper.ChunkToBaseVoxelPos(maxBound) 
+        minBound = VoxelPosHelper.ChunkPosToGlobalChunkBaseVoxelPos(minBound);
+        maxBound = VoxelPosHelper.ChunkPosToGlobalChunkBaseVoxelPos(maxBound) 
                     + new Vector3Int(VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize);
 
         return (minBound, maxBound);
@@ -414,7 +414,7 @@ public class VoxelWorld : MonoBehaviour
     public int? GetHighestVoxelPos(int x, int z)
     {
         var voxelXZPos = new Vector3Int(x, 0, z);
-        var chunkXZPos = VoxelPosHelper.VoxelToChunkPos(voxelXZPos);
+        var chunkXZPos = VoxelPosHelper.GlobalVoxelPosToChunkPos(voxelXZPos);
         var chunkPositions = _chunks.Keys
             .Where(c => c.x == chunkXZPos.x && c.z == chunkXZPos.z)
             .OrderByDescending(c => c.y);
@@ -458,7 +458,7 @@ public class VoxelWorld : MonoBehaviour
         var adjacentChunks = new List<Vector3Int>();
 
         var localPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(voxelPos);
-        var chunkPos = VoxelPosHelper.VoxelToChunkPos(voxelPos);
+        var chunkPos = VoxelPosHelper.GlobalVoxelPosToChunkPos(voxelPos);
 
         adjacentChunks.Add(chunkPos);
 
@@ -481,7 +481,7 @@ public class VoxelWorld : MonoBehaviour
     public Chunk GetChunkFromVoxelPosition(int x, int y, int z, bool create)
     {
         var voxelPos = new Vector3Int(x, y, z);
-        var chunkPos = VoxelPosHelper.VoxelToChunkPos(voxelPos);
+        var chunkPos = VoxelPosHelper.GlobalVoxelPosToChunkPos(voxelPos);
 
         lock(_chunkCreationLock)
         {

@@ -19,7 +19,7 @@ public static class VoxelPosHelper
         return false;
     }
 
-    public static Vector3Int GetVoxelPosFromWorldPos(Vector3 worldPos)
+    public static Vector3Int WorldPosToGlobalVoxelPos(Vector3 worldPos)
     {
         // Correct for voxels in negative space - they are offset by 1 compared to positive space
         // i.e. voxels in positive space start at 0, in negative they start at -1
@@ -65,7 +65,7 @@ public static class VoxelPosHelper
 
     public static Vector3Int ChunkLocalVoxelPosToGlobal(Vector3Int localVoxelPos, Vector3Int chunkPos)
     {
-        return ChunkToBaseVoxelPos(chunkPos) + localVoxelPos;
+        return ChunkPosToGlobalChunkBaseVoxelPos(chunkPos) + localVoxelPos;
     }
     
     public static Vector3Int GlobalToChunkLocalVoxelPos(Vector3Int voxelPos)
@@ -80,27 +80,27 @@ public static class VoxelPosHelper
         return new Vector3Int(x, y, z);
     }
 
-    public static Vector3Int VoxelToChunkPos(Vector3Int voxelPos)
+    public static Vector3Int GlobalVoxelPosToChunkPos(Vector3Int globalVoxelPos)
     {
-        var x = (int)voxelPos.x;
-        if(voxelPos.x < 0) x += 1;
+        var x = (int)globalVoxelPos.x;
+        if(globalVoxelPos.x < 0) x += 1;
         x /= VoxelInfo.ChunkSize;
-        if(voxelPos.x < 0) x -= 1;
+        if(globalVoxelPos.x < 0) x -= 1;
 
-        var y = (int)voxelPos.y;
-        if(voxelPos.y < 0) y += 1;
+        var y = (int)globalVoxelPos.y;
+        if(globalVoxelPos.y < 0) y += 1;
         y /= VoxelInfo.ChunkSize;
-        if(voxelPos.y < 0) y -= 1;
+        if(globalVoxelPos.y < 0) y -= 1;
 
-        var z = (int)voxelPos.z;
-        if(voxelPos.z < 0) z += 1;
+        var z = (int)globalVoxelPos.z;
+        if(globalVoxelPos.z < 0) z += 1;
         z /= VoxelInfo.ChunkSize;
-        if(voxelPos.z < 0) z -= 1;
+        if(globalVoxelPos.z < 0) z -= 1;
 
         return new Vector3Int(x, y, z);
     }
 
-    public static Vector3Int ChunkToBaseVoxelPos(Vector3Int chunkPos)
+    public static Vector3Int ChunkPosToGlobalChunkBaseVoxelPos(Vector3Int chunkPos)
     {
         return new Vector3Int(
             chunkPos.x * VoxelInfo.ChunkSize,

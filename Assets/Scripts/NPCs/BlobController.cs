@@ -139,7 +139,7 @@ public class BlobController : MonoBehaviour
             return;
         }
 
-        var voxelPos = VoxelPosHelper.GetVoxelPosFromWorldPos(transform.position) + randomOffset;
+        var voxelPos = VoxelPosHelper.WorldPosToGlobalVoxelPos(transform.position) + randomOffset;
 
         var y = _voxelWorld.GetHighestVoxelPos(voxelPos.x, voxelPos.z);
 

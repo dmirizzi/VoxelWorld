@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 
+// Priority queue where items with smaller priority are dequeued first
 public class PriorityQueue<TValue, TPriority> where TPriority : IComparable
 {
+    public int Count => _containedValues.Count;
+
     public void Enqueue(TValue value, TPriority priority)
     {
         if(_list.Count == 0)
@@ -10,8 +13,7 @@ public class PriorityQueue<TValue, TPriority> where TPriority : IComparable
             _list.AddFirst((value, priority));
         }
         else
-        {
-            
+        {           
             for(var node = _list.First; node != null; node = node.Next)
             {
                 if(priority.CompareTo(node.Value.Priority) < 0)
