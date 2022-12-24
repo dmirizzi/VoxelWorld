@@ -389,9 +389,6 @@ public class VoxelWorld : MonoBehaviour
         {
             if(!_chunks.ContainsKey(chunkPos)) continue;
 
-            // Delete existing chunk to regenerate it
-            _chunks[chunkPos].Reset();
-
             // Queue all builder tasks
             _chunkBuilders[chunkPos] = new ChunkBuilder(this, chunkPos, _chunks[chunkPos], TextureAtlasMaterial, TextureAtlasTransparentMaterial);
             _chunkBuildJobs.Add((_chunkBuilders[chunkPos], _chunkBuilders[chunkPos].Build()));
@@ -408,6 +405,7 @@ public class VoxelWorld : MonoBehaviour
             {
                 // Chunk GameObjects must be generated on main thread      
                 var builder = buildJob.Builder;
+                _chunks[builder.ChunkPos].Reset();
                 _chunks[builder.ChunkPos].AddVoxelMeshGameObjects(builder.CreateChunkGameObjects());
                 _chunks[builder.ChunkPos].BuildBlockGameObjects();
                 _chunks[builder.ChunkPos].BuildVoxelColliderGameObjects();
