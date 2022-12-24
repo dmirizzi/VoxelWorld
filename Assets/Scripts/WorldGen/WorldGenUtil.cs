@@ -6,6 +6,6 @@ public class WorldGenUtil
     {
         var playerVoxelPos = VoxelPosHelper.WorldPosToGlobalVoxelPos(worldPos);
         var playerChunkPos = VoxelPosHelper.GlobalVoxelPosToChunkPos(playerVoxelPos);
-        return (playerChunkPos - playerVoxelPos).sqrMagnitude;
+        return (playerChunkPos - chunkPos).sqrMagnitude;
     }
 }

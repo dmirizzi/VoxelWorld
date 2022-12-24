@@ -22,6 +22,16 @@
 [ ] Force specifying lookDir & placementDir on SetVoxel? All the HasValue checks are annoying
 
 ----------------------------------------------------------------------------------------------------------------
+    Optimization
+----------------------------------------------------------------------------------------------------------------
+
+[ ] High number of torches cost a lot of performance
+    -> Torch particle effect costs a lot of performance
+        -> maybe only show particles on close torches and a simpler effect on torches that are far away?
+    -> Even GameObject voxels by themselves in large numbers seem to have a high performance impact
+        -> Bake torch mesh into chunk mesh with static flame and display particles only when close by?
+
+----------------------------------------------------------------------------------------------------------------
     Graphics / Rendering
 ----------------------------------------------------------------------------------------------------------------
 
@@ -116,21 +126,25 @@ VoxelWorld
 World Gen
 ----------------------------------------------------------------------------------------------------------------
 
-[ ] Serialization / Deserialization
-
 [ ] Infinite World Gen
-    -> Generate world when moving towards empty chunks & unload chunks behind player
+    [x] Generate new chunks when player moves towards unloaded chunks
+    [ ] Unload chunks player is moving away from when generating new chunks in front
+    [ ] Propagate block lights from surrounding chunks when loading new chunks
+    [ ] Propagate sunlight in newly loaded chunks
+    [ ] Incorporate backlogged voxels into newly loaded chunks
 
+[ ] Serialization / Deserialization
+    [ ] Chunk serialization / Deserialization
+    [ ] Serialize unloaded chunk back into savegame
+    [ ] When loading new chunks, check if they are already generated in save game and if so deserialize
+        and load into world
 
-[ ] World Seed -> Deterministic world gen based on seed + position
-
-
-[x] Simple cave generator based on cellular automata
-
-[ ] Dungeon generator
-    [ ] Simple rooms connected by corridors
-
-[ ] Tree Generator
+[ ] Generation
+    [ ] World Seed -> Deterministic world gen based on seed + position
+    [x] Simple cave generator based on cellular automata
+    [ ] Dungeon generator
+        [ ] Simple rooms connected by corridors
+    [ ] Tree Generator
 
 ----------------------------------------------------------------------------------------------------------------
 Items / Blocks

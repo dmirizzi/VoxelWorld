@@ -80,6 +80,12 @@ public static class VoxelPosHelper
         return new Vector3Int(x, y, z);
     }
 
+    public static Vector3Int WorldPosToChunkPos(Vector3 worldPos)
+    {
+        var globalVoxelPos = WorldPosToGlobalVoxelPos(worldPos);
+        return GlobalVoxelPosToChunkPos(globalVoxelPos);
+    }
+
     public static Vector3Int GlobalVoxelPosToChunkPos(Vector3Int globalVoxelPos)
     {
         var x = (int)globalVoxelPos.x;

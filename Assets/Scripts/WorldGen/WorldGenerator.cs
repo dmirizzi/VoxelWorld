@@ -32,11 +32,11 @@ public class WorldGenerator : MonoBehaviour
         var sw = new Stopwatch();
         sw.Start();
 
-        GenerateInitialWorld();
-        int num = 0;
+
+        GenerateChunksAroundCenter(Vector3Int.zero);
+
         while(AnyChunksPending())
         {
-            num++;
             ProcessChunkGenerationQueue();
             HandleChunkGenerationTasks();
             ProcessChunkCreationQueue();
@@ -46,12 +46,19 @@ public class WorldGenerator : MonoBehaviour
         WorldGenerated = true;
 
         sw.Stop();
-        UnityEngine.Debug.Log($"Initial world in {sw.Elapsed.TotalSeconds} sec");
+
+        UnityEngine.Debug.Log($"Initial world generated in {sw.Elapsed.TotalSeconds} sec");
     }
 
 
     void Update()
-    {        
+    {       
+        var currentPlayerChunkPos = VoxelPosHelper.WorldPosToChunkPos(_player.transform.position);
+        if((currentPlayerChunkPos - _lastChunkGenerationCenter).magnitude > 1)
+        {
+            GenerateChunksAroundCenter(currentPlayerChunkPos);
+        }
+
         if(AnyChunksPending())
         {
             ProcessChunkGenerationQueue();
@@ -76,49 +83,45 @@ public class WorldGenerator : MonoBehaviour
         */
     }
 
-    /*
-
-        - GenerateInitialWorld
-            - Generate a radius of chunks around the player via GenerateChunk
-
-        - IsChunkWithinPlayerRadius
-
-        - GenerateChunk
-            - Generate voxel data and set via QueueVoxel
-
-        - QueueVoxel
-            - Assigns SetVoxel action to chunk in chunk creation queue if it is within player chunk radius
-            - If it is outside radius, add it to voxel creation backlog instead
-
-
-
-        - Update
-            - Maintain player chunk radius
-                - Remember last position, where chunks where loaded/unloaded
-                - If distance to last position is > 1 chunk, establish new chunk radius around player and remember new position
-            - Process chunk generation queue
-            - Process chunk creation queue
-                - SetVoxel calls
-                - Update sunlight
-    */
-
-    private void GenerateInitialWorld()
+    void OnGUI()
     {
+        GUI.Label(new Rect(10, 40, 600, 30), $"Generating={_chunkGenerationQueue.Count} | Creating={_chunkCreationQueue.Count} | LastCenter={_lastChunkGenerationCenter}");
+
+    }
+
+    private void GenerateChunksAroundCenter(Vector3Int centerChunkPos)
+    {
+        _lastChunkGenerationCenter = centerChunkPos;
+
+        int num1 = 0;
+        int num2 = 0;
+
         for(int z = -ChunkGenerationRadius; z <= ChunkGenerationRadius; ++z)
         {
             for(int y = -ChunkGenerationRadius; y <= ChunkGenerationRadius; ++y)
             {
                 for(int x = -ChunkGenerationRadius; x <= ChunkGenerationRadius; ++x)
                 {
-                    var chunkPos = new Vector3Int(x, y, z);
+                    var chunkPos = centerChunkPos + new Vector3Int(x, y, z);
+                    if(_currentlyLoadedChunks.Contains(chunkPos)) continue;
+
+                    num1++;
+
                     var sqrDistToPlayer = WorldGenUtil.GetChunkSqrDistanceToWorldPos(_player.transform.position, chunkPos);
+                    if(centerChunkPos != Vector3Int.zero)
+                    {        
+                        UnityEngine.Debug.Log($"PlayerChunkPos={centerChunkPos} ChunkPos={chunkPos} SqrDist={sqrDistToPlayer} Thresh={_chunkGenerationRadiusSqr}");
+                    }
                     if(sqrDistToPlayer <= _chunkGenerationRadiusSqr)
                     {
+                        num2++;
                         _chunkGenerationQueue.Enqueue(chunkPos, sqrDistToPlayer);
+                        _currentlyLoadedChunks.Add(chunkPos);
                     }
                 }                
             }
         }
+
     }
 
     private void ProcessChunkGenerationQueue()
@@ -126,7 +129,8 @@ public class WorldGenerator : MonoBehaviour
         var playerPos = _player.transform.position;
         while(_chunkGenerationTasks.Count < MaxNumChunkGenerationTasks && _chunkGenerationQueue.TryDequeue(out var chunkPos))
         {
-            _chunkGenerationTasks.Add(Task.Run<ChunkUpdate>(() => GenerateChunk(chunkPos, playerPos)));
+            var task = Task.Run<ChunkUpdate>(() => GenerateChunk(chunkPos, playerPos));
+            _chunkGenerationTasks.Add(task);
         }
     }
 
@@ -163,7 +167,7 @@ public class WorldGenerator : MonoBehaviour
                     else if(globalVoxelPos.y == terrainHeight + 1)
                     {
                         var rand = new System.Random();
-                        if(rand.NextDouble() > 0.95)
+                        if(rand.NextDouble() > 0.999)
                         {
                             builder.QueueVoxel(globalVoxelPos, torchType);
                         }
@@ -211,6 +215,9 @@ public class WorldGenerator : MonoBehaviour
 
     private void ProcessChunkCreationQueue()
     {
+        //var sw = new Stopwatch();
+        //sw.Start();
+
         int numChunksToCreate = MaxNumChunksCreatedPerFrame;
         while(numChunksToCreate > 0 && _chunkCreationQueue.TryDequeue(out var chunkPos))
         {
@@ -224,6 +231,9 @@ public class WorldGenerator : MonoBehaviour
 
             _chunkCreationMap.Remove(chunkPos);
         }
+
+        //sw.Stop();
+        //UnityEngine.Debug.Log($"Created chunk in {sw.ElapsedMilliseconds}ms");
     }
 
     private bool AnyChunksPending() => 
@@ -573,30 +583,16 @@ public class WorldGenerator : MonoBehaviour
     private int _iterations = 30;
     private float _emptyChance = .54f;
 
-    void OnGUI()
-    {
-/*
-        GUI.Label(new Rect(10, 10, 140, 50), $"BirthNeighbors({_birthNeighbors})");
-        _birthNeighbors = (int)GUI.HorizontalSlider(new Rect(150, 10, 250, 50), _birthNeighbors, 0, 26);
-        GUI.Label(new Rect(10, 70, 140, 50), $"DeathNeighbors({_deathNeighbors})");
-        _deathNeighbors = (int)GUI.HorizontalSlider(new Rect(150, 70, 250, 50), _deathNeighbors, 0, 26);
-        GUI.Label(new Rect(10, 130, 140, 50), $"Iterations({_iterations})");
-        _iterations  = (int)GUI.HorizontalSlider(new Rect(150, 130, 250, 50), _iterations, 1, 100);
-        GUI.Label(new Rect(10, 190, 140, 50), $"EmptyChance({_emptyChance})");
-        _emptyChance = GUI.HorizontalSlider(new Rect(150, 190, 250, 50), _emptyChance, 0f, 1.0f);
-
-        if(GUI.Button(new Rect(10, 250, 250, 50), "Generate World") )
-        {
-            GenerateWorld();
-        }
-*/
-    }
 
     public int _chunkGenerationRadiusSqr;
 
     private VoxelWorld _voxelWorld;
 
     private PlayerController _player;
+
+    private Vector3Int _lastChunkGenerationCenter;
+
+    private HashSet<Vector3Int> _currentlyLoadedChunks = new HashSet<Vector3Int>();
 
     // Chunks to be generated
     private PriorityQueue<Vector3Int, float> _chunkGenerationQueue = new PriorityQueue<Vector3Int, float>();

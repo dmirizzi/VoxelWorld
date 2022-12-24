@@ -28,7 +28,15 @@ public class VoxelWorld : MonoBehaviour
 
     void Update()
     {
+        var sw = new Stopwatch();
+        sw.Start();
+
         BuildChangedChunks();
+
+        sw.Stop();
+        //UnityEngine.Debug.Log($"Rebuilt changed chunks in {sw.ElapsedMilliseconds}ms");
+
+        sw.Restart();
 
         lock(_queuedLightUpdates)
         {
@@ -37,6 +45,11 @@ public class VoxelWorld : MonoBehaviour
                 ProcessLightUpdate(update);
             }
         }
+
+        sw.Stop();
+        //UnityEngine.Debug.Log($"Processed lightmap updates in {sw.ElapsedMilliseconds}ms");
+
+        sw.Restart();
 
         lock(_queuedChunkLightMappingUpdates)
         {
@@ -49,6 +62,10 @@ public class VoxelWorld : MonoBehaviour
             }
         }        
         _queuedChunkLightMappingUpdates.Clear();        
+
+
+        sw.Stop();
+        //UnityEngine.Debug.Log($"Updated chunk lighting in {sw.ElapsedMilliseconds}ms");
     }
 
     public void SetVoxel(
