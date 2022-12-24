@@ -199,8 +199,8 @@ public class DoorBlockType : BlockTypeBase
         UpdateProperty<DoorStateProperty>(world, globalPosition, switchDoorStateFunc);
         UpdateProperty<DoorStateProperty>(world, secondaryDoorPartPos, switchDoorStateFunc);
 
-        world.RebuildVoxel(globalPosition);
-        world.RebuildVoxel(secondaryDoorPartPos);
+        world.QueueVoxelForRebuild(globalPosition);
+        world.QueueVoxelForRebuild(secondaryDoorPartPos);
         return true;
     }
 

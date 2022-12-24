@@ -40,7 +40,7 @@ public class TorchBlockType : BlockTypeBase
         }
 
         var data = BlockDataRepository.GetBlockData("Torch");
-        world.SetLight(globalPos, data.LightColor.Value, true);
+        world.AddLight(globalPos, data.LightColor.Value);
 
         return true;
     }
@@ -48,7 +48,7 @@ public class TorchBlockType : BlockTypeBase
     public override bool OnRemove(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition)
     {
         var data = BlockDataRepository.GetBlockData("Torch");
-        world.SetLight(globalPosition, data.LightColor.Value, false);
+        world.RemoveLight(globalPosition, false);
         return true;        
     }
 

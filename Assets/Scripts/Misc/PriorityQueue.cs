@@ -19,6 +19,7 @@ public class PriorityQueue<TValue, TPriority> where TPriority : IComparable
                 if(priority.CompareTo(node.Value.Priority) < 0)
                 {
                     _list.AddBefore(node, (value, priority));
+                    _containedValues.Add(value);
                     return;
                 }
             }
@@ -49,6 +50,12 @@ public class PriorityQueue<TValue, TPriority> where TPriority : IComparable
         }
         value = default(TValue);
         return false;
+    }
+
+    public void Clear()
+    {
+        _list.Clear();
+        _containedValues.Clear();
     }
 
     private LinkedList<(TValue Value, TPriority Priority)> _list = new LinkedList<(TValue, TPriority)>();

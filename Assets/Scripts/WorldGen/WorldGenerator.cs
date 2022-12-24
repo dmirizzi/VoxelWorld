@@ -41,7 +41,7 @@ public class WorldGenerator : MonoBehaviour
             HandleChunkGenerationTasks();
             ProcessChunkCreationQueue();
         }
-        _voxelWorld.BuildChangedChunks();
+        _voxelWorld.RebuildChangedChunks();
         PlacePlayer(Vector3Int.zero);
         WorldGenerated = true;
 
@@ -295,7 +295,7 @@ public class WorldGenerator : MonoBehaviour
 */
         //GenerateTorches(10);
 
-        _voxelWorld.BuildChangedChunks();
+        _voxelWorld.RebuildChangedChunks();
         _voxelWorld.InitializeSunlight();
         PlacePlayer();
 

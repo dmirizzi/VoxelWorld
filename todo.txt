@@ -31,6 +31,9 @@
     -> Even GameObject voxels by themselves in large numbers seem to have a high performance impact
         -> Bake torch mesh into chunk mesh with static flame and display particles only when close by?
 
+[ ] Parallelize light map updates that cannot possibly overlap
+    -> max distance + some buffer between them
+
 ----------------------------------------------------------------------------------------------------------------
     Graphics / Rendering
 ----------------------------------------------------------------------------------------------------------------
