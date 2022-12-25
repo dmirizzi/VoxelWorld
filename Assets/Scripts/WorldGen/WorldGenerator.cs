@@ -16,22 +16,20 @@ public class WorldGenerator : MonoBehaviour
 
     public bool WorldGenerated { get; private set; }
 
-    public WorldGenerator()
-    {
-        _chunkGenerationRadiusSqr = ChunkGenerationRadius * ChunkGenerationRadius;
-    }
-
     void Awake()
     {
+        _chunkGenerationRadiusSqr = ChunkGenerationRadius * ChunkGenerationRadius;
         _voxelWorld = FindObjectOfType<VoxelWorld>();
         _player = FindObjectOfType<PlayerController>();
     }
 
     void Start()
     {
+
+        //Profiler.StartProfiling("WorldGen-Startup");
+
         var sw = new Stopwatch();
         sw.Start();
-
 
         GenerateChunksAroundCenter(Vector3Int.zero);
 
@@ -48,22 +46,36 @@ public class WorldGenerator : MonoBehaviour
         sw.Stop();
 
         UnityEngine.Debug.Log($"Initial world generated in {sw.Elapsed.TotalSeconds} sec");
+        //Profiler.StopProfiling();
     }
 
 
     void Update()
     {       
+        //Profiler.StartProfiling("WorldGen-1-GenerateChunksAroundCenter");
+
         var currentPlayerChunkPos = VoxelPosHelper.WorldPosToChunkPos(_player.transform.position);
         if((currentPlayerChunkPos - _lastChunkGenerationCenter).magnitude > 1)
         {
+            Profiler.Clear();
             GenerateChunksAroundCenter(currentPlayerChunkPos);
         }
 
+        //Profiler.StopProfiling();
+
         if(AnyChunksPending())
         {
+            //Profiler.StartProfiling("WorldGen-2-ProcessChunkGenerationQueue");
             ProcessChunkGenerationQueue();
+            //Profiler.StopProfiling();
+
+            //Profiler.StartProfiling("WorldGen-3-HandleChunkGenerationTasks");
             HandleChunkGenerationTasks();
+            //Profiler.StopProfiling();
+
+            //Profiler.StartProfiling("WorldGen-4-ProcessChunkCreationQueue");
             ProcessChunkCreationQueue();
+            //Profiler.StopProfiling();
         }
 
         /*
@@ -85,16 +97,22 @@ public class WorldGenerator : MonoBehaviour
 
     void OnGUI()
     {
-        GUI.Label(new Rect(10, 40, 600, 30), $"Generating={_chunkGenerationQueue.Count} | Creating={_chunkCreationQueue.Count} | LastCenter={_lastChunkGenerationCenter}");
+        GUI.Label(new Rect(10, 30, 600, 30), $"Generating={_chunkGenerationQueue.Count} | Creating={_chunkCreationQueue.Count} | LastCenter={_lastChunkGenerationCenter}");
 
+        var profiling = Profiler.GetProfilingResults();
+        int i = 0;
+        foreach(var prof in profiling)
+        {
+            GUI.Label(new Rect(10, 400 + 20 * i, 600, 30), $"{prof.Key}: {prof.Value}ms");
+            i++;
+        }
     }
 
     private void GenerateChunksAroundCenter(Vector3Int centerChunkPos)
     {
         _lastChunkGenerationCenter = centerChunkPos;
 
-        int num1 = 0;
-        int num2 = 0;
+        UnityEngine.Debug.Log($"Radius = {ChunkGenerationRadius} - Sqr = {_chunkGenerationRadiusSqr}");
 
         for(int z = -ChunkGenerationRadius; z <= ChunkGenerationRadius; ++z)
         {
@@ -105,12 +123,9 @@ public class WorldGenerator : MonoBehaviour
                     var chunkPos = centerChunkPos + new Vector3Int(x, y, z);
                     if(_currentlyLoadedChunks.Contains(chunkPos)) continue;
 
-                    num1++;
-
                     var sqrDistToPlayer = WorldGenUtil.GetChunkSqrDistanceToWorldPos(_player.transform.position, chunkPos);
                     if(sqrDistToPlayer <= _chunkGenerationRadiusSqr)
                     {
-                        num2++;
                         _chunkGenerationQueue.Enqueue(chunkPos, sqrDistToPlayer);
                         _currentlyLoadedChunks.Add(chunkPos);
                     }
@@ -221,7 +236,7 @@ public class WorldGenerator : MonoBehaviour
 
             var voxels = _chunkCreationMap[chunkPos];
             foreach(var voxel in voxels)
-            {
+            {        
                 _voxelWorld.SetVoxel(voxel.GlobalVoxelPos, voxel.Type);
             }
 

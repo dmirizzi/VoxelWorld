@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 public class VoxelWorld : MonoBehaviour
 {
@@ -30,45 +31,40 @@ public class VoxelWorld : MonoBehaviour
 
     void Update()
     {
-        var sw = new Stopwatch();
-        sw.Start();
+        //Profiler.StartProfiling("VoxelWorld-1-ChunkBuilding");
+            RebuildChangedChunks();
+        //Profiler.StopProfiling();
+        //Profiler.StartProfiling("VoxelWorld-2-HandleChunkBuildJobs");
+            HandleChunkBuildJobs();
+        //Profiler.StopProfiling();
 
-        RebuildChangedChunks();
-        HandleChunkBuildJobs();
+        //Profiler.StartProfiling("VoxelWorld-3-LightMapUpdates");
+            ProcessQueuedLightMapUpdates();
+        //Profiler.StopProfiling();
 
-        sw.Stop();
-        //UnityEngine.Debug.Log($"Rebuilt changed chunks in {sw.ElapsedMilliseconds}ms");
+        //Profiler.StartProfiling("VoxelWorld-4-ChunkLightMappingUpdates");
+            ProcessQueuedChunkLightMappingUpdates();
+        //Profiler.StopProfiling();
+    }
 
-        sw.Restart();
-
-        lock(_queuedLightUpdates)
+    private void ProcessQueuedLightMapUpdates()
+    {
+        if (_queuedLightUpdates.TryDequeue(out var update))
         {
-            if(_queuedLightUpdates.TryDequeue(out var update))
+            ProcessLightUpdate(update);
+        }
+    }
+
+    private void ProcessQueuedChunkLightMappingUpdates()
+    {
+        foreach (var chunkPos in _queuedChunkLightMappingUpdates)
+        {
+            if (_chunkBuilders.ContainsKey(chunkPos) && _chunkBuilders[chunkPos].MeshFinishedBuilding)
             {
-                ProcessLightUpdate(update);
+                _chunkBuilders[chunkPos].UpdateLightVertexColors();
             }
         }
-
-        sw.Stop();
-        //UnityEngine.Debug.Log($"Processed lightmap updates in {sw.ElapsedMilliseconds}ms");
-
-        sw.Restart();
-
-        lock(_queuedChunkLightMappingUpdates)
-        {
-            foreach(var chunkPos in _queuedChunkLightMappingUpdates)
-            {
-                if(_chunkBuilders.ContainsKey(chunkPos) && _chunkBuilders[chunkPos].MeshFinishedBuilding)
-                {
-                    _chunkBuilders[chunkPos].UpdateLightVertexColors();
-                }            
-            }
-        }        
-        _queuedChunkLightMappingUpdates.Clear();        
-
-
-        sw.Stop();
-        //UnityEngine.Debug.Log($"Updated chunk lighting in {sw.ElapsedMilliseconds}ms");
+        _queuedChunkLightMappingUpdates.Clear();
     }
 
     public void SetVoxel(
@@ -78,7 +74,19 @@ public class VoxelWorld : MonoBehaviour
         BlockFace? lookDir = null, 
         bool useExistingAuxData = false)
     {
-        SetVoxel(globalPos.x, globalPos.y, globalPos.z, type, placementDir, lookDir, useExistingAuxData);
+        var chunk = GetChunkFromVoxelPosition(globalPos, true);
+        var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(globalPos);
+
+        var oldVoxelType = chunk.GetVoxel(chunkLocalPos);
+
+        if(!chunk.SetVoxel(chunkLocalPos, type, placementDir, lookDir, useExistingAuxData))
+        {
+            // Voxel cant be placed
+            Profiler.StopProfiling();
+            return;
+        }
+
+        QueueAffectedChunksForRebuild(globalPos);
     }
 
     public void SetVoxel(
@@ -88,26 +96,7 @@ public class VoxelWorld : MonoBehaviour
         BlockFace? lookDir = null, 
         bool useExistingAuxData = false)
     {
-        var globalPos = new Vector3Int(x, y, z);
-        var chunk = GetChunkFromVoxelPosition(x, y, z, true);
-        var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(globalPos);
-
-        var oldVoxelType = chunk.GetVoxel(chunkLocalPos);
-        if(!chunk.SetVoxel(chunkLocalPos, type, placementDir, lookDir, useExistingAuxData))
-        {
-            // Voxel cant be placed
-            return;
-        }
-
-        foreach(var affectedChunkPos in GetChunksAdjacentToVoxel(globalPos))
-        {
-            // Remember affected chunks for rebuilding in batches later
-            if(!_chunks.ContainsKey(affectedChunkPos))
-            {
-                continue;
-            }
-            _queuedChunkRebuilds.EnqueueUnique(affectedChunkPos, GetChunkDistToPlayer(affectedChunkPos));
-        }
+        SetVoxel(new Vector3Int(x, y, z), type, placementDir, lookDir, useExistingAuxData);
     }
 
     public void SetVoxelAndUpdateLightMap(
@@ -372,6 +361,7 @@ public class VoxelWorld : MonoBehaviour
 
     public void QueueVoxelForRebuild(Vector3Int globalVoxelPos)
     {
+        //TODO: JUST CONVERT THE VOXELPOS TO CHUNK POS DUMBASS!!
         var chunkPos = GetChunkFromVoxelPosition(globalVoxelPos, true).ChunkPos;
         _queuedChunkRebuilds.EnqueueUnique(chunkPos, GetChunkDistToPlayer(chunkPos));
     }
@@ -406,7 +396,9 @@ public class VoxelWorld : MonoBehaviour
                 // Chunk GameObjects must be generated on main thread      
                 var builder = buildJob.Builder;
                 _chunks[builder.ChunkPos].Reset();
-                _chunks[builder.ChunkPos].AddVoxelMeshGameObjects(builder.CreateChunkGameObjects());
+                 
+                var blah = builder.CreateChunkGameObjects();
+                _chunks[builder.ChunkPos].AddChunkMeshGameObjects(blah);
                 _chunks[builder.ChunkPos].BuildBlockGameObjects();
                 _chunks[builder.ChunkPos].BuildVoxelColliderGameObjects();
 
@@ -455,78 +447,69 @@ public class VoxelWorld : MonoBehaviour
 
     private void QueueChunksForLightMappingUpdate(IEnumerable<Vector3Int> chunkPositions)
     {
-        lock(_queuedChunkLightMappingUpdates)
+        foreach(var chunkPos in chunkPositions)
         {
-            foreach(var chunkPos in chunkPositions)
-            {
-                // Skip chunk if its already being rebuilt anyways
-                if(_queuedChunkRebuilds.Contains(chunkPos)) continue;
+            // Skip chunk if its already being rebuilt anyways
+            if(_queuedChunkRebuilds.Contains(chunkPos)) continue;
 
-                _queuedChunkLightMappingUpdates.Add(chunkPos);
-            }
+            _queuedChunkLightMappingUpdates.Add(chunkPos);
         }
     }
 
-    private List<Vector3Int> GetChunksAdjacentToVoxel(Vector3Int voxelPos)
-    {
-        var adjacentChunks = new List<Vector3Int>();
-
+    private void QueueAffectedChunksForRebuild(Vector3Int voxelPos)
+    {        
         var localPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(voxelPos);
         var chunkPos = VoxelPosHelper.GlobalVoxelPosToChunkPos(voxelPos);
 
-        adjacentChunks.Add(chunkPos);
+        // Should be good enough as an approximation to use the same distance for all neighboring chunks
+        // to save some time
+        var dist = GetChunkDistToPlayer(chunkPos);
 
-        if(localPos.x == 0) adjacentChunks.Add(chunkPos + Vector3Int.left);
-        if(localPos.x == VoxelInfo.ChunkSize - 1) adjacentChunks.Add(chunkPos + Vector3Int.right);
-        if(localPos.y == 0) adjacentChunks.Add(chunkPos + Vector3Int.down);
-        if(localPos.y == VoxelInfo.ChunkSize - 1) adjacentChunks.Add(chunkPos + Vector3Int.up);
-        if(localPos.z == 0) adjacentChunks.Add(chunkPos + Vector3Int.back);
-        if(localPos.z == VoxelInfo.ChunkSize - 1) adjacentChunks.Add(chunkPos + Vector3Int.forward);
-
-        return adjacentChunks;
+        _queuedChunkRebuilds.EnqueueUnique(chunkPos, dist);
+        if(localPos.x == 0)                         _queuedChunkRebuilds.EnqueueUnique(chunkPos + Vector3Int.left, dist);
+        if(localPos.x == VoxelInfo.ChunkSize - 1)   _queuedChunkRebuilds.EnqueueUnique(chunkPos + Vector3Int.right, dist);
+        if(localPos.y == 0)                         _queuedChunkRebuilds.EnqueueUnique(chunkPos + Vector3Int.down, dist);
+        if(localPos.y == VoxelInfo.ChunkSize - 1)   _queuedChunkRebuilds.EnqueueUnique(chunkPos + Vector3Int.up, dist);
+        if(localPos.z == 0)                         _queuedChunkRebuilds.EnqueueUnique(chunkPos + Vector3Int.back, dist);
+        if(localPos.z == VoxelInfo.ChunkSize - 1)   _queuedChunkRebuilds.EnqueueUnique(chunkPos + Vector3Int.forward, dist);
     }
 
     private float GetChunkDistToPlayer(Vector3Int chunkPos)
     {
         var chunkVoxelPos = VoxelPosHelper.ChunkPosToGlobalChunkBaseVoxelPos(chunkPos);
         var playerVoxelPos = VoxelPosHelper.WorldPosToGlobalVoxelPos(_player.transform.position);
-        return (chunkVoxelPos - playerVoxelPos).magnitude;
+        var dist = (chunkVoxelPos - playerVoxelPos).sqrMagnitude;
+        return dist;
     }
 
-    public Chunk GetChunkFromVoxelPosition(Vector3Int globalPos, bool create)
+    public Chunk GetChunkFromVoxelPosition(Vector3Int globalVoxelPos, bool create)
     {
-        //TODO: Switch implementation with other overloaded method
-        return GetChunkFromVoxelPosition(globalPos.x, globalPos.y, globalPos.z, create);
+        var chunkPos = VoxelPosHelper.GlobalVoxelPosToChunkPos(globalVoxelPos);
+
+        if(!_chunks.ContainsKey(chunkPos))
+        {
+            if(create)
+            {
+                var chunk = new Chunk(this, chunkPos);
+                _chunks.Add(chunkPos, chunk);
+
+                var chunkXZPos = new Vector2Int(globalVoxelPos.x, globalVoxelPos.z);
+                if(!_topMostChunks.ContainsKey(chunkXZPos) || globalVoxelPos.y > _topMostChunks[chunkXZPos].ChunkPos.y)
+                {
+                    _topMostChunks[chunkXZPos] = chunk;
+                }
+            }
+            else
+            {
+                return null;
+            }
+        }
+        return _chunks[chunkPos];
     }
 
     public Chunk GetChunkFromVoxelPosition(int x, int y, int z, bool create)
     {
-        var voxelPos = new Vector3Int(x, y, z);
-        var chunkPos = VoxelPosHelper.GlobalVoxelPosToChunkPos(voxelPos);
-
-        lock(_chunkCreationLock)
-        {
-            if(!_chunks.ContainsKey(chunkPos))
-            {
-                if(create)
-                {
-                    var chunk = new Chunk(this, chunkPos);
-                    _chunks.Add(chunkPos, chunk);
-
-                    var chunkXZPos = new Vector2Int(x, z);
-                    if(!_topMostChunks.ContainsKey(chunkXZPos) || y > _topMostChunks[chunkXZPos].ChunkPos.y)
-                    {
-                        _topMostChunks[chunkXZPos] = chunk;
-                    }
-                }
-                else
-                {
-                    return null;
-                }
-
-            }
-            return _chunks[chunkPos];        
-        }
+        return GetChunkFromVoxelPosition(new Vector3Int(x, y, z), create);
     }
 
     private struct LightUpdate

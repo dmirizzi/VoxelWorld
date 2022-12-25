@@ -23,17 +23,13 @@ public static class VoxelPosHelper
     {
         // Correct for voxels in negative space - they are offset by 1 compared to positive space
         // i.e. voxels in positive space start at 0, in negative they start at -1
-        Vector3Int negativeOffset = new Vector3Int(
-            worldPos.x < 0f ? -1 : 0,
-            worldPos.y < 0f ? -1 : 0,
-            worldPos.z < 0f ? -1 : 0
+        var result = new Vector3Int(
+            (int)worldPos.x + (worldPos.x < 0f ? -1 : 0),
+            (int)worldPos.y + (worldPos.y < 0f ? -1 : 0),
+            (int)worldPos.z + (worldPos.z < 0f ? -1 : 0)
         );
 
-        return new Vector3Int(
-            (int)worldPos.x,
-            (int)worldPos.y,
-            (int)worldPos.z
-        ) + negativeOffset;
+        return result;
     }
 
     public static Vector3 GetVoxelCenterWorldPos(Vector3Int globalVoxelPos)
@@ -108,11 +104,7 @@ public static class VoxelPosHelper
 
     public static Vector3Int ChunkPosToGlobalChunkBaseVoxelPos(Vector3Int chunkPos)
     {
-        return new Vector3Int(
-            chunkPos.x * VoxelInfo.ChunkSize,
-            chunkPos.y * VoxelInfo.ChunkSize,
-            chunkPos.z * VoxelInfo.ChunkSize
-        );
+        return chunkPos * VoxelInfo.ChunkSize;
     }
 
 }

@@ -29,11 +29,12 @@ public class ChunkBuilder
 
         meshFilter.Clear();
         meshFilter.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+ 
         meshFilter.vertices = chunkMesh.Vertices.ToArray();
-        meshFilter.colors32 = GetSmoothLightVertexColorMapping(chunkMesh);
         meshFilter.triangles = chunkMesh.Triangles.ToArray();
         meshFilter.normals = chunkMesh.Normals.ToArray();
         meshFilter.uv = chunkMesh.UVCoordinates.ToArray();
+        meshFilter.colors32 = GetSmoothLightVertexColorMapping(chunkMesh);
         meshFilter.Optimize();
     }
 

@@ -125,7 +125,7 @@ public class Chunk
         obj.SetLayer(SceneLayers.VoxelsLayer);
     }
 
-    public void AddVoxelMeshGameObjects(params GameObject[] gameObjects)
+    public void AddChunkMeshGameObjects(params GameObject[] gameObjects)
     {
         foreach(var go in gameObjects)
         {
