@@ -66,7 +66,7 @@ class WorldUpdateScheduler : MonoBehaviour
 
     public void OnGUI()
     {
-        GUI.Label(new Rect(10, 80, 1500, 20), $"Queued Jobs: {_jobQueue.Count} | Active Jobs: {_activeJobs.Count}");
+        GUI.Label(new Rect(10, 80, 1500, 20), $"Queued Jobs: {_jobQueue.Count} | Active Jobs: {_activeJobs.Count} | ReservedChunks: {_reservedChunks.Count}");
         /*
 
         int i = 0;
@@ -122,7 +122,7 @@ class WorldUpdateScheduler : MonoBehaviour
     {
         // Schedule jobs that do not overlap in which chunks they affect
         while(_activeJobs.Count < MaxNumSimultaneousJobs 
-            && _jobQueue.DequeueNext(x => TryReserveChunks(x.AffectedChunks, x.UpdateStage), out var job))
+            && _jobQueue.DequeueNext(x => CanReserveChunks(x.AffectedChunks), out var job))
         {
             if(!job.PreExecuteSync(_world))
             {
@@ -130,27 +130,23 @@ class WorldUpdateScheduler : MonoBehaviour
                 continue;
             }
 
+            ReserveChunks(job.AffectedChunks);
+
             _activeJobs.AddLast((job, job.ExecuteAsync()));
         }
     }
 
-    private bool TryReserveChunks(HashSet<Vector3Int> chunksToBeReserved, int updateStage)
+    private bool CanReserveChunks(HashSet<Vector3Int> chunksToBeReserved)
     {
-        // First check that all given chunks can be reserved for the given update stage
-        foreach(var chunk in chunksToBeReserved)
-        {
-            if(_reservedChunks.Contains(chunk))
-            {
-                return false;
-            }
-        }
+        return !_reservedChunks.Overlaps(chunksToBeReserved);
+    }
 
-        // Then update all chunks
+    private void ReserveChunks(HashSet<Vector3Int> chunksToBeReserved)
+    {
         foreach(var chunk in chunksToBeReserved)
         {
             _reservedChunks.Add(chunk);
         }
-        return true;
     }
 
     private void HandleActiveJobs()

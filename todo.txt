@@ -149,9 +149,18 @@ World Gen
 
 [ ] Infinite World Gen
     [x] Generate new chunks when player moves towards unloaded chunks
-    [ ] Unload chunks player is moving away from when generating new chunks in front
     [ ] Propagate block lights from surrounding chunks when loading new chunks
     [ ] Propagate sunlight in newly loaded chunks
+        [ ] New column of chunks 
+            -> Initialize sunlight in those chunks from the new topmost chunks
+        [ ] New chunks below already generated chunks 
+            -> Propagate sunlight from chunks above newly generated ones
+    [ ] Only place/activate player once initial generate is done (at least chunks directly neighboring the player)
+    [ ] Prioritized scheduling for player induced world updates
+        -> Placing/removing blocks while world is being generated
+    [ ] ChunkLightMappingUpdate 
+        -> Only recreate GameObject if chunk was actually rebuilt, not if only the lighting changed
+    [ ] Unload chunks player is moving away from when generating new chunks in front
     [ ] Incorporate backlogged voxels into newly loaded chunks
 
 [ ] Serialization / Deserialization

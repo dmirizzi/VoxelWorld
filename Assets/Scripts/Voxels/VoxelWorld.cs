@@ -160,8 +160,6 @@ public class VoxelWorld : MonoBehaviour
 
     public void AddLight(Vector3Int globalLightPos, Color32 lightColor)
     {
-
-        UnityEngine.Debug.Log($"Adding light @ {globalLightPos}");
         _updateScheduler.AddBlockLightUpateJob(
             VoxelPosHelper.GlobalVoxelPosToChunkPos(globalLightPos),
             globalLightPos,
@@ -173,8 +171,6 @@ public class VoxelWorld : MonoBehaviour
     public void RemoveLight(Vector3Int globalLightPos, bool sunlight)
     {
         //TODO: HANDLE SUNLIGHT
-
-        UnityEngine.Debug.Log($"Removing light @ {globalLightPos}");
 
         _updateScheduler.AddBlockLightUpateJob(
             VoxelPosHelper.GlobalVoxelPosToChunkPos(globalLightPos),
