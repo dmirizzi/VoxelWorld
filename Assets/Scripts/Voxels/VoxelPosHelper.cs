@@ -107,4 +107,10 @@ public static class VoxelPosHelper
         return chunkPos * VoxelInfo.ChunkSize;
     }
 
+    public static float GetChunkSqrDistanceToWorldPos(Vector3 worldPos, Vector3Int chunkPos)
+    {
+        var playerVoxelPos = VoxelPosHelper.WorldPosToGlobalVoxelPos(worldPos);
+        var playerChunkPos = VoxelPosHelper.GlobalVoxelPosToChunkPos(playerVoxelPos);
+        return (playerChunkPos - chunkPos).sqrMagnitude;
+    }
 }

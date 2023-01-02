@@ -30,7 +30,7 @@ public class ChunkUpdateBuilder
     public void QueueVoxel(Vector3Int globalVoxelPos, ushort type)
     {
         var chunkPos = VoxelPosHelper.GlobalVoxelPosToChunkPos(globalVoxelPos);
-        var chunkDistToPlayer = WorldGenUtil.GetChunkSqrDistanceToWorldPos(_playerPos, _chunkUpdate.ChunkPos);
+        var chunkDistToPlayer = VoxelPosHelper.GetChunkSqrDistanceToWorldPos(_playerPos, _chunkUpdate.ChunkPos);
 
         if(chunkDistToPlayer <= _maxChunkDistSqr)
         {

@@ -34,7 +34,6 @@ public class ChunkBuilder
         meshFilter.triangles = chunkMesh.Triangles.ToArray();
         meshFilter.normals = chunkMesh.Normals.ToArray();
         meshFilter.uv = chunkMesh.UVCoordinates.ToArray();
-        meshFilter.colors32 = GetSmoothLightVertexColorMapping(chunkMesh);
         meshFilter.Optimize();
     }
 
@@ -62,54 +61,61 @@ public class ChunkBuilder
     }
 
 
-    public Task Build()
+    public void Build()
     {
-        return Task.Run( () => 
-        {         
-            for(int y = 0; y < VoxelInfo.ChunkSize; ++y)
+        for(int y = 0; y < VoxelInfo.ChunkSize; ++y)
+        {
+            for(int x = 0; x < VoxelInfo.ChunkSize; ++x)
             {
-                for(int x = 0; x < VoxelInfo.ChunkSize; ++x)
+                for(int z = 0; z < VoxelInfo.ChunkSize; ++z)
                 {
-                    for(int z = 0; z < VoxelInfo.ChunkSize; ++z)
+                    var voxelType = _chunk.GetVoxel(x, y, z);
+                    if(voxelType == 0) continue;
+
+                    var localVoxelPos =  new Vector3Int(x, y, z);
+                    var globalVoxelPos = _chunkVoxelPos + localVoxelPos;
+
+                    var renderType = BlockDataRepository.GetBlockData(voxelType).RenderType;
+                    if(renderType == BlockRenderType.CustomMesh)
                     {
-                        var voxelType = _chunk.GetVoxel(x, y, z);
-                        if(voxelType == 0) continue;
-
-                        var localVoxelPos =  new Vector3Int(x, y, z);
-                        var globalVoxelPos = _chunkVoxelPos + localVoxelPos;
-
-                        var renderType = BlockDataRepository.GetBlockData(voxelType).RenderType;
-                        if(renderType == BlockRenderType.CustomMesh)
-                        {
-                            var blockType = BlockTypeRegistry.GetBlockType(voxelType);
-                            blockType.OnChunkVoxelMeshBuild(
-                                _world,
-                                _chunk,
-                                voxelType,
-                                globalVoxelPos,
-                                localVoxelPos,
-                                VoxelInfo.IsTransparent(voxelType) ? _transparentMesh : _solidMesh
-                            );
-                        }
-                        else if(renderType == BlockRenderType.Voxel)
-                        {
-                            AddVoxelVertices(
-                                voxelType,
-                                globalVoxelPos,
-                                localVoxelPos,
-                                VoxelInfo.IsTransparent(voxelType) ? _transparentMesh : _solidMesh
-                            );
-                        }
+                        var blockType = BlockTypeRegistry.GetBlockType(voxelType);
+                        blockType.OnChunkVoxelMeshBuild(
+                            _world,
+                            _chunk,
+                            voxelType,
+                            globalVoxelPos,
+                            localVoxelPos,
+                            VoxelInfo.IsTransparent(voxelType) ? _transparentMesh : _solidMesh
+                        );
+                    }
+                    else if(renderType == BlockRenderType.Voxel)
+                    {
+                        AddVoxelVertices(
+                            voxelType,
+                            globalVoxelPos,
+                            localVoxelPos,
+                            VoxelInfo.IsTransparent(voxelType) ? _transparentMesh : _solidMesh
+                        );
                     }
                 }
             }
-        });
+        }
     }
 
-    public void UpdateLightVertexColors()
+    public ChunkLightColorMapping CreateChunkLightColorMapping()
     {
-        _solidChunk.GetComponent<MeshFilter>().mesh.colors32 = GetSmoothLightVertexColorMapping(_solidMesh);
-        _transparentChunk.GetComponent<MeshFilter>().mesh.colors32 = GetSmoothLightVertexColorMapping(_transparentMesh);
+        return new ChunkLightColorMapping
+        {
+            ChunkPos = ChunkPos,
+            SolidMeshLightMapping = GetSmoothLightVertexColorMapping(_solidMesh),
+            TransparentMeshLightMapping = GetSmoothLightVertexColorMapping(_transparentMesh)
+        };
+    }
+
+    public void UpdateLightVertexColors(ChunkLightColorMapping mapping)
+    {
+        _solidChunk.GetComponent<MeshFilter>().mesh.colors32 = mapping.SolidMeshLightMapping;
+        _transparentChunk.GetComponent<MeshFilter>().mesh.colors32 = mapping.TransparentMeshLightMapping;
     }
 
 
@@ -243,6 +249,15 @@ public class ChunkBuilder
             chunkMesh.Triangles.Add(i + 3 + vertexBaseIdx);
             chunkMesh.Triangles.Add(i + vertexBaseIdx);
         }
+    }
+
+    public struct ChunkLightColorMapping
+    {
+        public Vector3Int ChunkPos;
+
+        public Color32[] SolidMeshLightMapping;
+
+        public Color32[] TransparentMeshLightMapping;
     }
 
     private VoxelWorld _world;

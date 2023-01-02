@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 
 public class PlayerActionBarController : MonoBehaviour
@@ -67,6 +68,7 @@ public class PlayerActionBarController : MonoBehaviour
 
     void OnGUI()
     {
+        var sb = new StringBuilder();
         for(int i = 0; i < ActionBarItems.Length; ++i)
         {
             var name = ActionBarItems[i] != null ? ActionBarItems[i].Name : "N/A";
@@ -75,8 +77,11 @@ public class PlayerActionBarController : MonoBehaviour
             {
                 txt = $"[[{txt}]]";
             }
-            GUI.Label(new Rect(10, 40 + i * 20, 200, 18), txt);
+            sb.Append(txt);
+            sb.Append("  ");
         }
+        
+        GUI.Label(new Rect(10, 30, 1500, 20), sb.ToString());
     }
 
     private GameObject _lastEquippedGameObject;

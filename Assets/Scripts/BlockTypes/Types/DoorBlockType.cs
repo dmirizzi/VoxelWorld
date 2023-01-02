@@ -9,6 +9,7 @@ public class DoorBlockType : BlockTypeBase
     {
         this._voxelType = voxelType;
 
+        //TODO: Abstract Base class method: LoadVoxelMesh
         var topMeshObj = Resources.Load<GameObject>("Models/Door_Top");
         _topMesh = new VoxelMesh(topMeshObj.GetComponentInChildren<MeshFilter>().sharedMesh);
         var bottomMeshObj = Resources.Load<GameObject>("Models/Door_Bottom");

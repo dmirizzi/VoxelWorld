@@ -55,7 +55,7 @@ public class PlayerController : MonoBehaviour
         var targetedSurfaceVoxel = GetTargetedVoxelPos(true);
         var lightMapCol = targetedSurfaceVoxel.Item1.HasValue ? _voxelWorld.GetVoxelLightColor(targetedSurfaceVoxel.Item1.Value).ToString() : "N/A";
 
-        GUI.Label(new Rect(10, 10, 1500, 18), $"LookDir={GetLookDir()} | TargetedVoxelType: {targetedVoxelType} | TargetedVoxelLightMap: {lightMapCol}");
+        GUI.Label(new Rect(10, 10, 1500, 20), $"LookDir={GetLookDir()} | TargetedVoxelType: {targetedVoxelType} | TargetedVoxelLightMap: {lightMapCol}");
     }
 
     void OnDrawGizmos()
@@ -432,7 +432,7 @@ public class PlayerController : MonoBehaviour
         else if(_climbingCounter == 0 && !IsGroundedForGravity())
         {
             // Freefall
-            _velocity += Physics.gravity * Time.deltaTime * GravityFactor;
+            //_velocity += Physics.gravity * Time.deltaTime * GravityFactor;
         }
         else
         {

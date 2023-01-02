@@ -21,9 +21,27 @@
 
 [ ] Force specifying lookDir & placementDir on SetVoxel? All the HasValue checks are annoying
 
+[ ] Terminology Voxel -> Block (its all blocks, technically only a subset are actual voxels)
+    -> "Voxel" subfolder to "Core" ?
+    -> BlockType subfolder to "BlockBehavior" or "BlockLogic"? 
+
+[ ] BlockType -> Block Component/Behavior System
+    -> Instead of having one type class for each block type, have behavior components that can be
+       reused for different block BlockTypes  
+    -> e.g. PlacementOrientedBlockBehavior, DoorBlockBehavior, VerticalBlockStack(possible? abstract 2-block door behavior) 
+    -> Methods are then called for all components assigned to voxel type
+    -> What about methods that could conflict? e.g. GetForwardFace?
+    -> Each component needs to specify its required properties
+        -> Option to share properties between components? necessary?
+    -> We need to check at startup that required properties dont exceed auxiliary data limit
+
 ----------------------------------------------------------------------------------------------------------------
     Optimization
 ----------------------------------------------------------------------------------------------------------------
+
+[ ] Improve task handling in VoxelWorld/WorldGen
+    -> Checking every frame probably unnecessary
+    -> Removing via hashset+removeall probably slow
 
 [ ] High number of torches cost a lot of performance
     -> Torch particle effect costs a lot of performance

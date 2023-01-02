@@ -19,39 +19,30 @@ public class WorldGenerator : MonoBehaviour
     void Awake()
     {
         _chunkGenerationRadiusSqr = ChunkGenerationRadius * ChunkGenerationRadius;
+        _updateScheduler = FindObjectOfType<WorldUpdateScheduler>();
         _voxelWorld = FindObjectOfType<VoxelWorld>();
         _player = FindObjectOfType<PlayerController>();
     }
 
     void Start()
-    {
-
-        //Profiler.StartProfiling("WorldGen-Startup");
-
-        var sw = new Stopwatch();
-        sw.Start();
-
+    {       
         GenerateChunksAroundCenter(Vector3Int.zero);
-
-        while(AnyChunksPending())
-        {
-            ProcessChunkGenerationQueue();
-            HandleChunkGenerationTasks();
-            ProcessChunkCreationQueue();
-        }
-        _voxelWorld.RebuildChangedChunks();
-        PlacePlayer(Vector3Int.zero);
-        WorldGenerated = true;
-
-        sw.Stop();
-
-        UnityEngine.Debug.Log($"Initial world generated in {sw.Elapsed.TotalSeconds} sec");
-        //Profiler.StopProfiling();
     }
 
+    bool initialWorldGenerated = false;
+    bool initialGenerationStarted = false;
 
     void Update()
     {       
+        if(!initialWorldGenerated)
+        {
+            if(!initialGenerationStarted)
+            {
+                _updateScheduler.StartBatch();
+                initialGenerationStarted = true;
+            }
+        }
+
         //Profiler.StartProfiling("WorldGen-1-GenerateChunksAroundCenter");
 
         var currentPlayerChunkPos = VoxelPosHelper.WorldPosToChunkPos(_player.transform.position);
@@ -61,21 +52,19 @@ public class WorldGenerator : MonoBehaviour
             GenerateChunksAroundCenter(currentPlayerChunkPos);
         }
 
-        //Profiler.StopProfiling();
-
         if(AnyChunksPending())
         {
-            //Profiler.StartProfiling("WorldGen-2-ProcessChunkGenerationQueue");
             ProcessChunkGenerationQueue();
-            //Profiler.StopProfiling();
-
-            //Profiler.StartProfiling("WorldGen-3-HandleChunkGenerationTasks");
             HandleChunkGenerationTasks();
-            //Profiler.StopProfiling();
-
-            //Profiler.StartProfiling("WorldGen-4-ProcessChunkCreationQueue");
             ProcessChunkCreationQueue();
-            //Profiler.StopProfiling();
+        }
+        else if(!initialWorldGenerated)
+        {
+            _updateScheduler.FinishBatch();
+            initialWorldGenerated = true;
+            PlacePlayer(Vector3Int.zero);
+            WorldGenerated = true;
+            //UnityEngine.Debug.Log($"Initial world generated in {sw.Elapsed.TotalSeconds} sec");
         }
 
         /*
@@ -97,7 +86,7 @@ public class WorldGenerator : MonoBehaviour
 
     void OnGUI()
     {
-        GUI.Label(new Rect(10, 30, 600, 30), $"Generating={_chunkGenerationQueue.Count} | Creating={_chunkCreationQueue.Count} | LastCenter={_lastChunkGenerationCenter}");
+        GUI.Label(new Rect(10, 50, 600, 20), $"Generating={_chunkGenerationQueue.Count} | Creating={_chunkCreationQueue.Count} | LastCenter={_lastChunkGenerationCenter}");
 
         var profiling = Profiler.GetProfilingResults();
         int i = 0;
@@ -112,8 +101,6 @@ public class WorldGenerator : MonoBehaviour
     {
         _lastChunkGenerationCenter = centerChunkPos;
 
-        UnityEngine.Debug.Log($"Radius = {ChunkGenerationRadius} - Sqr = {_chunkGenerationRadiusSqr}");
-
         for(int z = -ChunkGenerationRadius; z <= ChunkGenerationRadius; ++z)
         {
             for(int y = -ChunkGenerationRadius; y <= ChunkGenerationRadius; ++y)
@@ -123,7 +110,7 @@ public class WorldGenerator : MonoBehaviour
                     var chunkPos = centerChunkPos + new Vector3Int(x, y, z);
                     if(_currentlyLoadedChunks.Contains(chunkPos)) continue;
 
-                    var sqrDistToPlayer = WorldGenUtil.GetChunkSqrDistanceToWorldPos(_player.transform.position, chunkPos);
+                    var sqrDistToPlayer = VoxelPosHelper.GetChunkSqrDistanceToWorldPos(_player.transform.position, chunkPos);
                     if(sqrDistToPlayer <= _chunkGenerationRadiusSqr)
                     {
                         _chunkGenerationQueue.Enqueue(chunkPos, sqrDistToPlayer);
@@ -132,7 +119,6 @@ public class WorldGenerator : MonoBehaviour
                 }                
             }
         }
-
     }
 
     private void ProcessChunkGenerationQueue()
@@ -147,7 +133,7 @@ public class WorldGenerator : MonoBehaviour
 
     private ChunkUpdate GenerateChunk(Vector3Int chunkPos, Vector3 playerPos)
     {
-        var chunkDistToPlayer = WorldGenUtil.GetChunkSqrDistanceToWorldPos(playerPos, chunkPos);
+        var chunkDistToPlayer = VoxelPosHelper.GetChunkSqrDistanceToWorldPos(playerPos, chunkPos);
 
         var builder = new ChunkUpdateBuilder(chunkPos, chunkDistToPlayer, playerPos, _chunkGenerationRadiusSqr);
 
@@ -249,9 +235,9 @@ public class WorldGenerator : MonoBehaviour
 
     private bool AnyChunksPending() => 
         _chunkGenerationQueue.Count > 0 
-        || _chunkCreationQueue.Count > 0 
         || _chunkGenerationTasks.Count > 0
-        || _chunkCreationMap.Count > 0;
+        || _chunkCreationMap.Count > 0
+        || _chunkCreationQueue.Count > 0;
 
     private void UnloadChunk(Vector3Int chunkPos)
     {
@@ -306,7 +292,6 @@ public class WorldGenerator : MonoBehaviour
 */
         //GenerateTorches(10);
 
-        _voxelWorld.RebuildChangedChunks();
         _voxelWorld.InitializeSunlight();
         PlacePlayer();
 
@@ -596,6 +581,8 @@ public class WorldGenerator : MonoBehaviour
 
 
     public int _chunkGenerationRadiusSqr;
+
+    private WorldUpdateScheduler _updateScheduler;
 
     private VoxelWorld _voxelWorld;
 
