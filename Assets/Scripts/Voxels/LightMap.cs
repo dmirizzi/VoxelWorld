@@ -161,6 +161,113 @@ public class LightMap
         );
     }
 
+    // Propagate the light from all the surrounding voxels into the new chunk
+    public void PropagateSurroundingLightsOnNewChunk(Vector3Int chunkPos)
+    {
+        var lightNodes = new Queue<LightNode>();
+
+        void EnqueueLightNode(Chunk chunk, Vector3Int chunkPos, Vector3Int localVoxelPos)
+        {
+            if(chunk.HasAnyBlockLight(localVoxelPos))
+            {
+                lightNodes.Enqueue(new LightNode{
+                    Chunk = chunk,
+                    GlobalPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(localVoxelPos, chunkPos)
+                });
+            } 
+        }
+
+        var topChunkPos = chunkPos + Vector3Int.up;
+        if(_world.TryGetChunk(topChunkPos, out var topChunk))
+        {
+            for(int x = 0; x < VoxelInfo.ChunkSize; ++x)
+            {
+                for(int z = 0; z < VoxelInfo.ChunkSize; ++z)
+                {
+                    var localVoxelPos = new Vector3Int(x, 0, z);
+                    EnqueueLightNode(topChunk, topChunkPos, localVoxelPos);
+                }
+            }
+        }
+
+        var bottomChunkPos = chunkPos + Vector3Int.down;
+        if(_world.TryGetChunk(bottomChunkPos, out var bottomChunk))
+        {
+            for(int x = 0; x < VoxelInfo.ChunkSize; ++x)
+            {
+                for(int z = 0; z < VoxelInfo.ChunkSize; ++z)
+                {
+                    var localVoxelPos = new Vector3Int(x, VoxelInfo.ChunkSize - 1, z);
+                    EnqueueLightNode(bottomChunk, bottomChunkPos, localVoxelPos);
+                }
+            }
+        }
+
+        var leftChunkPos = chunkPos + Vector3Int.left;
+        if(_world.TryGetChunk(leftChunkPos, out var leftChunk))
+        {
+            for(int y = 0; y < VoxelInfo.ChunkSize; ++y)
+            {
+                for(int z = 0; z < VoxelInfo.ChunkSize; ++z)
+                {
+                    var localVoxelPos = new Vector3Int(VoxelInfo.ChunkSize - 1, y, z);
+                    EnqueueLightNode(leftChunk, leftChunkPos, localVoxelPos);
+                }
+            }
+        }
+
+        var rightChunkPos = chunkPos + Vector3Int.right;
+        if(_world.TryGetChunk(rightChunkPos, out var rightChunk))
+        {
+            for(int y = 0; y < VoxelInfo.ChunkSize; ++y)
+            {
+                for(int z = 0; z < VoxelInfo.ChunkSize; ++z)
+                {
+                    var localVoxelPos = new Vector3Int(0, y, z);
+                    EnqueueLightNode(rightChunk, rightChunkPos, localVoxelPos);
+                }
+            }
+        }
+
+        var forwardChunkPos = chunkPos + Vector3Int.forward;
+        if(_world.TryGetChunk(forwardChunkPos, out var forwardChunk))
+        {
+            for(int x = 0; x < VoxelInfo.ChunkSize; ++x)
+            {
+                for(int y = 0; y < VoxelInfo.ChunkSize; ++y)
+                {
+                    var localVoxelPos = new Vector3Int(x, y, 0);
+                    EnqueueLightNode(forwardChunk, forwardChunkPos, localVoxelPos);
+                }
+            }
+        }
+
+        var backChunkPos = chunkPos + Vector3Int.back;
+        if(_world.TryGetChunk(backChunkPos, out var backChunk))
+        {
+            for(int x = 0; x < VoxelInfo.ChunkSize; ++x)
+            {
+                for(int y = 0; y < VoxelInfo.ChunkSize; ++y)
+                {
+                    var localVoxelPos = new Vector3Int(x, y, VoxelInfo.ChunkSize - 1);
+                    EnqueueLightNode(backChunk, backChunkPos, localVoxelPos);
+                }
+            }
+        }
+
+        for(int channel = 0; channel < 3; ++channel)
+        {
+            PropagateLightNodes(
+                new Queue<LightNode>(lightNodes),
+                channel,
+                new HashSet<Vector3Int>(),
+                new HashSet<Vector3Int>(),
+                false
+            );
+        }
+    }
+
+
     private void PropagateLightNodes(
         Queue<LightNode> lightNodes, 
         int channel, 

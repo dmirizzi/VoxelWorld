@@ -149,7 +149,8 @@ World Gen
 
 [ ] Infinite World Gen
     [x] Generate new chunks when player moves towards unloaded chunks
-    [ ] Propagate block lights from surrounding chunks when loading new chunks
+    [x] Propagate block lights from surrounding chunks when loading new chunks
+    [ ] Integrate world gen scheduling into WorldUpdateScheduler?
     [ ] Propagate sunlight in newly loaded chunks
         [ ] New column of chunks 
             -> Initialize sunlight in those chunks from the new topmost chunks

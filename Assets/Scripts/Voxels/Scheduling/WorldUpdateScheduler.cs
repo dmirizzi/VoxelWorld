@@ -1,46 +1,3 @@
-/*
-
-    - Chunk Mesh Rebuild
-        - Mesh Build
-        - Game Object Creation
-
-    - Light Map Update
-
-    - Chunk Light Mapping Update
-
-    - Scheduling criteria
-        - Which jobs can be executed simultaneously for same chunk
-        - Find jobs for unlocked chunks
-            - 
-        - Max allowed num threads
-        - Proximity of processed chunks to player (closer first)
-
-    - Job Type Sequence No.
-        1. Chunk Rebuild
-        2. Light Map Update
-        3. Chunk Light Mapping Update
-
-    - AddJob
-        - Insert into joblist by priority -> priority = Distance to Player + Job Type Sequence No.
-        - Potential Optimization: Alternate closeby and far away chunks to reduce unnecessary locked chunk checking
-
-    - AddHighPriorityJob -> Job that will be scheduled immediately (i.e. player placed/removed block)
-
-
-*/
-
-/*
-    [ ] Move ChunkBuilders to ChunkUpdateScheduler (?)
-    [ ] Update Stage per Chunk / Sort of Chunk Processing Pipeline
-        Stage1 - Generate Chunks / Build Chunks
-        Stage2 - Process Light Map Updates
-            - Track affected chunks per light map update
-        Stage3 - Any Chunk that is built & has no more pending light map updates -> Light Mapping Update
-    [ ] Add Chunk GameObjects at the end when its fully built & lit
-        and remove old chunk (if replaced) right before that (i.e. in the same frame)
-
-*/
-
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -95,7 +52,13 @@ class WorldUpdateScheduler : MonoBehaviour
         AddJob(new ChunkRebuildJob(chunkPos));
     }
 
-    public void AddBlockLightUpateJob(Vector3Int chunkPos, Vector3Int lightPos, Color32 lightColor, bool addLight)
+    public void AddChunkLightFillUpdateJob(Vector3Int chunkPos)
+    {
+        if(!_world.ChunkExists(chunkPos)) return;
+        AddJob(new ChunkLightFillUpdateJob(chunkPos));
+    }
+
+    public void AddBlockLightUpdateJob(Vector3Int chunkPos, Vector3Int lightPos, Color32 lightColor, bool addLight)
     {
         if(!_world.ChunkExists(chunkPos)) return;
         AddJob(new BlockLightUpdateJob(chunkPos, lightPos, lightColor, addLight));

@@ -226,6 +226,11 @@ public class Chunk
         return (byte)((_lightMap[pos.x, pos.y, pos.z] >> (channel * 4)) & 0xF);
     }
     
+    public bool HasAnyBlockLight(Vector3Int pos)
+    {
+        return (_lightMap[pos.x, pos.y, pos.z] & 0xFFF) > 0;
+    }
+
     private void CreateNewChunkGameObject()
     {
         _chunkGameObject = new GameObject($"Chunk[{ChunkPos.x}|{ChunkPos.y}|{ChunkPos.z}]");

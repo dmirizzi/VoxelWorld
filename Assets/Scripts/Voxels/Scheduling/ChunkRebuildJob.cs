@@ -32,7 +32,7 @@ class ChunkRebuildJob : IWorldUpdateJob
 
     public void PostExecuteSync(VoxelWorld world)
     {
-        world.QueueChunkForLightMappingUpdate(ChunkPos);
+        world.QueueLightFillOnNewChunk(ChunkPos);
     }
 
     public override bool Equals(object rhs) =>

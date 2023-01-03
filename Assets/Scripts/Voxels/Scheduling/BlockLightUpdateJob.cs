@@ -67,8 +67,10 @@ class BlockLightUpdateJob : IWorldUpdateJob
         });
     }
 
-    public void PostExecuteSync(VoxelWorld world) => 
+    public void PostExecuteSync(VoxelWorld world)
+    {
         world.QueueChunksForLightMappingUpdate(_affectedChunks);
+    }
 
     public override bool Equals(object rhs) =>
         (rhs is BlockLightUpdateJob rhsJob)

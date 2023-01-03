@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using UnityEngine;
 
 public class VoxelWorld : MonoBehaviour
@@ -40,6 +39,18 @@ public class VoxelWorld : MonoBehaviour
     public ChunkBuilder GetChunkBuilder(Vector3Int chunkPos) => _chunkBuilders[chunkPos];
 
     public Chunk GetChunk(Vector3Int chunkPos) => _chunks[chunkPos];
+
+    public bool TryGetChunk(Vector3Int chunkPos, out Chunk chunk)
+    {
+        if(_chunks.ContainsKey(chunkPos))
+        {
+            chunk = _chunks[chunkPos];
+            return true;
+        }
+
+        chunk = null;
+        return false;
+    }
 
     public bool ChunkExists(Vector3Int chunkPos) => _chunks.ContainsKey(chunkPos);
 
@@ -160,7 +171,7 @@ public class VoxelWorld : MonoBehaviour
 
     public void AddLight(Vector3Int globalLightPos, Color32 lightColor)
     {
-        _updateScheduler.AddBlockLightUpateJob(
+        _updateScheduler.AddBlockLightUpdateJob(
             VoxelPosHelper.GlobalVoxelPosToChunkPos(globalLightPos),
             globalLightPos,
             lightColor,
@@ -168,11 +179,16 @@ public class VoxelWorld : MonoBehaviour
         );
     }
 
+    public void QueueLightFillOnNewChunk(Vector3Int chunkPos)
+    {
+        _updateScheduler.AddChunkLightFillUpdateJob(chunkPos);
+    }
+
     public void RemoveLight(Vector3Int globalLightPos, bool sunlight)
     {
         //TODO: HANDLE SUNLIGHT
 
-        _updateScheduler.AddBlockLightUpateJob(
+        _updateScheduler.AddBlockLightUpdateJob(
             VoxelPosHelper.GlobalVoxelPosToChunkPos(globalLightPos),
             globalLightPos,
             new Color32(0, 0, 0, 0),
