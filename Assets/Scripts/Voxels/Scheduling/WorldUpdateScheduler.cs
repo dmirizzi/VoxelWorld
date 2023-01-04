@@ -81,10 +81,10 @@ class WorldUpdateScheduler : MonoBehaviour
         AddJob(new ChunkLightFillUpdateJob(chunkPos));
     }
 
-    public void AddBlockLightUpdateJob(Vector3Int chunkPos, Vector3Int lightPos, Color32 lightColor, bool addLight)
+    public void AddBlockLightUpdateJob(Vector3Int chunkPos, Vector3Int lightPos, Color32 lightColor, bool addLight, bool sunlight)
     {
         if(!_world.ChunkExists(chunkPos)) return;
-        AddJob(new BlockLightUpdateJob(chunkPos, lightPos, lightColor, addLight));
+        AddJob(new BlockLightUpdateJob(chunkPos, lightPos, lightColor, addLight, sunlight));
     }
 
     public void AddChunkLightMappingUpdateJob(Vector3Int chunkPos)

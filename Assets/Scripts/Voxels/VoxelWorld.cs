@@ -175,7 +175,8 @@ public class VoxelWorld : MonoBehaviour
             VoxelPosHelper.GlobalVoxelPosToChunkPos(globalLightPos),
             globalLightPos,
             lightColor,
-            true
+            true,
+            false
         );
     }
 
@@ -186,13 +187,12 @@ public class VoxelWorld : MonoBehaviour
 
     public void RemoveLight(Vector3Int globalLightPos, bool sunlight)
     {
-        //TODO: HANDLE SUNLIGHT
-
         _updateScheduler.AddBlockLightUpdateJob(
             VoxelPosHelper.GlobalVoxelPosToChunkPos(globalLightPos),
             globalLightPos,
             new Color32(0, 0, 0, 0),
-            false
+            false,
+            sunlight
         );     
     }
 

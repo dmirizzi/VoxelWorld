@@ -15,14 +15,17 @@ class BlockLightUpdateJob : IWorldUpdateJob
 
     public bool AddLight { get; private set; }
 
+    public bool Sunlight { get; private set; }
+
     public HashSet<Vector3Int> AffectedChunks { get; private set; }
 
-    public BlockLightUpdateJob(Vector3Int chunkPos, Vector3Int lightPos, Color32 lightColor, bool addLight)
+    public BlockLightUpdateJob(Vector3Int chunkPos, Vector3Int lightPos, Color32 lightColor, bool addLight, bool sunlight)
     {
         ChunkPos = chunkPos;
         LightPos = lightPos;
         LightColor = lightColor;
         AddLight = addLight;
+        Sunlight = sunlight;
 
         AffectedChunks = new HashSet<Vector3Int>();
         for(int z = -1; z <= 1; ++z)
@@ -53,15 +56,22 @@ class BlockLightUpdateJob : IWorldUpdateJob
                 (byte)(LightColor.b >> 4)
             };
 
-            for(int channel = 0; channel < 3; ++channel)
-            {            
-                if(AddLight)
-                {
-                    _lightMap.AddLight(LightPos, channel, colorChannels[channel], _affectedChunks);
-                }
-                else
-                {
-                    _lightMap.RemoveLight(LightPos, channel, _affectedChunks);                
+            if(Sunlight && !AddLight)
+            {
+                _lightMap.RemoveLight(LightPos, Chunk.SunlightChannel, _affectedChunks);
+            }
+            else
+            {
+                for(int channel = 0; channel < 3; ++channel)
+                {            
+                    if(AddLight)
+                    {
+                        _lightMap.AddLight(LightPos, channel, colorChannels[channel], _affectedChunks);
+                    }
+                    else
+                    {
+                        _lightMap.RemoveLight(LightPos, channel, _affectedChunks);                
+                    }
                 }
             }
         });
@@ -76,17 +86,19 @@ class BlockLightUpdateJob : IWorldUpdateJob
         (rhs is BlockLightUpdateJob rhsJob)
             && (ChunkPos == rhsJob.ChunkPos)
             && (LightPos == rhsJob.LightPos)
-            && (AddLight == rhsJob.AddLight);
+            && (AddLight == rhsJob.AddLight)
+            && (Sunlight == rhsJob.Sunlight);
 
     public override int GetHashCode() => 
         HashCode.Combine(
             typeof(BlockLightUpdateJob), 
             ChunkPos,
             LightPos,
-            AddLight);
+            AddLight,
+            Sunlight);
 
     public override string ToString() => 
-        $"BlockLightUpdateJob(Pos={LightPos}|Col={LightColor}|Add={AddLight})";
+        $"BlockLightUpdateJob(Pos={LightPos}|Col={LightColor}|Add={AddLight}|Sunlight={Sunlight})";
 
     private LightMap _lightMap;
 
