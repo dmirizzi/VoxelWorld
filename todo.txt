@@ -150,13 +150,15 @@ World Gen
 [ ] Infinite World Gen
     [x] Generate new chunks when player moves towards unloaded chunks
     [x] Propagate block lights from surrounding chunks when loading new chunks
+    [x] Only place/activate player once initial generate is done (at least chunks directly neighboring the player)
+    [ ] Fix remove sunlight on block change after scheduling implementation
+    [ ] Refactor away Job Queuing Methods from VoxelWorld, Jobs should call AddJobs methods directly
     [ ] Integrate world gen scheduling into WorldUpdateScheduler?
     [ ] Propagate sunlight in newly loaded chunks
-        [ ] New column of chunks 
+        [x] New column of chunks 
             -> Initialize sunlight in those chunks from the new topmost chunks
         [ ] New chunks below already generated chunks 
             -> Propagate sunlight from chunks above newly generated ones
-    [ ] Only place/activate player once initial generate is done (at least chunks directly neighboring the player)
     [ ] Prioritized scheduling for player induced world updates
         -> Placing/removing blocks while world is being generated
     [ ] ChunkLightMappingUpdate 

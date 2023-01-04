@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Diagnostics;
 using UnityEngine;
 
 // Based on Seed of Andromeda fast flood fill lighting
@@ -128,7 +127,7 @@ public class LightMap
         PropagateLightNodes(lightNodes, channel, new HashSet<Vector3Int>(), visitedChunks);
     }    
 
-    public void InitializeSunlight(IEnumerable<Chunk> topMostChunks, HashSet<Vector3Int> visitedChunks)
+    public void UpdateSunlight(IEnumerable<Chunk> topMostChunks, HashSet<Vector3Int> visitedChunks)
     {
         var lightNodes = new Queue<LightNode>();
 

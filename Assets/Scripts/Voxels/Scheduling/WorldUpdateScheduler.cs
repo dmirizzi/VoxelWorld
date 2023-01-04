@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -5,6 +6,8 @@ using UnityEngine;
 class WorldUpdateScheduler : MonoBehaviour
 {
     public int MaxNumSimultaneousJobs = 8;
+
+    public event Action BatchFinished;
 
     public void Awake()
     {
@@ -24,16 +27,31 @@ class WorldUpdateScheduler : MonoBehaviour
     public void OnGUI()
     {
         GUI.Label(new Rect(10, 80, 1500, 20), $"Queued Jobs: {_jobQueue.Count} | Active Jobs: {_activeJobs.Count} | ReservedChunks: {_reservedChunks.Count}");
-        /*
+
 
         int i = 0;
-        foreach(var item in _queuedJobs)
+        int currentPrio = 0;
+        Type currentType = null;
+        int num = 0;
+
+        foreach(var item in _jobQueue.GetList())
         {
             //GUI.Label(new Rect(10, 100 + i * 20, 300, 20), $"({item.Priority.JobTypePriority}|{item.Priority.DistanceToPlayer}) {item.Value.GetType()} @ {item.Value.ChunkPos}");
-            GUI.Label(new Rect(10, 100 + i * 20, 300, 20), $"{item.GetType()} @ {item.ChunkPos} | {item.GetHashCode()}");
-            i++;
+            if(item.Priority.JobTypePriority != currentPrio || currentType != item.Value.GetType())
+            {
+                num = 0;
+                currentPrio = item.Priority.JobTypePriority;
+                currentType = item.Value.GetType();
+            }
+            if(num < 3)
+            {
+                GUI.Label(new Rect(10, 100 + i * 20, 500, 20), $"{item.Priority}: {item.Value.ToString()} [{item.Value.GetType()}]");
+                i++;
+                num++;
+            }
         }
 
+/*
         GUI.Label(new Rect(10, 140 + i * 20, 1500, 20), $"Active Jobs ({_activeJobs.Count}):");
         foreach(var item in _activeJobs)
         {
@@ -50,6 +68,11 @@ class WorldUpdateScheduler : MonoBehaviour
     {
         if(!_world.ChunkExists(chunkPos)) return;
         AddJob(new ChunkRebuildJob(chunkPos));
+    }
+
+    public void AddSunlightUpdateJob()
+    {
+        AddJob(new SunlightUpdateJob());
     }
 
     public void AddChunkLightFillUpdateJob(Vector3Int chunkPos)
@@ -126,6 +149,12 @@ class WorldUpdateScheduler : MonoBehaviour
                 foreach(var chunk in node.Value.Job.AffectedChunks)
                 {
                     _reservedChunks.Remove(chunk);
+                }
+
+                if(_activeJobs.Count == 0 && _jobQueue.Count == 0)
+                {
+                    // Batch finished
+                    BatchFinished?.Invoke();
                 }
             }
             node = next;

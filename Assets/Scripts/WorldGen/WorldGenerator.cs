@@ -22,33 +22,28 @@ public class WorldGenerator : MonoBehaviour
         _updateScheduler = FindObjectOfType<WorldUpdateScheduler>();
         _voxelWorld = FindObjectOfType<VoxelWorld>();
         _player = FindObjectOfType<PlayerController>();
-    }
 
-    void Start()
-    {       
-        GenerateChunksAroundCenter(Vector3Int.zero);
+        _updateScheduler.BatchFinished += () => 
+        {
+            if(!WorldGenerated)
+            {
+                PlacePlayer(Vector3Int.zero);            
+                WorldGenerated = true;
+            }
+        };
     }
-
-    bool initialWorldGenerated = false;
-    bool initialGenerationStarted = false;
 
     void Update()
     {       
-        if(!initialWorldGenerated)
-        {
-            if(!initialGenerationStarted)
-            {
-                _updateScheduler.StartBatch();
-                initialGenerationStarted = true;
-            }
-        }
-
         //Profiler.StartProfiling("WorldGen-1-GenerateChunksAroundCenter");
 
         var currentPlayerChunkPos = VoxelPosHelper.WorldPosToChunkPos(_player.transform.position);
-        if((currentPlayerChunkPos - _lastChunkGenerationCenter).magnitude > 1)
+        if(!_initialChunkBatchGenerated || (currentPlayerChunkPos - _lastChunkGenerationCenter).magnitude > 1)
         {
-            Profiler.Clear();
+            _initialChunkBatchGenerated = true;
+            _currentWorldUpdateStarted = true;
+
+            _updateScheduler.StartBatch();
             GenerateChunksAroundCenter(currentPlayerChunkPos);
         }
 
@@ -58,13 +53,12 @@ public class WorldGenerator : MonoBehaviour
             HandleChunkGenerationTasks();
             ProcessChunkCreationQueue();
         }
-        else if(!initialWorldGenerated)
+        else if(_currentWorldUpdateStarted)
         {
+            _updateScheduler.AddSunlightUpdateJob();
             _updateScheduler.FinishBatch();
-            initialWorldGenerated = true;
-            PlacePlayer(Vector3Int.zero);
-            WorldGenerated = true;
-            //UnityEngine.Debug.Log($"Initial world generated in {sw.Elapsed.TotalSeconds} sec");
+
+            _currentWorldUpdateStarted = false;
         }
 
         /*
@@ -292,7 +286,6 @@ public class WorldGenerator : MonoBehaviour
 */
         //GenerateTorches(10);
 
-        _voxelWorld.InitializeSunlight();
         PlacePlayer();
 
         sw.Stop();
@@ -559,10 +552,15 @@ public class WorldGenerator : MonoBehaviour
             : _voxelWorld.GetRandomSolidSurfaceVoxel();
         var worldPos = VoxelPosHelper.GetVoxelTopCenterSurfaceWorldPos(pos) + Vector3.up;
 
-        var characterController = GameObject.Find("Player").GetComponent<CharacterController>();
+        var player = GameObject.Find("Player");
+
+        var characterController = player.GetComponent<CharacterController>();
         characterController.enabled = false;
         characterController.transform.position = worldPos + Vector3.up;
         characterController.enabled = true;
+
+        var playerController = player.GetComponent<PlayerController>();
+        playerController.SetGravityActive(true);
 /*
         var playerController = GameObject.Find("Player").GetComponent<PlayerController>();
         var torch = Instantiate(TorchPrefab, worldPos, Quaternion.identity);
@@ -579,6 +577,10 @@ public class WorldGenerator : MonoBehaviour
     private int _iterations = 30;
     private float _emptyChance = .54f;
 
+
+    bool _initialChunkBatchGenerated = false;
+
+    bool _currentWorldUpdateStarted = false;
 
     public int _chunkGenerationRadiusSqr;
 

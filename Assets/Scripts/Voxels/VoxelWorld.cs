@@ -162,11 +162,11 @@ public class VoxelWorld : MonoBehaviour
         }
     }
 
-    public void InitializeSunlight()
+    public List<Chunk> GetTopMostChunksAndClear()
     {
-        var affectedChunks = new HashSet<Vector3Int>();
-        _lightMap.InitializeSunlight(_topMostChunks.Values, affectedChunks);
-        QueueChunksForLightMappingUpdate(affectedChunks);
+        var chunks = new List<Chunk>(_topMostChunks.Values);
+        _topMostChunks.Clear();
+        return chunks;
     }
 
     public void AddLight(Vector3Int globalLightPos, Color32 lightColor)

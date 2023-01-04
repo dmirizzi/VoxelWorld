@@ -99,6 +99,8 @@ public class PlayerController : MonoBehaviour
         _climbingCounter += delta;
     }
 
+    public void SetGravityActive(bool gravityActive) => _gravityActive = gravityActive;
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Voxel-player interactions
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -432,7 +434,10 @@ public class PlayerController : MonoBehaviour
         else if(_climbingCounter == 0 && !IsGroundedForGravity())
         {
             // Freefall
-            //_velocity += Physics.gravity * Time.deltaTime * GravityFactor;
+            if(_gravityActive)
+            {
+                _velocity += Physics.gravity * Time.deltaTime * GravityFactor;
+            }
         }
         else
         {
@@ -484,6 +489,8 @@ public class PlayerController : MonoBehaviour
     private HashSet<Vector3Int> _lastTouchedVoxels = new HashSet<Vector3Int>();
 
     private int _climbingCounter;
+
+    private bool _gravityActive;
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Debug Gizmo Stuff

@@ -13,4 +13,6 @@ class JobPriority : IComparable
         if(res == 0)  DistanceToPlayer.CompareTo(rhs.DistanceToPlayer);
         return res;
     }
+
+    public override string ToString() => $"[{JobTypePriority}|{DistanceToPlayer}]";
 }

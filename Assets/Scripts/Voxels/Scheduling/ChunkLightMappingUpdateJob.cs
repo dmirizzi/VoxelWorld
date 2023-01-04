@@ -5,7 +5,7 @@ using UnityEngine;
 
 class ChunkLightMappingUpdateJob : IWorldUpdateJob
 {
-    public int UpdateStage => 2;
+    public int UpdateStage => 3;
 
     public Vector3Int ChunkPos { get; private set; }
 
