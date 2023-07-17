@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -138,10 +139,6 @@ public class LightMap
                 for(int z = 0; z < VoxelInfo.ChunkSize; ++z)
                 {
                     var localVoxelPos = new Vector3Int(x, VoxelInfo.ChunkSize - 1, z);
-                    var voxelType = chunk.GetVoxel(localVoxelPos);
-
-                    // Start off by setting all top most voxels in the top most chunks to the max sunlight level
-                    // and then propagate downwards from there
                     chunk.SetLightChannelValue(localVoxelPos, Chunk.SunlightChannel, 15);
                     lightNodes.Enqueue(new LightNode{
                         Chunk = chunk,
@@ -276,35 +273,18 @@ public class LightMap
     {
         while(lightNodes.Count > 0)
         {
-            var node = lightNodes.Dequeue();
-
-            var localPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(node.GlobalPos);
+            var lightNode = lightNodes.Dequeue();
 
             //TODO: Should we only do this for chunks where a light value was actually changed below?
-            foreach(var chunk in GetAffectedChunks(node.Chunk.ChunkPos, localPos))
+            var localPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(lightNode.GlobalPos);
+            foreach(var chunk in GetAffectedChunks(lightNode.Chunk.ChunkPos, localPos))
             {
                 visitedChunks.Add(chunk);
             }
 
-            var currentLightLevel = node.Chunk.GetLightChannelValue(localPos, channel);           
-
             foreach(var neighborDir in fillDirections)
             {
-                var neighborGlobalPos = node.GlobalPos + neighborDir;
-                
-                byte newLightLevel;
-                if(isSunlight && neighborDir == Vector3Int.down && currentLightLevel == 15)
-                {
-                    // Propagate sunlight downwards infinitely until we hit an opaque block
-                    newLightLevel = 15;
-                }
-                else
-                {
-                    // For normal block light, reduce light level by 1 for every step away from the light source
-                    newLightLevel = (byte)(currentLightLevel - 1);
-                }
-
-                var localNeighborPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(neighborGlobalPos);
+                var neighborGlobalPos = lightNode.GlobalPos + neighborDir;                
                 var neighborChunk = _world.GetChunkFromVoxelPosition(neighborGlobalPos.x, neighborGlobalPos.y, neighborGlobalPos.z, false);                 
                 if(neighborChunk == null)
                 {
@@ -312,10 +292,12 @@ public class LightMap
                     continue;
                 }
 
+                var localNeighborPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(neighborGlobalPos);
                 var neighborLightLevel = neighborChunk.GetLightChannelValue(localNeighborPos, channel);
 
                 // In case of sunlight, allow a light node to be set again if it is being lit directly by the sun and only 
                 // indirectly before
+                var currentLightLevel = lightNode.Chunk.GetLightChannelValue(localPos, channel);           
                 if(!isSunlight || currentLightLevel < 15 || neighborLightLevel == 15 )
                 {
                     // Otherwise, skip already processed nodes
@@ -326,13 +308,14 @@ public class LightMap
                 }
 
                 if(neighborChunk != null 
-                    && !VoxelBuildHelper.NeighborVoxelHasOpaqueSide(_world, node.GlobalPos, neighborDir)
+                    && !VoxelBuildHelper.NeighborVoxelHasOpaqueSide(_world, lightNode.GlobalPos, neighborDir)
                     && neighborLightLevel + 2 <= currentLightLevel)
                 {
                     visitedNodes.Add(neighborGlobalPos);
 
+                    byte newLightLevel = GetNewLightLevel(currentLightLevel, neighborDir, isSunlight);
                     neighborChunk.SetLightChannelValue(localNeighborPos, channel, newLightLevel);
-                    
+
                     //TODO: Do we actually need to store the chunk in the light node? Seems like we 
                     //TODO: fetch it for each neighbor anyways (compare performance with & without)
                     lightNodes.Enqueue(new LightNode
@@ -342,6 +325,20 @@ public class LightMap
                     });
                 }
             }            
+        }
+    }
+
+    private byte GetNewLightLevel(byte currentLightLevel, Vector3Int fillDir, bool isSunlight)
+    {
+        if(isSunlight && fillDir == Vector3Int.down && currentLightLevel == 15)
+        {
+            // Propagate sunlight downwards infinitely until we hit an opaque block
+            return 15;
+        }
+        else
+        {
+            // For normal block light, reduce light level by 1 for every step away from the light source
+            return (byte)(currentLightLevel - 1);
         }
     }
 

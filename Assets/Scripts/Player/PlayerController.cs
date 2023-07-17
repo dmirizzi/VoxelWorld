@@ -56,6 +56,8 @@ public class PlayerController : MonoBehaviour
         var lightMapCol = targetedSurfaceVoxel.Item1.HasValue ? _voxelWorld.GetVoxelLightColor(targetedSurfaceVoxel.Item1.Value).ToString() : "N/A";
 
         GUI.Label(new Rect(10, 10, 1500, 20), $"LookDir={GetLookDir()} | TargetedVoxelType: {targetedVoxelType} | TargetedVoxelLightMap: {lightMapCol}");
+
+        GUI.Label(new Rect(Screen.width / 2 - 10, Screen.height / 2 - 10, 20, 20), "+");
     }
 
     void OnDrawGizmos()

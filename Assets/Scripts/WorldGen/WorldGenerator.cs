@@ -62,20 +62,19 @@ public class WorldGenerator : MonoBehaviour
         }
 
         /*
-        if((DateTime.Now - lastDrop).Milliseconds >= 10)
+        // stress test!!
+        if(WorldGenerated && (DateTime.Now - lastDrop).TotalMilliseconds >= 50)
         {
             lastDrop = DateTime.Now;
             var x = UnityEngine.Random.Range(-256, 256);
             var z = UnityEngine.Random.Range(-256, 256);
             
-            var highestPoint = VoxelWorld.GetHighestVoxelPos(x, z);
-            if(highestPoint.HasValue)
-            {
-                //_world.SetVoxel(x, highestPoint.Value, z, VoxelType.Empty, true);
-                VoxelWorld.SetVoxelSphere(new Vector3Int(x, highestPoint.Value, z), 5, VoxelType.Empty, true);
-            }
+            //var highestPoint = _voxelWorld.GetHighestVoxelPos(x, z);
+            var highestPoint = _voxelWorld.GetRandomSolidSurfaceVoxel();
+            _voxelWorld.SetVoxelSphere(highestPoint, 5, 0);
         }
         */
+        
     }
 
     void OnGUI()
@@ -97,7 +96,8 @@ public class WorldGenerator : MonoBehaviour
 
         for(int z = -ChunkGenerationRadius; z <= ChunkGenerationRadius; ++z)
         {
-            for(int y = -ChunkGenerationRadius; y <= ChunkGenerationRadius; ++y)
+            for(int y = -1; y <= ChunkGenerationRadius; ++y)
+            //for(int y = 0; y <= 0; ++y)
             {
                 for(int x = -ChunkGenerationRadius; x <= ChunkGenerationRadius; ++x)
                 {
@@ -139,9 +139,9 @@ public class WorldGenerator : MonoBehaviour
 
         for(int z = 0; z < VoxelInfo.ChunkSize; ++z)
         {
-            for(int y = 0; y <= VoxelInfo.ChunkSize; ++y)
+            for(int y = 0; y < VoxelInfo.ChunkSize; ++y)
             {
-                for(int x = 0; x <= VoxelInfo.ChunkSize; ++x)
+                for(int x = 0; x < VoxelInfo.ChunkSize; ++x)
                 {
                     var localVoxelpos = new Vector3Int(x, y, z);
                     var globalVoxelPos = chunkBasePos + localVoxelpos;
@@ -239,7 +239,7 @@ public class WorldGenerator : MonoBehaviour
     }
 
     private int GetTerrainHeight(Vector3Int globalVoxelPos)
-        => (int)(Mathf.PerlinNoise(WorldSeed + globalVoxelPos.x / 20.0f, WorldSeed + globalVoxelPos.z / 20.0f) * 32) - 5;
+        => (int)(Mathf.PerlinNoise((float)globalVoxelPos.x / 20.0f, (float)globalVoxelPos.z / 20.0f) * 32) - 5;
 
     
 

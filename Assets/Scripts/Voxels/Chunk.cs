@@ -205,9 +205,17 @@ public class Chunk
         //TODO: Not destroying!?
         if(ChunkGameObject != null)
         {
-            GameObject.Destroy(ChunkGameObject);
+            for(int i = 0; i < ChunkGameObject.transform.childCount; ++i)
+            {
+                var child = ChunkGameObject.transform.GetChild(i);
+                if(!child.name.StartsWith("Gizmo"))
+                {
+                    Debug.Log($"Deleting child {child.name} for parent {ChunkGameObject.name}");
+                    GameObject.Destroy(child.gameObject);
+                }
+            }
         }
-        CreateNewChunkGameObject();
+        //CreateNewChunkGameObject();
 
         _voxelColliderGameObjects.Clear();
         _blockGameObjects.Clear();

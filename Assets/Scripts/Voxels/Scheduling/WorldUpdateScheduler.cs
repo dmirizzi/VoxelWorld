@@ -129,27 +129,22 @@ class WorldUpdateScheduler : MonoBehaviour
 
     private void ReserveChunks(HashSet<Vector3Int> chunksToBeReserved)
     {
-        foreach(var chunk in chunksToBeReserved)
-        {
-            _reservedChunks.Add(chunk);
-        }
+        _reservedChunks.UnionWith(chunksToBeReserved);
     }
 
     private void HandleActiveJobs()
     {
-        var node = _activeJobs.First;
-        while(node != null)
+        var jobNode = _activeJobs.First;
+        while(jobNode != null)
         {
-            var next = node.Next;
-            if (node.Value.JobTask.IsCompleted)
+            var next = jobNode.Next;
+            if (jobNode.Value.JobTask.IsCompleted)
             {
-                node.Value.Job.PostExecuteSync(_world);
+                jobNode.Value.Job.PostExecuteSync(_world);
 
-                _activeJobs.Remove(node);
-                foreach(var chunk in node.Value.Job.AffectedChunks)
-                {
-                    _reservedChunks.Remove(chunk);
-                }
+                _activeJobs.Remove(jobNode);
+
+                ReleaseReservedChunks(jobNode.Value.Job.AffectedChunks);
 
                 if(_activeJobs.Count == 0 && _jobQueue.Count == 0)
                 {
@@ -157,8 +152,13 @@ class WorldUpdateScheduler : MonoBehaviour
                     BatchFinished?.Invoke();
                 }
             }
-            node = next;
+            jobNode = next;
         }
+    }
+
+    private void ReleaseReservedChunks(IEnumerable<Vector3Int> chunks)
+    {
+        _reservedChunks.ExceptWith(chunks);
     }
 
     private int? _currentUpdateStage;

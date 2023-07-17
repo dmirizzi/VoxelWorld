@@ -3,6 +3,10 @@
 ----------------------------------------------------------------------------------------------------------------
 [x] Avoid explicit Rebuild/Non Rebuild and just batch voxel changes & rebuild affected chunks once per frame
 
+[ ] Refactor Chunk GameObject life cycle handling 
+    -> Shouldnt be created in Property!
+    -> Do we even need to delete it on reset/clear? Or just when it is unloaded from world?
+
 [ ] Use TryGet-Pattern instead of nullable return values
 [ ] Simplify IBlockType?
     [ ] Should we even provide access to Chunk? Or just go always through World?
@@ -152,8 +156,21 @@ World Gen
     [x] Propagate block lights from surrounding chunks when loading new chunks
     [x] Only place/activate player once initial generate is done (at least chunks directly neighboring the player)
     [x] Fix remove sunlight on block change after scheduling implementation
+    [ ] ChunkLightFillUpdateJob -> This shouldn't propagate lights on world gen occluded borders between chunks
+        -> e.g. torch at the edge of a chunk propagating down the side of the chunk b/c the bordering chunk hasn'take
+            been generated yet
     [ ] Refactor away Job Queuing Methods from VoxelWorld, Jobs should call AddJobs methods directly
     [ ] Integrate world gen scheduling into WorldUpdateScheduler?
+    [x] Bug: Fully-sunlit chunks when generating new area
+        -> All voxels within this chunk are fully sun-lit (even inside voxels)
+        -> This only seems to happen at the border between old and newly generated area
+        -> Only happens when generating a new area in z-direction (not on x)
+    [x] Bug: Empty chunks when generating new area
+        -> Seems to be when player takes turns in the world
+        -> First go one direction & gen new area, then take 90° turn and generate new area
+        -> There will be several chunks missing on the inner corner of the turn
+        -> See screenshot empty_chunk_bug
+        -> Its not a hole in the geometry, it looks like the voxels are not generated at all
     [ ] Propagate sunlight in newly loaded chunks
         [x] New column of chunks 
             -> Initialize sunlight in those chunks from the new topmost chunks
@@ -171,6 +188,8 @@ World Gen
 [ ] Serialization / Deserialization
     [ ] Chunk serialization / Deserialization
     [ ] Serialize unloaded chunk back into savegame
+        [ ] Run Length Encoding / Zip
+        [ ] To optimize RLE, order chunk in vertical slices (as voxels tend to be of same type on the same horizontal slice)
     [ ] When loading new chunks, check if they are already generated in save game and if so deserialize
         and load into world
 

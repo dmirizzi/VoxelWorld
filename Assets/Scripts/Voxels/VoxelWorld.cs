@@ -155,7 +155,7 @@ public class VoxelWorld : MonoBehaviour
 
                     if(dx + dy + dz < sqrRadius)
                     {
-                        SetVoxel(x, y, z, voxelType);
+                        SetVoxelAndUpdateLightMap(x, y, z, voxelType);
                     }
                 }
             }
