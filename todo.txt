@@ -86,6 +86,10 @@
     [x] Recalculating light map on added solid voxel
         -> Removed light at position of added solid voxel
 
+[ ] Light passing through glass etc. / colored glass
+    -> Define light color on transparent block
+    -> When light passes through transparent block, combine current propagating light color with block color
+
 [x] Flood Fill sunlight
     -> https://web.archive.org/web/20201112022602/https://www.seedofandromeda.com/blogs/30-fast-flood-fill-lighting-in-a-blocky-voxel-game-pt-2
 

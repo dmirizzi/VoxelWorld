@@ -96,7 +96,7 @@ public class WorldGenerator : MonoBehaviour
 
         for(int z = -ChunkGenerationRadius; z <= ChunkGenerationRadius; ++z)
         {
-            for(int y = -1; y <= ChunkGenerationRadius; ++y)
+            for(int y = -ChunkGenerationRadius; y <= ChunkGenerationRadius; ++y)
             //for(int y = 0; y <= 0; ++y)
             {
                 for(int x = -ChunkGenerationRadius; x <= ChunkGenerationRadius; ++x)
@@ -239,7 +239,7 @@ public class WorldGenerator : MonoBehaviour
     }
 
     private int GetTerrainHeight(Vector3Int globalVoxelPos)
-        => (int)(Mathf.PerlinNoise((float)globalVoxelPos.x / 20.0f, (float)globalVoxelPos.z / 20.0f) * 32) - 5;
+        => (int)(Mathf.PerlinNoise((float)globalVoxelPos.x / 40.0f, (float)globalVoxelPos.z / 40.0f) * 32) - 5;
 
     
 
