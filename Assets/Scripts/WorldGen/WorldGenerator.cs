@@ -10,7 +10,7 @@ public class WorldGenerator : MonoBehaviour
 
     public int MaxNumChunkGenerationTasks = 4;
 
-    public int MaxNumChunksCreatedPerFrame = 1;
+    public int MaxNumChunksCreatedPerFrame = 2;
 
     public int WorldSeed = 123456789;
 
@@ -18,6 +18,12 @@ public class WorldGenerator : MonoBehaviour
 
     void Awake()
     {
+        _dirtType = BlockDataRepository.GetBlockTypeId("Dirt");
+        _grassType = BlockDataRepository.GetBlockTypeId("Grass");
+        _torchType = BlockDataRepository.GetBlockTypeId("Torch");
+        _logType = BlockDataRepository.GetBlockTypeId("Log");
+        _leavesType = BlockDataRepository.GetBlockTypeId("Leaves");
+
         _chunkGenerationRadiusSqr = ChunkGenerationRadius * ChunkGenerationRadius;
         _updateScheduler = FindObjectOfType<WorldUpdateScheduler>();
         _voxelWorld = FindObjectOfType<VoxelWorld>();
@@ -113,6 +119,34 @@ public class WorldGenerator : MonoBehaviour
                 }                
             }
         }
+
+        BuildBackloggedVoxelsWithinPlayerRadius();
+    }
+
+    private void BuildBackloggedVoxelsWithinPlayerRadius()
+    {
+        var processedChunks = new List<Vector3Int>();
+
+        foreach(var chunkBacklog in _chunkCreationBacklog)
+        {
+            var chunkPos = chunkBacklog.Key;
+            var sqrDistToPlayer = VoxelPosHelper.GetChunkSqrDistanceToWorldPos(_player.transform.position, chunkPos);
+            if(sqrDistToPlayer <= _chunkGenerationRadiusSqr)
+            {
+                foreach(var voxel in chunkBacklog.Value)
+                {
+                    var globalVoxelPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(voxel.LocalVoxelPos, chunkPos);
+                    _voxelWorld.SetVoxel(globalVoxelPos, voxel.Type);
+                }
+
+                processedChunks.Add(chunkPos);
+            }
+        }
+
+        foreach(var processedChunk in processedChunks)
+        {
+            _chunkCreationBacklog.Remove(processedChunk);
+        }
     }
 
     private void ProcessChunkGenerationQueue()
@@ -133,34 +167,35 @@ public class WorldGenerator : MonoBehaviour
 
         var chunkBasePos = VoxelPosHelper.ChunkPosToGlobalChunkBaseVoxelPos(chunkPos);
 
-        var dirtType = BlockDataRepository.GetBlockTypeId("Dirt");
-        var grassType = BlockDataRepository.GetBlockTypeId("Grass");
-        var torchType = BlockDataRepository.GetBlockTypeId("Torch");
-
         for(int z = 0; z < VoxelInfo.ChunkSize; ++z)
         {
             for(int y = 0; y < VoxelInfo.ChunkSize; ++y)
             {
                 for(int x = 0; x < VoxelInfo.ChunkSize; ++x)
                 {
-                    var localVoxelpos = new Vector3Int(x, y, z);
-                    var globalVoxelPos = chunkBasePos + localVoxelpos;
+                    var localVoxelPos = new Vector3Int(x, y, z);
+                    var globalVoxelPos = chunkBasePos + localVoxelPos;
                     var terrainHeight = GetTerrainHeight(globalVoxelPos);
 
                     if(globalVoxelPos.y < terrainHeight)
                     {
-                        builder.QueueVoxel(globalVoxelPos, dirtType);
+                        builder.QueueVoxel(localVoxelPos, _dirtType);
                     }
                     else if(globalVoxelPos.y == terrainHeight)
                     {
-                        builder.QueueVoxel(globalVoxelPos, grassType);
+                        builder.QueueVoxel(localVoxelPos, _grassType);
+
+                        if(TreeShouldBePlaced(localVoxelPos) && (x % 15 == 0 || y % 15 == 0 || z % 15 == 0))
+                        {
+                            PlaceTree(builder, localVoxelPos, 4, 3);
+                        }
                     }
                     else if(globalVoxelPos.y == terrainHeight + 1)
                     {
                         var rand = new System.Random();
                         if(rand.NextDouble() > 0.999)
                         {
-                            builder.QueueVoxel(globalVoxelPos, torchType);
+                            builder.QueueVoxel(localVoxelPos, _torchType);
                         }
                     }
                 }
@@ -168,6 +203,36 @@ public class WorldGenerator : MonoBehaviour
         }
 
         return builder.GetChunkUpdate();
+    }
+
+    private void PlaceTree(
+        ChunkUpdateBuilder builder, 
+        Vector3Int localRootPos, 
+        int trunkHeight, 
+        int crownRadius)
+    {
+        for(int ty = 1; ty <= trunkHeight; ++ty)
+        {
+            builder.QueueVoxel(localRootPos + Vector3Int.up * ty, _logType);
+        }
+
+        for(int tz = -crownRadius; tz <= crownRadius; ++tz)
+        {
+            for(int ty = -crownRadius; ty <= crownRadius; ++ty)
+            {
+                for(int tx = -crownRadius; tx <= crownRadius; ++tx)
+                {
+                    builder.QueueVoxel(localRootPos + Vector3Int.up * trunkHeight + new Vector3Int(tx, ty + trunkHeight, tz), _leavesType);
+                }
+            }
+        }
+    }
+
+    private bool TreeShouldBePlaced(Vector3Int globalVoxelPos)
+    {
+        //var rand = new System.Random(globalVoxelPos.x + 1000 * globalVoxelPos.y + 1000000 + globalVoxelPos.z);
+        var rand = new System.Random();
+        return rand.NextDouble() <= 0.001f;
     }
 
     private void HandleChunkGenerationTasks()
@@ -217,7 +282,8 @@ public class WorldGenerator : MonoBehaviour
             var voxels = _chunkCreationMap[chunkPos];
             foreach(var voxel in voxels)
             {        
-                _voxelWorld.SetVoxel(voxel.GlobalVoxelPos, voxel.Type);
+                var globalPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(voxel.LocalVoxelPos, chunkPos);
+                _voxelWorld.SetVoxel(globalPos, voxel.Type);
             }
 
             _chunkCreationMap.Remove(chunkPos);
@@ -610,4 +676,14 @@ public class WorldGenerator : MonoBehaviour
     private PriorityQueue<Vector3Int, float> _chunkUnloadingQueue = new PriorityQueue<Vector3Int, float>();
 
     private List<Task<ChunkUpdate>> _chunkGenerationTasks = new List<Task<ChunkUpdate>>();
+
+    private ushort _dirtType;
+
+    private ushort _grassType;
+
+    private ushort _torchType;
+
+    private ushort _logType;
+    
+    private ushort _leavesType;    
 }

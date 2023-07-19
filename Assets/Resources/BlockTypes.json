@@ -72,6 +72,24 @@
             "FaceTextureTileCoords": {
                 "Default": [6, 0]
             }            
+        },
+        {
+            "Name": "Log",
+            "RenderType": "Voxel",
+            "OpaqueFaces": ["None"],
+            "FaceTextureTileCoords": {
+                "Top": [8, 0],
+                "Bottom": [8, 0],
+                "Default": [7, 0]
+            }            
+        },
+        {
+            "Name": "Leaves",
+            "RenderType": "Voxel",
+            "OpaqueFaces": ["None"],
+            "FaceTextureTileCoords": {
+                "All": [9, 0]
+            }            
         }
     ]
 }

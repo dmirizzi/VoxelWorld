@@ -47,9 +47,9 @@ public static class VoxelInfo
 
     public const int TextureTileSize = 16;
 
-    public const int TextureAtlasWidth = 128;
+    public const int TextureAtlasWidth = 256;
 
-    public const int TextureAtlasHeight = 128;
+    public const int TextureAtlasHeight = 256;
 
     public static bool IsLightEmitting(ushort blockType)
     {

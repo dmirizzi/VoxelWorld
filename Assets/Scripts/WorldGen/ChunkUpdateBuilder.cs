@@ -27,15 +27,16 @@ public class ChunkUpdateBuilder
         _maxChunkDistSqr = maxChunkDistSqr;
     }
 
-    public void QueueVoxel(Vector3Int globalVoxelPos, ushort type)
+    public void QueueVoxel(Vector3Int localVoxelPos, ushort type)
     {
-        var chunkPos = VoxelPosHelper.GlobalVoxelPosToChunkPos(globalVoxelPos);
-        var chunkDistToPlayer = VoxelPosHelper.GetChunkSqrDistanceToWorldPos(_playerPos, _chunkUpdate.ChunkPos);
+        bool voxelInsideChunk = localVoxelPos.x >= 0 && localVoxelPos.x < VoxelInfo.ChunkSize &&
+                                localVoxelPos.y >= 0 && localVoxelPos.y < VoxelInfo.ChunkSize &&
+                                localVoxelPos.z >= 0 && localVoxelPos.z < VoxelInfo.ChunkSize;
 
-        if(chunkDistToPlayer <= _maxChunkDistSqr)
+        if(voxelInsideChunk)
         {
             _chunkUpdate.Voxels.Add(new VoxelCreationAction{
-                GlobalVoxelPos = globalVoxelPos,
+                LocalVoxelPos = localVoxelPos,
                 Type = type
             });
         }
@@ -43,12 +44,12 @@ public class ChunkUpdateBuilder
         // Generated voxel is outside player chunk radius, put into backlog (e.g. a tree being generated across chunk boundaries)
         else
         {
-            if(!_chunkUpdate.Backlog.ContainsKey(chunkPos))
+            if(!_chunkUpdate.Backlog.ContainsKey(_chunkUpdate.ChunkPos))
             {
-                _chunkUpdate.Backlog[chunkPos] = new List<VoxelCreationAction>();
+                _chunkUpdate.Backlog[_chunkUpdate.ChunkPos] = new List<VoxelCreationAction>();
             }
-            _chunkUpdate.Backlog[chunkPos].Add(new VoxelCreationAction{
-                GlobalVoxelPos = globalVoxelPos,
+            _chunkUpdate.Backlog[_chunkUpdate.ChunkPos].Add(new VoxelCreationAction{
+                LocalVoxelPos = localVoxelPos,
                 Type = type
             });
         }

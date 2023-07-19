@@ -3,6 +3,9 @@
 ----------------------------------------------------------------------------------------------------------------
 [x] Avoid explicit Rebuild/Non Rebuild and just batch voxel changes & rebuild affected chunks once per frame
 
+[ ] Separate Engine/Core and Game logic
+    - e.g. World Generator (which handles chunk loading/unloading, backlogged voxels etc.) and Chunk Gen Logic (biomes, block types, trees etc.)
+
 [ ] Refactor Chunk GameObject life cycle handling 
     -> Shouldnt be created in Property!
     -> Do we even need to delete it on reset/clear? Or just when it is unloaded from world?
@@ -132,7 +135,7 @@ VoxelWorld
         -> with texture repeat wrapping, this will tile the voxel texture onto the greedy mesh
     [ ] What about the light map? We need different light values across a greedy mesh
         [ ] Store light map for mesh in 2d array & pass to (fragment?) shader?
-        [ ] Or only merge if they have the same light value?
+        [ ] Or only merge if they have the same light value? -> thats not gonna happen much, esp. with sunlight + block lights
 
 [x] Custom models as custom voxel mesh (e.g. stairs)
 

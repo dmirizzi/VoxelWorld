@@ -210,7 +210,6 @@ public class Chunk
                 var child = ChunkGameObject.transform.GetChild(i);
                 if(!child.name.StartsWith("Gizmo"))
                 {
-                    Debug.Log($"Deleting child {child.name} for parent {ChunkGameObject.name}");
                     GameObject.Destroy(child.gameObject);
                 }
             }
