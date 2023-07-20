@@ -5,7 +5,7 @@ using UnityEngine;
 
 class ChunkRebuildJob : IWorldUpdateJob
 {
-    public int UpdateStage => 0;
+    public int UpdateStage => 3;
 
     public Vector3Int ChunkPos { get; private set; }
 
@@ -18,7 +18,7 @@ class ChunkRebuildJob : IWorldUpdateJob
         AffectedChunks.Add(chunkPos);
     }
 
-    public bool PreExecuteSync(VoxelWorld world)
+    public bool PreExecuteSync(VoxelWorld world, WorldGenerator worldGenerator)
     {
         if(!world.ChunkExists(ChunkPos)) return false;
         _chunkBuilder = world.CreateNewChunkBuilder(ChunkPos);
@@ -30,7 +30,7 @@ class ChunkRebuildJob : IWorldUpdateJob
         return Task.Run(() => _chunkBuilder.Build());
     }
 
-    public void PostExecuteSync(VoxelWorld world)
+    public void PostExecuteSync(VoxelWorld world, WorldGenerator worldGenerator, WorldUpdateScheduler worldUpdateScheduler)
     {
         world.QueueLightFillOnNewChunk(ChunkPos);
     }

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
-public class ChunkLightFillUpdateJob : IWorldUpdateJob
+class ChunkLightFillUpdateJob : IWorldUpdateJob
 {
-    public int UpdateStage => 1;
+    public int UpdateStage => 4;
 
     public Vector3Int ChunkPos { get; private set; }
 
@@ -27,7 +27,7 @@ public class ChunkLightFillUpdateJob : IWorldUpdateJob
         }
     }
 
-    public bool PreExecuteSync(VoxelWorld world)
+    public bool PreExecuteSync(VoxelWorld world, WorldGenerator worldGenerator)
     {
         _lightMap = world.GetLightMap();
         return _lightMap != null;
@@ -38,7 +38,7 @@ public class ChunkLightFillUpdateJob : IWorldUpdateJob
         return Task.Run(() => _lightMap.PropagateSurroundingLightsOnNewChunk(ChunkPos));
     }
 
-    public void PostExecuteSync(VoxelWorld world)
+    public void PostExecuteSync(VoxelWorld world, WorldGenerator worldGenerator, WorldUpdateScheduler worldUpdateScheduler)
     {
         world.QueueChunkForLightMappingUpdate(ChunkPos);
     }

@@ -67,8 +67,6 @@ public class VoxelWorld : MonoBehaviour
         var chunk = GetChunkFromVoxelPosition(globalPos, true);
         var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(globalPos);
 
-        var oldVoxelType = chunk.GetVoxel(chunkLocalPos);
-
         if(!chunk.SetVoxel(chunkLocalPos, type, placementDir, lookDir, useExistingAuxData))
         {
             // Voxel cant be placed

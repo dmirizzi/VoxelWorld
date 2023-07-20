@@ -29,6 +29,18 @@ public class PriorityQueue<TValue, TPriority> where TPriority : IComparable
         _containedValues.Add(value);
     }
 
+    public bool TryPeekNextPriority(out TPriority priority)
+    {
+        if(_list.Count == 0)
+        {
+            priority = default;
+            return false;
+        }
+
+        priority = _list.First.Value.Priority;
+        return true;
+    }
+
     public bool DequeueNext(Func<TValue, bool> predicate, out TValue value)
     {
         if(_list.Count == 0)
@@ -37,9 +49,11 @@ public class PriorityQueue<TValue, TPriority> where TPriority : IComparable
             return false;
         }
 
+        TPriority lowestPriority = _list.First.Value.Priority;
+
         for(var node = _list.First; node != null; node = node.Next)
         {            
-            if(predicate(node.Value.Value))
+            if(node.Value.Priority.CompareTo(lowestPriority) == 0 && predicate(node.Value.Value))
             {
                 value = node.Value.Value;
                 _list.Remove(node);
@@ -79,17 +93,6 @@ public class PriorityQueue<TValue, TPriority> where TPriority : IComparable
     {
         _containedValues.Remove(_list.First.Value.Value);
         _list.RemoveFirst();
-    }
-
-    public bool Peek(out TValue value)
-    {
-        if(_list.Count > 0)
-        {
-            value = _list.First.Value.Value;
-            return true;
-        }
-        value = default(TValue);
-        return false;
     }
 
     public IReadOnlyCollection<(TValue Value, TPriority Priority)> GetList() => _list;

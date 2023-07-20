@@ -5,7 +5,7 @@ using UnityEngine;
 
 class BlockLightUpdateJob : IWorldUpdateJob
 {
-    public int UpdateStage => 1;
+    public int UpdateStage => 4;
 
     public Vector3Int ChunkPos { get; private set; }
 
@@ -40,7 +40,7 @@ class BlockLightUpdateJob : IWorldUpdateJob
         }
     }
 
-    public bool PreExecuteSync(VoxelWorld world)
+    public bool PreExecuteSync(VoxelWorld world, WorldGenerator worldGenerator)
     {
         _lightMap = world.GetLightMap();
         return _lightMap != null;
@@ -77,7 +77,7 @@ class BlockLightUpdateJob : IWorldUpdateJob
         });
     }
 
-    public void PostExecuteSync(VoxelWorld world)
+    public void PostExecuteSync(VoxelWorld world, WorldGenerator worldGenerator, WorldUpdateScheduler worldUpdateScheduler)
     {
         world.QueueChunksForLightMappingUpdate(_affectedChunks);
     }

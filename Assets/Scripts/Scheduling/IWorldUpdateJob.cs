@@ -1,4 +1,4 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -11,9 +11,9 @@ interface IWorldUpdateJob
 
     public HashSet<Vector3Int> AffectedChunks { get; }
 
-    public bool PreExecuteSync(VoxelWorld world);
+    public bool PreExecuteSync(VoxelWorld world, WorldGenerator worldGenerator);
 
     public Task ExecuteAsync();
 
-    public void PostExecuteSync(VoxelWorld world);
+    public void PostExecuteSync(VoxelWorld world, WorldGenerator worldGenerator, WorldUpdateScheduler worldUpdateScheduler);
 }

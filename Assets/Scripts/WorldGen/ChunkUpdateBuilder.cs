@@ -5,8 +5,6 @@ public struct ChunkUpdate
 {
     public Vector3Int ChunkPos;
 
-    public float ChunkDistanceToPlayer;
-
     public List<VoxelCreationAction> Voxels;
 
     public Dictionary<Vector3Int, List<VoxelCreationAction>> Backlog;
@@ -14,17 +12,14 @@ public struct ChunkUpdate
 
 public class ChunkUpdateBuilder
 {
-    public ChunkUpdateBuilder(Vector3Int chunkPos, float chunkDistanceToPlayer, Vector3 playerPos, float maxChunkDistSqr)
+    public ChunkUpdateBuilder(Vector3Int chunkPos)
     {
         _chunkUpdate = new ChunkUpdate
         {
             ChunkPos = chunkPos,
-            ChunkDistanceToPlayer = chunkDistanceToPlayer,
             Voxels = new List<VoxelCreationAction>(VoxelInfo.NumVoxelsPerChunk),
             Backlog = new Dictionary<Vector3Int, List<VoxelCreationAction>>()
         };
-        _playerPos = playerPos;
-        _maxChunkDistSqr = maxChunkDistSqr;
     }
 
     public void QueueVoxel(Vector3Int localVoxelPos, ushort type)
@@ -60,6 +55,4 @@ public class ChunkUpdateBuilder
     private ChunkUpdate _chunkUpdate;
 
     private Vector3 _playerPos;
-
-    private float _maxChunkDistSqr;
 }

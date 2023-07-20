@@ -13,6 +13,7 @@ class WorldUpdateScheduler : MonoBehaviour
     {
         _player = FindObjectOfType<PlayerController>();
         _world = FindObjectOfType<VoxelWorld>();
+        _worldGenerator = FindObjectOfType<WorldGenerator>();
     }
 
     public void Update()
@@ -62,7 +63,17 @@ class WorldUpdateScheduler : MonoBehaviour
 
     public void StartBatch() => _batching = true;
 
-    public void FinishBatch() => _batching = false;
+    public void FinishBatch()
+    {
+        /*
+        foreach(var job in _jobQueue.GetList())
+        {
+            Debug.Log($"[{job.Priority}] {job.Value.GetType()} @ {job.Value.ChunkPos}");
+        }
+        */
+
+        _batching = false;
+    }
 
     public void AddChunkRebuildJob(Vector3Int chunkPos)
     {
@@ -90,27 +101,44 @@ class WorldUpdateScheduler : MonoBehaviour
     public void AddChunkLightMappingUpdateJob(Vector3Int chunkPos)
     {
         if(!_world.ChunkExists(chunkPos)) return;
-         AddJob(new ChunkLightMappingUpdateJob(chunkPos));
+        AddJob(new ChunkLightMappingUpdateJob(chunkPos));
     }
 
-    public void AddJob(IWorldUpdateJob job)
+    public void AddChunkGenerationJob(Vector3Int chunkPos)
+    {
+        if(_world.ChunkExists(chunkPos)) return;
+        AddJob(new ChunkGenerationJob(chunkPos));
+    }
+
+    public void AddChunkVoxelCreationJob(Vector3Int chunkPos, List<VoxelCreationAction> voxels)
+    {
+        AddJob(new ChunkVoxelCreationJob(chunkPos, voxels));
+    }
+
+    public void AddBackloggedVoxelCreationJob()
+    {
+        AddJob(new BackloggedVoxelCreationJob());
+    }
+
+    public void AddJob(IWorldUpdateJob worldUpdateJob)
     {        
         _jobQueue.EnqueueUnique(
-            job,
-            new JobPriority{
-                JobTypePriority = job.UpdateStage,
-                DistanceToPlayer = VoxelPosHelper.GetChunkSqrDistanceToWorldPos(_player.transform.position, job.ChunkPos)
+            worldUpdateJob,
+            new JobPriority
+            {
+                JobTypePriority = worldUpdateJob.UpdateStage,
+                DistanceToPlayer = VoxelPosHelper.GetChunkSqrDistanceToWorldPos(_player.transform.position, worldUpdateJob.ChunkPos)
             }
         );
     }
 
     private void ScheduleJobs()
     {
-        // Schedule jobs that do not overlap in which chunks they affect
-        while(_activeJobs.Count < MaxNumSimultaneousJobs 
+        while(_activeJobs.Count < MaxNumSimultaneousJobs
+            && NextJobIsNotHigherStageThanActiveJobs()
             && _jobQueue.DequeueNext(x => CanReserveChunks(x.AffectedChunks), out var job))
         {
-            if(!job.PreExecuteSync(_world))
+            if(!job.PreExecuteSync(_world, _worldGenerator))
             {
                 // Pre execution failed -> job is not executable -> skip
                 continue;
@@ -118,18 +146,12 @@ class WorldUpdateScheduler : MonoBehaviour
 
             ReserveChunks(job.AffectedChunks);
 
-            _activeJobs.AddLast((job, job.ExecuteAsync()));
+            _activeJobs.AddLast(new ActiveJob
+            {
+                Job = job,
+                JobTask = job.ExecuteAsync()
+            });
         }
-    }
-
-    private bool CanReserveChunks(HashSet<Vector3Int> chunksToBeReserved)
-    {
-        return !_reservedChunks.Overlaps(chunksToBeReserved);
-    }
-
-    private void ReserveChunks(HashSet<Vector3Int> chunksToBeReserved)
-    {
-        _reservedChunks.UnionWith(chunksToBeReserved);
     }
 
     private void HandleActiveJobs()
@@ -140,7 +162,9 @@ class WorldUpdateScheduler : MonoBehaviour
             var next = jobNode.Next;
             if (jobNode.Value.JobTask.IsCompleted)
             {
-                jobNode.Value.Job.PostExecuteSync(_world);
+                jobNode.Value.Job.PostExecuteSync(_world, _worldGenerator, this);
+    
+                //Debug.Log($"Finished job: {jobNode.Value.Job.GetType()} @ {jobNode.Value.Job.ChunkPos}");
 
                 _activeJobs.Remove(jobNode);
 
@@ -154,6 +178,35 @@ class WorldUpdateScheduler : MonoBehaviour
             }
             jobNode = next;
         }
+    }    
+
+    private bool NextJobIsNotHigherStageThanActiveJobs()
+    {
+        if(_activeJobs.Count == 0)
+        {
+            // No active jobs so we are clear to go to the next update stage
+            return true;
+        }
+
+        if(_jobQueue.TryPeekNextPriority(out var priority))
+        {
+            // Only allow new job if it is at the same or lower stage than currently active jobs
+            var activeJobsStage = _activeJobs.First.Value.Job.UpdateStage;
+            return priority.JobTypePriority <= activeJobsStage;
+        }
+
+        // No more jobs queued
+        return true;
+    }    
+
+    private bool CanReserveChunks(HashSet<Vector3Int> chunksToBeReserved)
+    {
+        return !_reservedChunks.Overlaps(chunksToBeReserved);
+    }
+
+    private void ReserveChunks(HashSet<Vector3Int> chunksToBeReserved)
+    {
+        _reservedChunks.UnionWith(chunksToBeReserved);
     }
 
     private void ReleaseReservedChunks(IEnumerable<Vector3Int> chunks)
@@ -169,9 +222,18 @@ class WorldUpdateScheduler : MonoBehaviour
 
     private VoxelWorld _world;
 
+    private WorldGenerator _worldGenerator;
+
     private HashSet<Vector3Int> _reservedChunks = new HashSet<Vector3Int>();
 
     private PriorityQueue<IWorldUpdateJob, JobPriority> _jobQueue = new PriorityQueue<IWorldUpdateJob, JobPriority>();
 
-    private LinkedList<(IWorldUpdateJob Job, Task JobTask)> _activeJobs = new LinkedList<(IWorldUpdateJob, Task)>();
+    private LinkedList<ActiveJob> _activeJobs = new LinkedList<ActiveJob>();
+
+    private struct ActiveJob
+    {
+        public IWorldUpdateJob Job { get; set; }
+
+        public Task JobTask { get; set; }
+    }
 }

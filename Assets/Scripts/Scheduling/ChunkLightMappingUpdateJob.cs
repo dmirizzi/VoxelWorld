@@ -5,7 +5,7 @@ using UnityEngine;
 
 class ChunkLightMappingUpdateJob : IWorldUpdateJob
 {
-    public int UpdateStage => 3;
+    public int UpdateStage => 6;
 
     public Vector3Int ChunkPos { get; private set; }
 
@@ -18,7 +18,7 @@ class ChunkLightMappingUpdateJob : IWorldUpdateJob
         AffectedChunks.Add(chunkPos);
     }
 
-    public bool PreExecuteSync(VoxelWorld world)
+    public bool PreExecuteSync(VoxelWorld world, WorldGenerator worldGenerator)
     {
         if(!world.ChunkExists(ChunkPos) || !world.ChunkBuilderExists(ChunkPos)) return false;
         _chunkBuilder = world.GetChunkBuilder(ChunkPos);
@@ -30,7 +30,7 @@ class ChunkLightMappingUpdateJob : IWorldUpdateJob
         return Task.Run(() => _lightColorMapping = _chunkBuilder.CreateChunkLightColorMapping());
     }
 
-    public void PostExecuteSync(VoxelWorld world)
+    public void PostExecuteSync(VoxelWorld world, WorldGenerator worldGenerator, WorldUpdateScheduler worldUpdateScheduler)
     {
         var chunk = world.GetChunk(ChunkPos);
 
