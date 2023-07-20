@@ -103,7 +103,6 @@ class WorldUpdateScheduler : MonoBehaviour
 
     public void AddChunkGenerationJob(Vector3Int chunkPos)
     {
-        if(_world.ChunkExists(chunkPos)) return;
         AddJob(new ChunkGenerationJob(chunkPos));
     }
 

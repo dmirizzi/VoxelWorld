@@ -22,6 +22,11 @@ class ChunkGenerationJob : IWorldUpdateJob
 
     public bool PreExecuteSync(VoxelWorld world, WorldGenerator worldGenerator)
     {
+        if(world.TryGetChunk(ChunkPos, out var chunk))
+        {
+            chunk.ResetLightMap();
+        }
+
         _chunkGenerator = worldGenerator.ChunkGenerator;
         return true;
     }

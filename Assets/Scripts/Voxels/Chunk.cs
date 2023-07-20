@@ -220,6 +220,11 @@ public class Chunk
         _blockGameObjects.Clear();
     }
 
+    public void ResetLightMap()
+    {
+        _lightMap = new ushort[VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize];
+    }
+
     public void SetLightChannelValue(Vector3Int pos, int channel, byte intensity)
     {        
         var mask = (ushort)~(0xF << (channel * 4));
