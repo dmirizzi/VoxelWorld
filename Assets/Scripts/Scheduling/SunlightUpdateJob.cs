@@ -13,8 +13,19 @@ class SunlightUpdateJob : IWorldUpdateJob
 
     public bool PreExecuteSync(VoxelWorld world, WorldGenerator worldGenerator)
     {
-        _topMostChunks = world.GetTopMostChunksAndClear();
+        var topChunks = world.GetTopMostChunksAndClear();
         _lightMap = world.GetLightMap();
+
+        // Create a layer of empty chunks above the top chunks to propagate sunlight from. Otherwise voxels on the
+        // top border of top chunks won't be lit correctly, as there will be no light map above them
+        _topMostChunks = new List<Chunk>();
+        foreach(var chunk in topChunks)
+        {
+            var emptyChunkPos = chunk.ChunkPos + Vector3Int.up;
+            var voxelPos = VoxelPosHelper.ChunkPosToGlobalChunkBaseVoxelPos(emptyChunkPos);
+            world.SetVoxel(voxelPos, 0);
+            _topMostChunks.Add(world.GetChunk(emptyChunkPos));
+        }
 
         return _topMostChunks.Any();
     }
@@ -31,7 +42,7 @@ class SunlightUpdateJob : IWorldUpdateJob
 
     public override string ToString() => $"SunlightUpdateJob()";
 
-    private IEnumerable<Chunk> _topMostChunks;
+    private List<Chunk> _topMostChunks;
 
     private HashSet<Vector3Int> _affectedChunks = new HashSet<Vector3Int>();
 

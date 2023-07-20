@@ -55,8 +55,7 @@ public class VoxelWorld : MonoBehaviour
     public bool ChunkExists(Vector3Int chunkPos) => _chunks.ContainsKey(chunkPos);
 
     public bool ChunkBuilderExists(Vector3Int chunkPos) => _chunkBuilders.ContainsKey(chunkPos);
-
-
+    
     public void SetVoxel(
         Vector3Int globalPos, 
         ushort type, 

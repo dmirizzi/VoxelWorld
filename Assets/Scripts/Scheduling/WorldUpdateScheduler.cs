@@ -81,10 +81,7 @@ class WorldUpdateScheduler : MonoBehaviour
         AddJob(new ChunkRebuildJob(chunkPos));
     }
 
-    public void AddSunlightUpdateJob()
-    {
-        AddJob(new SunlightUpdateJob());
-    }
+    public void AddSunlightUpdateJob() => AddJob(new SunlightUpdateJob());
 
     public void AddChunkLightFillUpdateJob(Vector3Int chunkPos)
     {
@@ -115,10 +112,7 @@ class WorldUpdateScheduler : MonoBehaviour
         AddJob(new ChunkVoxelCreationJob(chunkPos, voxels));
     }
 
-    public void AddBackloggedVoxelCreationJob()
-    {
-        AddJob(new BackloggedVoxelCreationJob());
-    }
+    public void AddBackloggedVoxelCreationJob() => AddJob(new BackloggedVoxelCreationJob());
 
     public void AddJob(IWorldUpdateJob worldUpdateJob)
     {        

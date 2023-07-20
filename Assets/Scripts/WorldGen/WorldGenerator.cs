@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading.Tasks;
 using UnityEngine;
 
 public class WorldGenerator : MonoBehaviour
@@ -17,27 +16,6 @@ public class WorldGenerator : MonoBehaviour
     public bool WorldGenerated { get; private set; }
 
     public ChunkGenerator ChunkGenerator { get; private set; }
-
-    public void QueueChunkForCreation(Vector3Int chunkPos, List<VoxelCreationAction> voxels)
-    {
-        if(_chunkCreationMap.ContainsKey(chunkPos))
-        {
-            // Merge new chunk update backlog into existing backlog
-            _chunkCreationMap[chunkPos].AddRange(voxels);
-        }
-        else
-        {
-            // If no backlog exists for this chunk yet, take over the one from the chunk update
-            _chunkCreationMap[chunkPos] = voxels;
-        }    
-    }
-
-    public Dictionary<Vector3Int, List<VoxelCreationAction>> PopAllChunksToBeCreated()
-    {
-        var chunks = _chunkCreationMap;
-        _chunkCreationMap = new Dictionary<Vector3Int, List<VoxelCreationAction>>();
-        return chunks;
-    }
 
     public void AddBackloggedVoxels(Vector3Int chunkPos, List<VoxelCreationAction> voxels)
     {
@@ -108,13 +86,10 @@ public class WorldGenerator : MonoBehaviour
 
     void Update()
     {       
-        //Profiler.StartProfiling("WorldGen-1-GenerateChunksAroundCenter");
-
         var currentPlayerChunkPos = VoxelPosHelper.WorldPosToChunkPos(_player.transform.position);
         if(!_initialChunkBatchGenerated || (currentPlayerChunkPos - _lastChunkGenerationCenter).magnitude > 1)
         {
             _initialChunkBatchGenerated = true;
-            _currentWorldUpdateStarted = true;
 
             _updateScheduler.StartBatch();
 
@@ -143,8 +118,6 @@ public class WorldGenerator : MonoBehaviour
 
     void OnGUI()
     {
-        GUI.Label(new Rect(10, 50, 600, 20), $"Generating={_chunkGenerationQueue.Count} | Creating={_chunkCreationQueue.Count} | LastCenter={_lastChunkGenerationCenter}");
-
         var profiling = Profiler.GetProfilingResults();
         int i = 0;
         foreach(var prof in profiling)
@@ -179,13 +152,7 @@ public class WorldGenerator : MonoBehaviour
                 }                
             }
         }
-    }
-
-    private void UnloadChunk(Vector3Int chunkPos)
-    {
-
-    }
-    
+    }   
 
     private void GenerateWorld()
     {
@@ -524,8 +491,6 @@ public class WorldGenerator : MonoBehaviour
 
     bool _initialChunkBatchGenerated = false;
 
-    bool _currentWorldUpdateStarted = false;
-
     private int _chunkGenerationRadiusSqr;
 
     private WorldUpdateScheduler _updateScheduler;
@@ -538,22 +503,6 @@ public class WorldGenerator : MonoBehaviour
 
     private HashSet<Vector3Int> _currentlyLoadedChunks = new HashSet<Vector3Int>();
 
-    // Chunks to be generated
-    private PriorityQueue<Vector3Int, float> _chunkGenerationQueue = new PriorityQueue<Vector3Int, float>();
-
-    // The voxels in the chunks to be created in the VoxelWorld after being generated
-    private Dictionary<Vector3Int, List<VoxelCreationAction>> _chunkCreationMap = new Dictionary<Vector3Int, List<VoxelCreationAction>>();
-
-    // The order of the chunks to be created in the VoxelWorld after being generated
-    private PriorityQueue<Vector3Int, float> _chunkCreationQueue = new PriorityQueue<Vector3Int, float>();
-
-    private List<VoxelCreationAction> _voxelsToBeCreated = new List<VoxelCreationAction>();
-
     // Holds queued voxel creation actions that are outside of the player radius and will be applied, once the chunks they are in are loaded/generated
     private Dictionary<Vector3Int, List<VoxelCreationAction>> _chunkCreationBacklog = new Dictionary<Vector3Int, List<VoxelCreationAction>>();
-
-    // Chunks to be unloaded
-    private PriorityQueue<Vector3Int, float> _chunkUnloadingQueue = new PriorityQueue<Vector3Int, float>();
-
-    private List<Task<ChunkUpdate>> _chunkGenerationTasks = new List<Task<ChunkUpdate>>();
 }
