@@ -36,6 +36,7 @@ class ChunkLightMappingUpdateJob : IWorldUpdateJob
 
         var chunkGameObjects = _chunkBuilder.CreateChunkGameObjects();
 
+        // Finalize chunk game object to apply light mapping
         chunk.Reset();                 
         chunk.AddChunkMeshGameObjects(chunkGameObjects);
         chunk.BuildBlockGameObjects();

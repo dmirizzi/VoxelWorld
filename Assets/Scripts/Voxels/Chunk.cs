@@ -1,5 +1,3 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,29 +8,15 @@ public class Chunk
 
     public Vector3Int ChunkPos { get; private set; }
 
-    public GameObject ChunkGameObject 
-    { 
-        get
-        {
-            if(_chunkGameObject == null)
-            {
-                CreateNewChunkGameObject();
-            }
-            return _chunkGameObject;
-        } 
-        private set
-        {
-            _chunkGameObject = value;
-        } 
-    }
+    public GameObject ChunkGameObject { get; private set; }
 
     public Chunk(VoxelWorld voxelWorld, Vector3Int chunkPos)
     {
         _voxelWorld = voxelWorld;
-        _chunkData = new ushort[VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize];
-        _lightMap = new ushort[VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize];
-
         ChunkPos = chunkPos;
+
+        _chunkData = new ushort[VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize];
+        ResetLightMap();
     }
 
     public ushort GetVoxel(Vector3Int localPos)
@@ -202,8 +186,13 @@ public class Chunk
 
     public void Reset()
     {
-        //TODO: Not destroying!?
-        if(ChunkGameObject != null)
+        if(ChunkGameObject == null)
+        {
+            ChunkGameObject = new GameObject($"Chunk[{ChunkPos.x}|{ChunkPos.y}|{ChunkPos.z}]");
+            var chunkVoxelPos = VoxelPosHelper.ChunkPosToGlobalChunkBaseVoxelPos(ChunkPos);
+            ChunkGameObject.transform.position = chunkVoxelPos;
+        }
+        else
         {
             for(int i = 0; i < ChunkGameObject.transform.childCount; ++i)
             {
@@ -214,7 +203,6 @@ public class Chunk
                 }
             }
         }
-        //CreateNewChunkGameObject();
 
         _voxelColliderGameObjects.Clear();
         _blockGameObjects.Clear();
@@ -241,13 +229,6 @@ public class Chunk
     public bool HasAnyBlockLight(Vector3Int pos)
     {
         return (_lightMap[pos.x, pos.y, pos.z] & 0xFFF) > 0;
-    }
-
-    private void CreateNewChunkGameObject()
-    {
-        _chunkGameObject = new GameObject($"Chunk[{ChunkPos.x}|{ChunkPos.y}|{ChunkPos.z}]");
-        var chunkVoxelPos = VoxelPosHelper.ChunkPosToGlobalChunkBaseVoxelPos(ChunkPos);
-        _chunkGameObject.transform.position = chunkVoxelPos;
     }
 
     // SSSS.RRRR.GGGG.BBBB

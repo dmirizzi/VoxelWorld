@@ -154,55 +154,6 @@ public class WorldGenerator : MonoBehaviour
         }
     }   
 
-    private void GenerateWorld()
-    {
-        var sw = new Stopwatch();
-        sw.Start();
-
-        _voxelWorld.Clear();
-        
-        //GenerateCubeRoom(3);
-        //GenerateCuboidByCorners(new Vector3Int(-16, 0, -16), new Vector3Int(16, -16, 16), BlockDataRepository.GetBlockTypeId("Dirt"));
-        
-        /*
-        for(int x = 0; x < 17; ++x)
-        {
-            GenerateCuboidByCorners(new Vector3Int(x, 0, 0), new Vector3Int(x, x, 4), BlockDataRepository.GetBlockTypeId("Dirt"));
-        }
-        */
-        
-        //GenerateCube(new Vector3Int(0, 0, 0), 32, BlockDataRepository.GetBlockTypeId("Dirt"));
-
-        //VoxelWorld.SetVoxel(new Vector3Int(-2, 0, 0), BlockDataRepository.GetBlockTypeId("Torch"));
-        
-        //VoxelWorld.AddLight(new Vector3Int(0, 1, 0), new Color32(255, 78, 203, 255), 20);
-        //VoxelWorld.AddLight(new Vector3Int(30, 2, 0), new Color32(50, 255, 50, 255), 20);
-        //VoxelWorld.AddLight(new Vector3Int(15, 2, -10), new Color32(255, 255, 0, 255), 20);
-
-        GenerateTerrain(256);
-
-/*
-        GenerateCave(
-            new Vector3Int(0, 0, 0),
-            new Vector3Int(
-                32,//UnityEngine.Random.Range(32, 128),
-                32,//UnityEngine.Random.Range(32, 128), 
-                32//UnityEngine.Random.Range(32, 128)
-            ),
-            _iterations,
-            _birthNeighbors,
-            _deathNeighbors,
-            _emptyChance
-        );       
-*/
-        //GenerateTorches(10);
-
-        PlacePlayer();
-
-        sw.Stop();
-        UnityEngine.Debug.Log($"Generated world in {sw.Elapsed.TotalSeconds} sec");
-    }
-
     private void GenerateCuboidByCorners(Vector3Int p1, Vector3Int p2, ushort type)
     {
         var xs = Math.Min(p1.x, p2.x);
@@ -258,58 +209,6 @@ public class WorldGenerator : MonoBehaviour
                 }
             }
         }        
-    }
-
-    private void GenerateTorches(int numTorches)
-    {
-        for (int i = 0; i < numTorches; ++i)
-        {
-            var worldPos = _voxelWorld.GetRandomSolidSurfaceVoxel() + Vector3Int.up;
-            _voxelWorld.SetVoxel(worldPos, BlockDataRepository.GetBlockTypeId("Torch"));
-        }
-    }
-
-    private void GenerateTerrain(int size)
-    {
-        size /= 2;
-
-        var seed = UnityEngine.Random.Range(0, 1000);
-
-        for(int x = -size; x < size; ++x)
-        {
-            for(int z = -size; z < size; ++z)
-            {
-                var height = Mathf.Min(64, (int)(Mathf.PerlinNoise(seed + x / 20.0f, seed + z / 20.0f) * 32) - 5);
-                //var height = 8;
-
-                bool isWater = height < 0;
-                if(isWater) height = 0;
-
-                for(int y = -64; y <= height; ++y)
-                {
-                    if(y == -64)
-                    {
-                        _voxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Cobblestone"));
-                    }
-                    else if(isWater)
-                    {
-
-                        _voxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Water"));
-                    }
-                    else
-                    {
-                        if(y < height)
-                        {
-                            _voxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Dirt"));
-                        }
-                        else
-                        {
-                            _voxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Grass"));
-                        }
-                    }                    
-                }
-            }
-        }
     }
 
     private void GenerateCave(Vector3Int position, Vector3Int size, int iterations, int birthNeighbors, int deathNeighbors, float emptyChance)

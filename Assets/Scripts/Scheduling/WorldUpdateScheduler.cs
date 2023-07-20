@@ -25,23 +25,9 @@ class WorldUpdateScheduler : MonoBehaviour
         }
     }
 
-    public void OnDrawGizmos()
-    {
-        /*
-        var size = new Vector3(18, 18, 18);
-        foreach(var chunk in _reservedChunks)
-        {
-            var chunkCenter = chunk * 16 - new Vector3(8, 8, 8);
-
-            Gizmos.DrawWireCube(chunkCenter, size);
-        }
-        */
-    }
-
     public void OnGUI()
     {
         GUI.Label(new Rect(10, 80, 1500, 20), $"Queued Jobs: {_jobQueue.Count} | Active Jobs: {_activeJobs.Count} | ReservedChunks: {_reservedChunks.Count}");
-
 
         int i = 0;
         int currentPrio = 0;
@@ -50,7 +36,6 @@ class WorldUpdateScheduler : MonoBehaviour
 
         foreach(var item in _jobQueue.GetList())
         {
-            //GUI.Label(new Rect(10, 100 + i * 20, 300, 20), $"({item.Priority.JobTypePriority}|{item.Priority.DistanceToPlayer}) {item.Value.GetType()} @ {item.Value.ChunkPos}");
             if(item.Priority.JobTypePriority != currentPrio || currentType != item.Value.GetType())
             {
                 num = 0;
@@ -64,29 +49,11 @@ class WorldUpdateScheduler : MonoBehaviour
                 num++;
             }
         }
-
-/*
-        GUI.Label(new Rect(10, 140 + i * 20, 1500, 20), $"Active Jobs ({_activeJobs.Count}):");
-        foreach(var item in _activeJobs)
-        {
-            GUI.Label(new Rect(10, 100 + i * 20, 300, 20), $"{item.Job.GetType()} @ {item.Job.ChunkPos}");
-            i++;
-        }*/
     }
 
     public void StartBatch() => _batching = true;
 
-    public void FinishBatch()
-    {
-        /*
-        foreach(var job in _jobQueue.GetList())
-        {
-            Debug.Log($"[{job.Priority}] {job.Value.GetType()} @ {job.Value.ChunkPos}");
-        }
-        */
-
-        _batching = false;
-    }
+    public void FinishBatch() => _batching = false;
 
     public void AddChunkRebuildJob(Vector3Int chunkPos)
     {
@@ -169,8 +136,6 @@ class WorldUpdateScheduler : MonoBehaviour
             if (jobNode.Value.JobTask.IsCompleted)
             {
                 jobNode.Value.Job.PostExecuteSync(_world, _worldGenerator, this);
-    
-                //Debug.Log($"Finished job: {jobNode.Value.Job.GetType()} @ {jobNode.Value.Job.ChunkPos}");
 
                 _activeJobs.Remove(jobNode);
 

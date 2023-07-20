@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class VoxelWorld : MonoBehaviour
 {
-    public int MaxNumChunkBuilderTasks = 8;
-
     public Material TextureAtlasMaterial;
 
     public Material TextureAtlasTransparentMaterial;
@@ -28,15 +26,7 @@ public class VoxelWorld : MonoBehaviour
     {
     }
 
-    public ChunkBuilder CreateNewChunkBuilder(Vector3Int chunkPos)
-    {
-        _chunkBuilders[chunkPos] = new ChunkBuilder(this, chunkPos, _chunks[chunkPos], TextureAtlasMaterial, TextureAtlasTransparentMaterial);
-        return _chunkBuilders[chunkPos];
-    }
-
     public LightMap GetLightMap() => _lightMap;
-
-    public ChunkBuilder GetChunkBuilder(Vector3Int chunkPos) => _chunkBuilders[chunkPos];
 
     public Chunk GetChunk(Vector3Int chunkPos) => _chunks[chunkPos];
 
@@ -53,6 +43,15 @@ public class VoxelWorld : MonoBehaviour
     }
 
     public bool ChunkExists(Vector3Int chunkPos) => _chunks.ContainsKey(chunkPos);
+
+    public ChunkBuilder CreateNewChunkBuilder(Vector3Int chunkPos)
+    {
+        _chunkBuilders[chunkPos] = new ChunkBuilder(this, chunkPos, _chunks[chunkPos], TextureAtlasMaterial, TextureAtlasTransparentMaterial);
+        return _chunkBuilders[chunkPos];
+    }
+
+    public ChunkBuilder GetChunkBuilder(Vector3Int chunkPos) => _chunkBuilders[chunkPos];
+
 
     public bool ChunkBuilderExists(Vector3Int chunkPos) => _chunkBuilders.ContainsKey(chunkPos);
     
@@ -294,13 +293,6 @@ public class VoxelWorld : MonoBehaviour
         }
     }
 
-    public void QueueVoxelForRebuild(Vector3Int globalVoxelPos)
-    {
-        //TODO: JUST CONVERT THE VOXELPOS TO CHUNK POS DUMBASS!!
-        var chunkPos = GetChunkFromVoxelPosition(globalVoxelPos, true).ChunkPos;
-        _updateScheduler.AddChunkRebuildJob(chunkPos);
-    }
-
     public void Clear()
     {
         foreach(var chunk in _chunks.Values)
@@ -334,6 +326,13 @@ public class VoxelWorld : MonoBehaviour
             }
         }
         return null;
+    }
+
+    public void QueueVoxelForRebuild(Vector3Int globalVoxelPos)
+    {
+        //TODO: JUST CONVERT THE VOXELPOS TO CHUNK POS DUMBASS!!
+        var chunkPos = GetChunkFromVoxelPosition(globalVoxelPos, true).ChunkPos;
+        _updateScheduler.AddChunkRebuildJob(chunkPos);
     }
 
     public void QueueChunksForLightMappingUpdate(IEnumerable<Vector3Int> chunkPositions)
@@ -392,19 +391,6 @@ public class VoxelWorld : MonoBehaviour
     {
         return GetChunkFromVoxelPosition(new Vector3Int(x, y, z), create);
     }
-
-    private struct LightUpdate
-    {
-        public Vector3Int Position { get; set; }
-
-        public Color32 Color { get; set; }
-
-        public bool Add { get; set; }
-
-        public bool Sunlight { get; set; }
-    }
-
-    private object _chunkCreationLock = new object();
 
     private Dictionary<Vector3Int, Chunk> _chunks;
 
