@@ -263,7 +263,6 @@ public class LightMap
         }
     }
 
-
     private void PropagateLightNodes(
         Queue<LightNode> lightNodes, 
         int channel, 
@@ -382,31 +381,7 @@ public class LightMap
         Vector3Int.left,
         Vector3Int.right,
         Vector3Int.forward,
-        Vector3Int.back,
-/*
-        Vector3Int.up + Vector3Int.left,
-        Vector3Int.up + Vector3Int.right,
-        Vector3Int.up + Vector3Int.forward,
-        Vector3Int.up + Vector3Int.back,
-        Vector3Int.up + Vector3Int.left + Vector3Int.forward,
-        Vector3Int.up + Vector3Int.left + Vector3Int.back,
-        Vector3Int.up + Vector3Int.right + Vector3Int.forward,
-        Vector3Int.up + Vector3Int.right + Vector3Int.back,
-
-        Vector3Int.down + Vector3Int.left,
-        Vector3Int.down + Vector3Int.right,
-        Vector3Int.down + Vector3Int.forward,
-        Vector3Int.down + Vector3Int.back,
-        Vector3Int.down + Vector3Int.left + Vector3Int.forward,
-        Vector3Int.down + Vector3Int.left + Vector3Int.back,
-        Vector3Int.down + Vector3Int.right + Vector3Int.forward,
-        Vector3Int.down + Vector3Int.right + Vector3Int.back,
-
-        Vector3Int.left + Vector3Int.forward,
-        Vector3Int.left + Vector3Int.back,
-        Vector3Int.right + Vector3Int.forward,
-        Vector3Int.right + Vector3Int.back
-*/        
+        Vector3Int.back,   
     };
 }
 

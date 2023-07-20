@@ -20,22 +20,7 @@ public class ChunkBuilder
         _transparentMesh = new ChunkMesh();
     }
 
-    private void AddChunkMeshToGameObject(ChunkMesh chunkMesh, GameObject gameObject)
-    {
-        gameObject.AddComponent<MeshRenderer>();
-        var meshFilter = gameObject.AddComponent<MeshFilter>().mesh;
-
-        meshFilter.Clear();
-        meshFilter.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
- 
-        meshFilter.vertices = chunkMesh.Vertices.ToArray();
-        meshFilter.triangles = chunkMesh.Triangles.ToArray();
-        meshFilter.normals = chunkMesh.Normals.ToArray();
-        meshFilter.uv = chunkMesh.UVCoordinates.ToArray();
-        meshFilter.Optimize();
-    }
-
-    public GameObject[] CreateChunkGameObjects()
+    public GameObject[] CreateMeshGameObjects()
     {
         _solidChunk = new GameObject($"SolidVoxelMesh");
 
@@ -55,7 +40,6 @@ public class ChunkBuilder
             _transparentChunk
         };
     }
-
 
     public void Build()
     {
@@ -114,6 +98,20 @@ public class ChunkBuilder
         _transparentChunk.GetComponent<MeshFilter>().mesh.colors32 = mapping.TransparentMeshLightMapping;
     }
 
+    private void AddChunkMeshToGameObject(ChunkMesh chunkMesh, GameObject gameObject)
+    {
+        gameObject.AddComponent<MeshRenderer>();
+        var meshFilter = gameObject.AddComponent<MeshFilter>().mesh;
+
+        meshFilter.Clear();
+        meshFilter.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+ 
+        meshFilter.vertices = chunkMesh.Vertices.ToArray();
+        meshFilter.triangles = chunkMesh.Triangles.ToArray();
+        meshFilter.normals = chunkMesh.Normals.ToArray();
+        meshFilter.uv = chunkMesh.UVCoordinates.ToArray();
+        meshFilter.Optimize();
+    }
 
     private Color32[] GetBlockyLightVertexColorMapping(ChunkMesh mesh)
     {

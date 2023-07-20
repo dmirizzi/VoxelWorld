@@ -88,7 +88,6 @@ public class ChunkGenerator
         return rand.NextDouble() <= 0.001f;
     }
 
-
     private ushort _dirtType;
 
     private ushort _grassType;

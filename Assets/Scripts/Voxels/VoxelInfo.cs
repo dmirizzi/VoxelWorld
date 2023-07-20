@@ -1,19 +1,6 @@
 using System.Linq;
 using UnityEngine;
 
-/*
-public enum VoxelType
-{
-    Empty = 0,
-    Grass,
-    Dirt,
-    Water,
-    Cobblestone,
-    Torch,
-    CobblestoneWedge
-}
-*/
-
 public struct VoxelFaceData
 {
     public VoxelFaceData(BlockFace voxelFace, Vector3Int intDirection, Vector3 floatDirection, int[] vertexIndices, int[] uvIndices)
