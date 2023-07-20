@@ -41,7 +41,7 @@ public static class VoxelPosHelper
         );
     }
 
-        public static Vector3 GetVoxelCenterSurfaceWorldPos(Vector3Int globalVoxelPos)
+    public static Vector3 GetVoxelCenterSurfaceWorldPos(Vector3Int globalVoxelPos)
     {
         return new Vector3(
             globalVoxelPos.x + VoxelInfo.VoxelSize * 0.5f,
