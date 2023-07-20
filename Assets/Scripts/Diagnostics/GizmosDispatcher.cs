@@ -38,7 +38,6 @@ public class GizmosDispatcher : MonoBehaviour
             {
                 while(_chunkGizmoCreationQueue.TryDequeue(out var creation))
                 {
-
                     var parent = _world.GetChunk(creation.ChunkPos).ChunkGameObject.transform;
 
                     var newGameObj = creation.Factory();
@@ -77,6 +76,8 @@ public class GizmosDispatcher : MonoBehaviour
     }
 
     private Queue<(Func<GameObject> Factory, Vector3Int ChunkPos)> _chunkGizmoCreationQueue = new Queue<(Func<GameObject> Factory, Vector3Int ChunkPos)>();
+
+    private Queue<Func<GameObject>> _gizmoCreationQueue = new Queue<Func<GameObject>>();
 
     private Queue<string> _deletionByTagQueue = new Queue<string>();
 

@@ -25,6 +25,19 @@ class WorldUpdateScheduler : MonoBehaviour
         }
     }
 
+    public void OnDrawGizmos()
+    {
+        /*
+        var size = new Vector3(18, 18, 18);
+        foreach(var chunk in _reservedChunks)
+        {
+            var chunkCenter = chunk * 16 - new Vector3(8, 8, 8);
+
+            Gizmos.DrawWireCube(chunkCenter, size);
+        }
+        */
+    }
+
     public void OnGUI()
     {
         GUI.Label(new Rect(10, 80, 1500, 20), $"Queued Jobs: {_jobQueue.Count} | Active Jobs: {_activeJobs.Count} | ReservedChunks: {_reservedChunks.Count}");
