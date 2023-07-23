@@ -111,7 +111,10 @@ class WorldUpdateScheduler : MonoBehaviour
             && NextJobIsNotHigherStageThanActiveJobs()
             && _jobQueue.DequeueNext(x => CanReserveChunks(x.AffectedChunks), out var job))
         {
-            if(!job.PreExecuteSync(_world, _worldGenerator))
+            var token = Profiler.StartProfiling($"{job.GetType()}-PreExecute");
+            var preExecute = job.PreExecuteSync(_world, _worldGenerator);
+            Profiler.StopProfiling(token);
+            if(!preExecute)
             {
                 // Pre execution failed -> job is not executable -> skip
                 continue;
@@ -135,7 +138,9 @@ class WorldUpdateScheduler : MonoBehaviour
             var next = jobNode.Next;
             if (jobNode.Value.JobTask.IsCompleted)
             {
+                var token = Profiler.StartProfiling($"{jobNode.Value.Job.GetType()}-PostExecute");
                 jobNode.Value.Job.PostExecuteSync(_world, _worldGenerator, this);
+                Profiler.StopProfiling(token);
 
                 _activeJobs.Remove(jobNode);
 

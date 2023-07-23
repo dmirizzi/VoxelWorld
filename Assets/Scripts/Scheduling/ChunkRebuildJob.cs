@@ -27,7 +27,12 @@ class ChunkRebuildJob : IWorldUpdateJob
 
     public Task ExecuteAsync()
     {
-        return Task.Run(() => _chunkBuilder.Build());
+        return Task.Run(() => 
+        {
+            var token = Profiler.StartProfiling($"{GetType()}-Async");
+            _chunkBuilder.Build();
+            Profiler.StopProfiling(token);
+        });
     }
 
     public void PostExecuteSync(VoxelWorld world, WorldGenerator worldGenerator, WorldUpdateScheduler worldUpdateScheduler)

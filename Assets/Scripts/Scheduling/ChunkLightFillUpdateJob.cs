@@ -35,7 +35,12 @@ class ChunkLightFillUpdateJob : IWorldUpdateJob
 
     public Task ExecuteAsync()
     {
-        return Task.Run(() => _lightMap.PropagateSurroundingLightsOnNewChunk(ChunkPos));
+        return Task.Run(() => 
+        {
+            var token = Profiler.StartProfiling($"{GetType()}-Async");
+            _lightMap.PropagateSurroundingLightsOnNewChunk(ChunkPos);
+            Profiler.StopProfiling(token);
+        });
     }
 
     public void PostExecuteSync(VoxelWorld world, WorldGenerator worldGenerator, WorldUpdateScheduler worldUpdateScheduler)

@@ -50,6 +50,8 @@ class BlockLightUpdateJob : IWorldUpdateJob
     {
         return Task.Run(() => 
         {
+            var token = Profiler.StartProfiling($"{GetType()}-Async");
+
             var colorChannels = new byte[]{
                 (byte)(LightColor.r >> 4),
                 (byte)(LightColor.g >> 4),
@@ -74,6 +76,8 @@ class BlockLightUpdateJob : IWorldUpdateJob
                     }
                 }
             }
+
+            Profiler.StopProfiling(token);
         });
     }
 

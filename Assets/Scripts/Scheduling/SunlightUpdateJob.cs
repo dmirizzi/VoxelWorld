@@ -31,7 +31,12 @@ class SunlightUpdateJob : IWorldUpdateJob
 
     public Task ExecuteAsync()
     {
-        return Task.Run(() => _lightMap.UpdateSunlight(_topMostChunks, _affectedChunks));
+        return Task.Run(() => 
+        {
+            var token = Profiler.StartProfiling($"{GetType()}-Async");
+            _lightMap.UpdateSunlight(_topMostChunks, _affectedChunks);
+            Profiler.StopProfiling(token);
+        });
     }
 
     public void PostExecuteSync(VoxelWorld world, WorldGenerator worldGenerator, WorldUpdateScheduler worldUpdateScheduler)

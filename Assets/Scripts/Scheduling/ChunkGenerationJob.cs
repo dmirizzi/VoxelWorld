@@ -33,7 +33,12 @@ class ChunkGenerationJob : IWorldUpdateJob
 
     public Task ExecuteAsync()
     {
-        return Task.Run(() => _chunkUpdate = _chunkGenerator.GenerateChunk(ChunkPos));
+        return Task.Run(() => 
+        {
+            var token = Profiler.StartProfiling($"{GetType()}-Async");
+            _chunkUpdate = _chunkGenerator.GenerateChunk(ChunkPos);
+            Profiler.StopProfiling(token);
+        });
     }
 
     public void PostExecuteSync(VoxelWorld world, WorldGenerator worldGenerator, WorldUpdateScheduler worldUpdateScheduler)

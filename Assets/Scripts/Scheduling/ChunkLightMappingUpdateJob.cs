@@ -27,7 +27,12 @@ class ChunkLightMappingUpdateJob : IWorldUpdateJob
 
     public Task ExecuteAsync()
     {
-        return Task.Run(() => _lightColorMapping = _chunkBuilder.CreateChunkLightColorMapping());
+        return Task.Run(() => 
+        {
+            var token = Profiler.StartProfiling($"{GetType()}-Async");
+            _lightColorMapping = _chunkBuilder.CreateChunkLightColorMapping();
+            Profiler.StopProfiling(token);
+        });
     }
 
     public void PostExecuteSync(VoxelWorld world, WorldGenerator worldGenerator, WorldUpdateScheduler worldUpdateScheduler)

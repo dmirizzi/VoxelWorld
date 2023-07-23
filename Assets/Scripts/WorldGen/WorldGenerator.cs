@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using UnityEngine;
 
 public class WorldGenerator : MonoBehaviour
@@ -78,6 +79,7 @@ public class WorldGenerator : MonoBehaviour
         {
             if(!WorldGenerated)
             {
+                Profiler.WriteProfilingResultsToCSV();
                 PlacePlayer(Vector3Int.zero);            
                 WorldGenerated = true;
             }
@@ -118,7 +120,7 @@ public class WorldGenerator : MonoBehaviour
 
     void OnGUI()
     {
-        var profiling = Profiler.GetProfilingResults();
+        var profiling = Profiler.GetProfilingResults().OrderByDescending(x => x.Value);
         int i = 0;
         foreach(var prof in profiling)
         {
