@@ -29,9 +29,9 @@ class ChunkLightMappingUpdateJob : IWorldUpdateJob
     {
         return Task.Run(() => 
         {
-            var token = Profiler.StartProfiling($"{GetType()}-Async");
+            //var token = Profiler.StartProfiling($"{GetType()}-Async");
             _lightColorMapping = _chunkBuilder.CreateChunkLightColorMapping();
-            Profiler.StopProfiling(token);
+            //Profiler.StopProfiling(token);
         });
     }
 

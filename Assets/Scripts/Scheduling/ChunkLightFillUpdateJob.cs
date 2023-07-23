@@ -37,9 +37,9 @@ class ChunkLightFillUpdateJob : IWorldUpdateJob
     {
         return Task.Run(() => 
         {
-            var token = Profiler.StartProfiling($"{GetType()}-Async");
+            //var token = Profiler.StartProfiling($"{GetType()}-Async");
             _lightMap.PropagateSurroundingLightsOnNewChunk(ChunkPos);
-            Profiler.StopProfiling(token);
+            //Profiler.StopProfiling(token);
         });
     }
 

@@ -33,9 +33,9 @@ class SunlightUpdateJob : IWorldUpdateJob
     {
         return Task.Run(() => 
         {
-            var token = Profiler.StartProfiling($"{GetType()}-Async");
+            //var token = Profiler.StartProfiling($"{GetType()}-Async");
             _lightMap.UpdateSunlight(_topMostChunks, _affectedChunks);
-            Profiler.StopProfiling(token);
+            //Profiler.StopProfiling(token);
         });
     }
 

@@ -35,9 +35,9 @@ class ChunkGenerationJob : IWorldUpdateJob
     {
         return Task.Run(() => 
         {
-            var token = Profiler.StartProfiling($"{GetType()}-Async");
+            //var token = Profiler.StartProfiling($"{GetType()}-Async");
             _chunkUpdate = _chunkGenerator.GenerateChunk(ChunkPos);
-            Profiler.StopProfiling(token);
+            //Profiler.StopProfiling(token);
         });
     }
 
