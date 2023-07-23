@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -51,7 +52,11 @@ class WorldUpdateScheduler : MonoBehaviour
         }
     }
 
-    public void StartBatch() => _batching = true;
+    public void StartBatch()
+    { 
+        _batching = true;
+        _batchTimer.Restart();
+    }
 
     public void FinishBatch() => _batching = false;
 
@@ -150,6 +155,9 @@ class WorldUpdateScheduler : MonoBehaviour
                 {
                     // Batch finished
                     BatchFinished?.Invoke();
+                    
+                    _batchTimer.Stop();
+                    UnityEngine.Debug.Log($"Processed batch in {_batchTimer.Elapsed.TotalMilliseconds}ms");
                 }
             }
             jobNode = next;
@@ -205,6 +213,8 @@ class WorldUpdateScheduler : MonoBehaviour
     private PriorityQueue<IWorldUpdateJob, JobPriority> _jobQueue = new PriorityQueue<IWorldUpdateJob, JobPriority>();
 
     private LinkedList<ActiveJob> _activeJobs = new LinkedList<ActiveJob>();
+
+    private Stopwatch _batchTimer = new Stopwatch();
 
     private struct ActiveJob
     {

@@ -4,61 +4,60 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
-public class ProfilingToken
+public class ProfilingEntry
 {
-    public string Subject { get; private set; }
+    public string Subject { get; set; }
 
-    public ProfilingToken(string subject)
+    public int Index { get; set; }
+
+    public Stopwatch Stopwatch { get; }
+
+    public double ElapsedMs { get; set; }
+
+    public ProfilingEntry()
     {
-        Subject = subject;
-        _tokenStr = $"{Subject}{System.Guid.NewGuid().ToString()}";
+        Stopwatch = new Stopwatch();
     }
 
-    public override string ToString() => _tokenStr;
-
-    public static implicit operator string(ProfilingToken token) => token._tokenStr;
-
-    private string _tokenStr;
 }
 
 public static class Profiler
 {
-    public static ProfilingToken StartProfiling(string subject)
+    static Profiler()
     {
-        var token = new ProfilingToken(subject);
-        lock(_lockObject)
-        {
-            _stopwatches[token] = new Stopwatch();
-            _stopwatches[token].Restart();
-        }
-        return token;
+        Clear();
     }
 
-    public static void StopProfiling(ProfilingToken token)
+    public static ProfilingEntry StartProfiling(string subject)
     {
-        lock(_lockObject)
+        var entry = new ProfilingEntry();
+        entry.Subject = subject;
+        entry.Stopwatch.Restart();
+
+        lock(_entries)
         {
-            var stopwatch = _stopwatches[token];
-            stopwatch.Stop();
-            if(_totalMsPerSubject.ContainsKey(token.Subject))
-            {
-                _totalMsPerSubject[token.Subject] += stopwatch.Elapsed.TotalMilliseconds;
-            }
-            else
-            {
-                _totalMsPerSubject[token.Subject] = stopwatch.Elapsed.TotalMilliseconds;
-            }
+            _entries.AddLast(entry);
         }
+
+        return entry;
     }
 
-    public static void Clear() =>_totalMsPerSubject.Clear();
+    public static void StopProfiling(ProfilingEntry entry)
+    {
+        entry.Stopwatch.Stop();
+        entry.ElapsedMs = entry.Stopwatch.Elapsed.TotalMilliseconds;
+    }
 
-    public static IReadOnlyDictionary<string, double> GetProfilingResults() => _totalMsPerSubject;
+    public static void Clear()
+    {
+        _entries = new LinkedList<ProfilingEntry>();
+    }
 
     public static void WriteProfilingResultsToCSV() 
     {
-        var fileName = "./profiling.csv";
+        var fileName = @"E:\Dev\VoxelProfilingData\Profiling.csv";
         InitProfilingCSV(fileName);
 
         var sb = new StringBuilder();
@@ -69,14 +68,24 @@ public static class Profiler
         sb.Append(GitHelper.GetGitCommitMessage());
         sb.Append(";");
 
+        var elapsedPerSubject = _entries
+            .GroupBy(entry => entry.Subject)
+            .Select(group => new {
+                Subject = group.Key,
+                TotalElapsedMs = group.Sum(entry => entry.ElapsedMs)
+            })
+            .OrderBy(entry => entry.Subject);
+
         var total = 0.0;        
-        foreach(var entry in _totalMsPerSubject.OrderBy(x => x.Key))
+        foreach(var entry in elapsedPerSubject)
         {
-            sb.Append(entry.Value);
+            sb.Append(entry.TotalElapsedMs);
             sb.Append(";");
 
-            total += entry.Value;
+            total += entry.TotalElapsedMs;
         }
+        UnityEngine.Debug.Log($"Synchronous batch processing time: {total}ms");
+
         sb.Append(total);
         sb.Append(Environment.NewLine);
         File.AppendAllText(fileName, sb.ToString());
@@ -89,9 +98,11 @@ public static class Profiler
             var sb = new StringBuilder();
             sb.Append("Commit;");
             sb.Append("CommitMessage;");
-            foreach(var entry in _totalMsPerSubject.OrderBy(x => x.Key))
+
+            var allSubjects = _entries.Select(x => x.Subject).Distinct();
+            foreach(var entry in allSubjects)
             {
-                sb.Append(entry.Key);
+                sb.Append(entry);
                 sb.Append(";");
             }
             sb.Append("Total");
@@ -101,9 +112,7 @@ public static class Profiler
         }
     }
 
-    private static Dictionary<string, double> _totalMsPerSubject = new Dictionary<string, double>();
+    private static LinkedList<ProfilingEntry> _entries;
 
-    private static Dictionary<string, Stopwatch> _stopwatches = new Dictionary<string, Stopwatch>();
-
-    private static object _lockObject = new object();
+    private static int _currentIndex = 0;
 }

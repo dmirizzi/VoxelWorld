@@ -120,6 +120,7 @@ public class WorldGenerator : MonoBehaviour
 
     void OnGUI()
     {
+        /*
         var profiling = Profiler.GetProfilingResults().OrderByDescending(x => x.Value);
         int i = 0;
         foreach(var prof in profiling)
@@ -127,8 +128,9 @@ public class WorldGenerator : MonoBehaviour
             GUI.Label(new Rect(10, 400 + 20 * i, 600, 30), $"{prof.Key}: {prof.Value}ms");
             i++;
         }
+        */
     }
-
+    
     private void GenerateChunksAroundCenter(Vector3Int centerChunkPos)
     {
         _lastChunkGenerationCenter = centerChunkPos;
