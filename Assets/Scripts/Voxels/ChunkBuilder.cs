@@ -54,8 +54,8 @@ public class ChunkBuilder
 
                     var localVoxelPos =  new Vector3Int(x, y, z);
                     var globalVoxelPos = _chunkVoxelPos + localVoxelPos;
-
                     var renderType = BlockDataRepository.GetBlockData(voxelType).RenderType;
+
                     if(renderType == BlockRenderType.CustomMesh)
                     {
                         var blockType = BlockTypeRegistry.GetBlockType(voxelType);
@@ -200,26 +200,26 @@ public class ChunkBuilder
 
         var voxelCornerVertices = new Vector3[]
         {
-                localVoxelPos,
-                localVoxelPos + new Vector3(VoxelInfo.VoxelSize, 0, 0),
-                localVoxelPos + new Vector3(VoxelInfo.VoxelSize, 0, VoxelInfo.VoxelSize),
-                localVoxelPos + new Vector3(0, 0, VoxelInfo.VoxelSize),
-                localVoxelPos + new Vector3(0, VoxelInfo.VoxelSize - heightOffset, 0),
-                localVoxelPos + new Vector3(VoxelInfo.VoxelSize, VoxelInfo.VoxelSize - heightOffset, 0),
-                localVoxelPos + new Vector3(VoxelInfo.VoxelSize, VoxelInfo.VoxelSize - heightOffset, VoxelInfo.VoxelSize),
-                localVoxelPos + new Vector3(0, VoxelInfo.VoxelSize - heightOffset, VoxelInfo.VoxelSize)
+            localVoxelPos,
+            localVoxelPos + new Vector3(VoxelInfo.VoxelSize, 0, 0),
+            localVoxelPos + new Vector3(VoxelInfo.VoxelSize, 0, VoxelInfo.VoxelSize),
+            localVoxelPos + new Vector3(0, 0, VoxelInfo.VoxelSize),
+            localVoxelPos + new Vector3(0, VoxelInfo.VoxelSize - heightOffset, 0),
+            localVoxelPos + new Vector3(VoxelInfo.VoxelSize, VoxelInfo.VoxelSize - heightOffset, 0),
+            localVoxelPos + new Vector3(VoxelInfo.VoxelSize, VoxelInfo.VoxelSize - heightOffset, VoxelInfo.VoxelSize),
+            localVoxelPos + new Vector3(0, VoxelInfo.VoxelSize - heightOffset, VoxelInfo.VoxelSize)
         };
 
-        var voxelVertices = new List<Vector3>();
+        _voxelVertices.Clear();
         for(int i = 0; i < VoxelInfo.VoxelFaceData.Length; ++i)
         {
             var faceData = VoxelInfo.VoxelFaceData[i];
             if(VoxelBuildHelper.IsVoxelSideVisible(_world, voxelType, globalVoxelPos, faceData.Direction))
             {
-                voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[0]]);
-                voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[1]]);
-                voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[2]]);
-                voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[3]]);
+                _voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[0]]);
+                _voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[1]]);
+                _voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[2]]);
+                _voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[3]]);
 
                 chunkMesh.Normals.AddRange(faceData.Normals);
 
@@ -232,9 +232,9 @@ public class ChunkBuilder
         }
 
         int vertexBaseIdx = chunkMesh.Vertices.Count;
-        chunkMesh.Vertices.AddRange(voxelVertices);
+        chunkMesh.Vertices.AddRange(_voxelVertices);
 
-        for(int i = 0; i < voxelVertices.Count; i += 4)
+        for(int i = 0; i < _voxelVertices.Count; i += 4)
         {
             chunkMesh.Triangles.Add(i + vertexBaseIdx);
             chunkMesh.Triangles.Add(i + 1 + vertexBaseIdx);
@@ -253,6 +253,9 @@ public class ChunkBuilder
 
         public Color32[] TransparentMeshLightMapping;
     }
+
+    // List of potential vertices for a voxel during building. We only instantiate it once to improve performance.
+    private List<Vector3> _voxelVertices = new List<Vector3>(24);
 
     private VoxelWorld _world;
 
