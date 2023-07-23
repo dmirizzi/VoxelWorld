@@ -160,63 +160,6 @@ public class WorldGenerator : MonoBehaviour
         }
     }   
 
-    private void GenerateCuboidByCorners(Vector3Int p1, Vector3Int p2, ushort type)
-    {
-        var xs = Math.Min(p1.x, p2.x);
-        var xe = Math.Max(p1.x, p2.x);
-        var ys = Math.Min(p1.y, p2.y);
-        var ye = Math.Max(p1.y, p2.y);
-        var zs = Math.Min(p1.z, p2.z);
-        var ze = Math.Max(p1.z, p2.z);
-
-        for(int x = xs; x <= xe; ++x)
-        {
-            for(int z = zs; z <= ze; ++z)
-            {
-                for(int y = ys; y <= ye; ++y)
-                {
-                    _voxelWorld.SetVoxel(x, y, z, type);
-                }
-            }
-        }
-    }
-
-    private void GenerateCuboid(Vector3Int pos, Vector3Int size, ushort type)
-    {
-        for(int x = -size.x; x < size.x; ++x)
-        {
-            for(int z = -size.z; z < size.z; ++z)
-            {
-                for(int y = -size.y; y <= size.y; ++y)
-                {
-                    _voxelWorld.SetVoxel(pos.x + x, pos.y + y, pos.z + z, type);
-                }
-            }
-        }
-    }
-
-    private void GenerateCube(Vector3Int pos, int size, ushort type)
-    {
-        GenerateCuboid(pos, new Vector3Int(size, size, size), type);
-    }
-
-    private void GenerateCubeRoom(int size)
-    {
-        for(int x = -size; x < size; ++x)
-        {
-            for(int z = -size; z < size; ++z)
-            {
-                for(int y = -size; y < size; ++y)
-                {
-                    if(x == -size || x == size-1 || y == -size || y == size-1 || z == -size || z == size-1)
-                    {
-                        _voxelWorld.SetVoxel(x, y, z, BlockDataRepository.GetBlockTypeId("Dirt"));
-                    }
-                }
-            }
-        }        
-    }
-
     private void GenerateCave(Vector3Int position, Vector3Int size, int iterations, int birthNeighbors, int deathNeighbors, float emptyChance)
     {
         if(size.x == 0 || size.y == 0 || size.z == 0)
@@ -311,10 +254,10 @@ public class WorldGenerator : MonoBehaviour
                 {
                     if(cells[x, y, z])
                     {
-                        _voxelWorld.SetVoxel(
+                        _voxelWorld.SetVoxel(new Vector3Int(
                             position.x + x - size.x / 2, 
                             position.y - y, 
-                            position.z + z - size.z / 2, 
+                            position.z + z - size.z / 2 ),
                             0 );
                     }
                 }                

@@ -35,11 +35,12 @@ public class ChunkGenerator
                     else if(globalVoxelPos.y == terrainHeight)
                     {
                         builder.QueueVoxel(localVoxelPos, _grassType);
-
+/*
                         if(TreeShouldBePlaced(localVoxelPos) && (x % 15 == 0 || y % 15 == 0 || z % 15 == 0))
                         {
                             PlaceTree(builder, localVoxelPos, 4, 3);
                         }
+                        */
                     }
                     else if(globalVoxelPos.y == terrainHeight + 1)
                     {

@@ -74,16 +74,6 @@ public class VoxelWorld : MonoBehaviour
         QueueAffectedChunksForRebuild(globalPos);
     }
 
-    public void SetVoxel(
-        int x, int y, int z, 
-        ushort type, 
-        BlockFace? placementDir = null, 
-        BlockFace? lookDir = null, 
-        bool useExistingAuxData = false)
-    {
-        SetVoxel(new Vector3Int(x, y, z), type, placementDir, lookDir, useExistingAuxData);
-    }
-
     public void SetVoxelAndUpdateLightMap(
         Vector3Int globalVoxelPos, 
         ushort type, 
@@ -91,26 +81,8 @@ public class VoxelWorld : MonoBehaviour
         BlockFace? lookDir = null, 
         bool useExistingAuxData = false)
     {
-        SetVoxelAndUpdateLightMap(
-            globalVoxelPos.x, 
-            globalVoxelPos.y, 
-            globalVoxelPos.z,
-            type, 
-            placementDir, 
-            lookDir,
-            useExistingAuxData);
-    }
-
-    public void SetVoxelAndUpdateLightMap(
-        int x, int y, int z, 
-        ushort type, 
-        BlockFace? placementDir = null, 
-        BlockFace? lookDir = null, 
-        bool useExistingAuxData = false)
-    {
-        var globalPos = new Vector3Int(x, y, z);
-        var chunk = GetChunkFromVoxelPosition(x, y, z, true);
-        var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(globalPos);
+        var chunk = GetChunkFromVoxelPosition(globalVoxelPos, true);
+        var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(globalVoxelPos);
 
         var oldVoxelType = chunk.GetVoxel(chunkLocalPos);
 
@@ -119,43 +91,20 @@ public class VoxelWorld : MonoBehaviour
         // If a transparent voxel was replaced by a non-transparent voxel, remove the light value at this location
         if(VoxelInfo.IsTransparent(oldVoxelType) && !VoxelInfo.IsTransparent(type))
         { 
-            RemoveLight(globalPos, false);
-            RemoveLight(globalPos, true);
+            RemoveLight(globalVoxelPos, false);
+            RemoveLight(globalVoxelPos, true);
         }
 
-        SetVoxel(x, y, z, type, placementDir, lookDir, useExistingAuxData);        
+        SetVoxel(globalVoxelPos, type, placementDir, lookDir, useExistingAuxData);        
 
         // If non-transparent voxel was removed or replaced by a transparent voxel, update light map to propagate the light
         // through this new gap
         if(!VoxelInfo.IsTransparent(oldVoxelType) && VoxelInfo.IsTransparent(type))
         { 
-            _lightMap.UpdateOnRemovedSolidVoxel(globalPos, chunksAffectedByLightUpdate);
+            _lightMap.UpdateOnRemovedSolidVoxel(globalVoxelPos, chunksAffectedByLightUpdate);
         }
 
         QueueChunksForLightMappingUpdate(chunksAffectedByLightUpdate);
-    }
-
-    public void SetVoxelSphere(Vector3Int center, int radius, ushort voxelType)
-    {
-        var sqrRadius = radius * radius;
-
-        for(int z = center.z - radius; z < center.z + radius; ++z)
-        {
-            for(int y = center.y - radius; y < center.y + radius; ++y)
-            {
-                for(int x = center.x - radius; x < center.x + radius; ++x)
-                {
-                    var dx = (x - center.x) * (x - center.x);
-                    var dy = (y - center.y) * (y - center.y);
-                    var dz = (z - center.z) * (z - center.z);
-
-                    if(dx + dy + dz < sqrRadius)
-                    {
-                        SetVoxelAndUpdateLightMap(x, y, z, voxelType);
-                    }
-                }
-            }
-        }
     }
 
     public List<Chunk> GetTopMostChunksAndClear()
@@ -192,14 +141,14 @@ public class VoxelWorld : MonoBehaviour
         );     
     }
 
-    public Color32 GetVoxelLightColor(Vector3Int pos)
+    public Color32 GetVoxelLightColor(Vector3Int globalVoxelPos)
     {
-        var chunk = GetChunkFromVoxelPosition(pos.x, pos.y, pos.z, false);
+        var chunk = GetChunkFromVoxelPosition(globalVoxelPos, false);
         if(chunk == null)
         {
             return new Color32(0, 0, 0, 0);
         }
-        var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(pos);
+        var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(globalVoxelPos);
         return new Color32
         (
             (byte)(chunk.GetLightChannelValue(chunkLocalPos, 0) << 4),
@@ -209,50 +158,40 @@ public class VoxelWorld : MonoBehaviour
         );
     }
 
-    public void SetVoxelAuxiliaryData(Vector3Int pos, ushort auxData)
+    public void SetVoxelAuxiliaryData(Vector3Int globalVoxelPos, ushort auxData)
     {
-        var chunk = GetChunkFromVoxelPosition(pos.x, pos.y, pos.z, true);
-        var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(pos);
+        var chunk = GetChunkFromVoxelPosition(globalVoxelPos, true);
+        var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(globalVoxelPos);
         chunk.SetAuxiliaryData(chunkLocalPos, auxData);
     }
 
-    public void ClearVoxelAuxiliaryData(Vector3Int pos)
+    public void ClearVoxelAuxiliaryData(Vector3Int globalVoxelPos)
     {
-        var chunk = GetChunkFromVoxelPosition(pos.x, pos.y, pos.z, true);
-        var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(pos);
+        var chunk = GetChunkFromVoxelPosition(globalVoxelPos, true);
+        var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(globalVoxelPos);
         chunk.ClearAuxiliaryData(chunkLocalPos);
     }
 
-    public ushort? GetVoxelAuxiliaryData(Vector3Int pos)
+    public ushort? GetVoxelAuxiliaryData(Vector3Int globalVoxelPos)
     {
-        return GetVoxelAuxiliaryData(pos.x, pos.y, pos.z);
-    }
-
-    public ushort? GetVoxelAuxiliaryData(int x, int y, int z)
-    {
-        var chunk = GetChunkFromVoxelPosition(x, y, z, false);
+        var chunk = GetChunkFromVoxelPosition(globalVoxelPos, false);
         if(chunk == null)
         {
             return null;
         }
-        var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(new Vector3Int(x, y, z));
+        var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(globalVoxelPos);
         return chunk.GetAuxiliaryData(chunkLocalPos);
-    }
-
-    public ushort GetVoxel(int x, int y, int z)
-    {
-        var chunk = GetChunkFromVoxelPosition(x, y, z, false);
-        if(chunk == null)
-        {
-            return 0;
-        }
-        var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(new Vector3Int(x, y, z));
-        return chunk.GetVoxel(chunkLocalPos);
     }
 
     public ushort GetVoxel(Vector3Int voxelPos)
     {
-        return GetVoxel(voxelPos.x, voxelPos.y, voxelPos.z);
+        var chunk = GetChunkFromVoxelPosition(voxelPos, false);
+        if(chunk == null)
+        {
+            return 0;
+        }
+        var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(voxelPos);
+        return chunk.GetVoxel(chunkLocalPos);
     }
 
     public (Vector3Int, Vector3Int) GetWorldBoundaries()
@@ -385,11 +324,6 @@ public class VoxelWorld : MonoBehaviour
             }
         }
         return _chunks[chunkPos];
-    }
-
-    public Chunk GetChunkFromVoxelPosition(int x, int y, int z, bool create)
-    {
-        return GetChunkFromVoxelPosition(new Vector3Int(x, y, z), create);
     }
 
     private Dictionary<Vector3Int, Chunk> _chunks;

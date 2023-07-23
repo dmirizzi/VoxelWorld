@@ -13,7 +13,7 @@ public class LightMap
 
     public void AddLight(Vector3Int lightPos, int channel, byte intensity, HashSet<Vector3Int> visitedChunks)
     {
-        var firstChunk = _world.GetChunkFromVoxelPosition(lightPos.x, lightPos.y, lightPos.z, true);
+        var firstChunk = _world.GetChunkFromVoxelPosition(lightPos, true);
         if(firstChunk == null)
         {
             return;
@@ -40,7 +40,7 @@ public class LightMap
         foreach(var dir in fillDirections)
         {
             var neighborGlobalPos = globalRemovedVoxelPos + dir;
-            var chunk = _world.GetChunkFromVoxelPosition(neighborGlobalPos.x, neighborGlobalPos.y, neighborGlobalPos.z, true);
+            var chunk = _world.GetChunkFromVoxelPosition(neighborGlobalPos, true);
             lightNodes.Enqueue(new LightNode
             {
                 GlobalPos = neighborGlobalPos,
@@ -58,7 +58,7 @@ public class LightMap
 
     public void RemoveLight(Vector3Int lightPos, int channel, HashSet<Vector3Int> visitedChunks)
     {
-        var firstChunk = _world.GetChunkFromVoxelPosition(lightPos.x, lightPos.y, lightPos.z, true);
+        var firstChunk = _world.GetChunkFromVoxelPosition(lightPos, true);
         if(firstChunk == null)
         {
             return;
@@ -95,7 +95,7 @@ public class LightMap
                 }
                 visitedNodes.Add(neighborGlobalPos);
 
-                var neighborChunk = _world.GetChunkFromVoxelPosition(neighborGlobalPos.x, neighborGlobalPos.y, neighborGlobalPos.z, true);
+                var neighborChunk = _world.GetChunkFromVoxelPosition(neighborGlobalPos, true);
                 if(neighborChunk != null)
                 {
                     var localNeighborPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(neighborGlobalPos);
@@ -284,7 +284,7 @@ public class LightMap
             foreach(var neighborDir in fillDirections)
             {
                 var neighborGlobalPos = lightNode.GlobalPos + neighborDir;                
-                var neighborChunk = _world.GetChunkFromVoxelPosition(neighborGlobalPos.x, neighborGlobalPos.y, neighborGlobalPos.z, false);                 
+                var neighborChunk = _world.GetChunkFromVoxelPosition(neighborGlobalPos, false);                 
                 if(neighborChunk == null)
                 {
                     visitedNodes.Add(neighborGlobalPos);
