@@ -69,6 +69,8 @@ public class WorldGenerator : MonoBehaviour
 
     void Awake()
     {
+        VoxelBuildHelper.BuildVoxelUVCache();
+
         ChunkGenerator = new ChunkGenerator();
         _chunkGenerationRadiusSqr = ChunkGenerationRadius * ChunkGenerationRadius;
         _updateScheduler = FindObjectOfType<WorldUpdateScheduler>();

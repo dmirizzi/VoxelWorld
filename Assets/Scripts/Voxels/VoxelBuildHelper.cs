@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public static class VoxelBuildHelper
@@ -116,9 +119,33 @@ public static class VoxelBuildHelper
         return !VoxelInfo.IsOpaque(neighbor, neighborFace, yRotation);
     }
 
+    public static void BuildVoxelUVCache()
+    {
+        _voxelUVCache = new Dictionary<(ushort, BlockFace), Vector2[]>();
+
+        var faces = Enum.GetValues(typeof(BlockFace)).Cast<BlockFace>();
+
+        var blockData = BlockDataRepository.GetAllBlockData();
+        for(ushort voxelType = 1; voxelType < blockData.Count; ++voxelType)
+        {
+            foreach(var face in faces)
+            {
+                if(TryCalcUVsForVoxel(voxelType, face, out var uvs))
+                {
+                    _voxelUVCache[(voxelType, face)] = uvs;
+                }
+            }
+        }
+    }
+
     //TODO: Cache calculated UVs -> any significant performance increase?
     //TODO: Either thread-safe dict access or precalculate all uvs before building world
     public static Vector2[] GetUVsForVoxelType(ushort voxelType, BlockFace face)
+    {     
+        return _voxelUVCache[(voxelType, face)];
+    }
+
+    public static bool TryCalcUVsForVoxel(ushort voxelType, BlockFace face, out Vector2[] uvs)
     {     
         // Shift the UV coordinates by a tiny amount to probe the texture pixel colors away from the border
         // of the pixel rather than at the border to avoid interpolation between atlas tiles
@@ -126,21 +153,29 @@ public static class VoxelBuildHelper
           .0000001f,
           .0000001f
         );
-
-        var uvOffset = VoxelInfo.GetAtlasUVOffsetForVoxel(voxelType, face) + texelOffset;
-        var uvTileSize = new Vector2(
-            VoxelInfo.TextureTileSize * 1.0f / VoxelInfo.TextureAtlasWidth - texelOffset.x * 2,
-            VoxelInfo.TextureTileSize * 1.0f / VoxelInfo.TextureAtlasHeight + texelOffset.y * 2
-        );
-
-        var uvs = new Vector2[]
+    
+        if(VoxelInfo.TryGetAtlasUVOffsetForVoxel(voxelType, face, out var uvOffset))
         {
-            uvOffset + new Vector2(0f, 0f),
-            uvOffset + new Vector2(uvTileSize.x, 0f),
-            uvOffset + new Vector2(0f, -uvTileSize.y),
-            uvOffset + new Vector2(uvTileSize.x, -uvTileSize.y)
-        };
+            uvOffset += texelOffset;
+            var uvTileSize = new Vector2(
+                VoxelInfo.TextureTileSize * 1.0f / VoxelInfo.TextureAtlasWidth - texelOffset.x * 2,
+                VoxelInfo.TextureTileSize * 1.0f / VoxelInfo.TextureAtlasHeight + texelOffset.y * 2
+            );
 
-        return uvs;
-    }
+            uvs = new Vector2[]
+            {
+                uvOffset + new Vector2(0f, 0f),
+                uvOffset + new Vector2(uvTileSize.x, 0f),
+                uvOffset + new Vector2(0f, -uvTileSize.y),
+                uvOffset + new Vector2(uvTileSize.x, -uvTileSize.y)
+            };
+
+            return true;
+        }
+
+        uvs = null;
+        return false;
+    }    
+
+    private static Dictionary<(ushort, BlockFace), Vector2[]> _voxelUVCache;
 }

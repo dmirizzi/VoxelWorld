@@ -58,14 +58,19 @@ public static class VoxelInfo
         return BlockDataRepository.GetBlockData(blockType).HeightOffset;
     }
 
-    public static Vector2 GetAtlasUVOffsetForVoxel(ushort blockType, BlockFace face)
+    public static bool TryGetAtlasUVOffsetForVoxel(ushort blockType, BlockFace face, out Vector2 uvOffset)
     {
-        var tilePosCoords = BlockDataRepository.GetBlockData(blockType).GetFaceTextureTileCoords(face);
+        if(BlockDataRepository.GetBlockData(blockType).TryGetFaceTextureTileCoords(face, out var tilePosCoords))
+        {
 
-        return new Vector2(
-            (float)TextureTileSize / TextureAtlasWidth * tilePosCoords[0],
-            -(float)TextureTileSize / TextureAtlasHeight * tilePosCoords[1]
-        );
+            uvOffset = new Vector2(
+                (float)TextureTileSize / TextureAtlasWidth * tilePosCoords[0],
+                -(float)TextureTileSize / TextureAtlasHeight * tilePosCoords[1]
+            );
+            return true;
+        }
+        uvOffset = default;
+        return false;
     }
     
     public static readonly VoxelFaceData[] VoxelFaceData = new VoxelFaceData[]

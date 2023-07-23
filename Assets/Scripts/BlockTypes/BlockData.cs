@@ -84,8 +84,14 @@ public class BlockData
         return false;
     }
 
-    public int[] GetFaceTextureTileCoords(BlockFace face)
+    public bool TryGetFaceTextureTileCoords(BlockFace face, out int[] tileCoords)
     {
+        if(FaceTextureTileCoords == null)
+        {
+            tileCoords = null;
+            return false;
+        }
+
         var blockFaceSelector = BlockFaceHelper.ToBlockFaceSelector(face);
         int[] coords = null;
         if(FaceTextureTileCoords.ContainsKey(blockFaceSelector))
@@ -103,14 +109,19 @@ public class BlockData
 
         if(coords == null)
         {
-            throw new System.ArgumentException($"Invalid FaceTextureTileCoords for block type {Name}. Must either contain a set of tile coords for specific faces (and optionally a default) or one specifier for all faces");
+            UnityEngine.Debug.LogWarning($"Invalid FaceTextureTileCoords for block type {Name}. Must either contain a set of tile coords for specific faces (and optionally a default) or one specifier for all faces");
+            tileCoords = null;
+            return false;
         }
 
         if(coords.Length != 2)
         {
-            throw new System.ArgumentException($"Invalid FaceTextureTileCoords for block type {Name}. Tile coordinates must have exactly two values - x and y.");
+            UnityEngine.Debug.LogWarning($"Invalid FaceTextureTileCoords for block type {Name}. Tile coordinates must have exactly two values - x and y.");
+            tileCoords = null;
+            return false;
         }
 
-        return coords;
+        tileCoords = coords;
+        return true;
     }
 }

@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using UnityEngine;
 
 public static class BlockDataRepository
@@ -41,6 +39,8 @@ public static class BlockDataRepository
     {
         return _blockDataList.BlockData[index];
     }
+
+    public static IReadOnlyList<BlockData> GetAllBlockData() => _blockDataList.BlockData;
 
     private static BlockDataList _blockDataList;
 
