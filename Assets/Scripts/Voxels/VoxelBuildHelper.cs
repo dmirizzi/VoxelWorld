@@ -72,26 +72,23 @@ public static class VoxelBuildHelper
         return result;
     }
 
-    public static bool NeighborVoxelHasOpaqueSide(VoxelWorld world, Vector3Int globalVoxelPos, Vector3Int direction)
+    public static bool NeighborVoxelHasOpaqueSide(VoxelWorld world, Vector3Int globalVoxelPos, BlockFace direction, Vector3Int directionVec)
     {
-        var neighbor = world.GetVoxel(globalVoxelPos + direction);
-        var neighborFace = BlockFaceHelper.GetBlockFaceFromVector(-direction);
-        if(!neighborFace.HasValue)
-        {
-            throw new System.ArgumentException($"Direction vector must be a cardinal direction! Instead is {direction}");
-        }
+        var globalNeighborPos = globalVoxelPos + directionVec;
+        var neighbor = world.GetVoxel(globalNeighborPos);
+        var neighborFace = BlockFaceHelper.GetOppositeFace(direction);
 
         var blockType = BlockTypeRegistry.GetBlockType(neighbor);
         int yRotation = 0;
         if(blockType != null)
         {
             yRotation = BlockFaceHelper.GetYAngleBetweenFaces(
-                blockType.GetForwardFace(world, globalVoxelPos + direction),
+                blockType.GetForwardFace(world, globalNeighborPos),
                 BlockFace.Back
             );
         }
 
-        return VoxelInfo.IsOpaque(neighbor, neighborFace.Value, yRotation);        
+        return VoxelInfo.IsOpaque(neighbor, neighborFace, yRotation);        
     }
 
     public static bool IsVoxelSideVisible(VoxelWorld world, ushort voxelType, Vector3Int globalVoxelPos, BlockFace direction)

@@ -37,9 +37,10 @@ public class LightMap
     {
         // Fill in the gap in the light map left by the removed solid voxel by propagating the surrounding light nodes
         var lightNodes = new Queue<LightNode>();
-        foreach(var dir in fillDirections)
+        foreach(var neighborFace in fillDirections)
         {
-            var neighborGlobalPos = globalRemovedVoxelPos + dir;
+            var neighborDir = BlockFaceHelper.GetVectorIntFromBlockFace(neighborFace);
+            var neighborGlobalPos = globalRemovedVoxelPos + neighborDir;
             var chunk = _world.GetChunkFromVoxelPosition(neighborGlobalPos, true);
             lightNodes.Enqueue(new LightNode
             {
@@ -86,9 +87,10 @@ public class LightMap
                 visitedChunks.Add(chunk);
             }
 
-            foreach(var dir in fillDirections)
+            foreach(var neighborFace in fillDirections)
             {
-                var neighborGlobalPos = removeLightNode.GlobalPos + dir;
+                var neighborDir = BlockFaceHelper.GetVectorIntFromBlockFace(neighborFace);
+                var neighborGlobalPos = removeLightNode.GlobalPos + neighborDir;
                 if(visitedNodes.Contains(neighborGlobalPos))
                 {
                     continue;
@@ -103,7 +105,7 @@ public class LightMap
                     if(neighborLightLevel > 0 && neighborLightLevel < removeLightNode.LightLevel
 
                         // Remove sunlight downwards as long as its at max level
-                        || (dir == Vector3Int.down && channel == Chunk.SunlightChannel && removeLightNode.LightLevel == 15))                
+                        || (neighborDir == Vector3Int.down && channel == Chunk.SunlightChannel && removeLightNode.LightLevel == 15))                
                     {
                         neighborChunk.SetLightChannelValue(localNeighborPos, channel, 0);
                         removeLightNodes.Enqueue(new RemoveLightNode
@@ -129,7 +131,7 @@ public class LightMap
     }    
 
     public void UpdateSunlight(IEnumerable<Chunk> topMostChunks, HashSet<Vector3Int> visitedChunks)
-    {
+    {        
         var lightNodes = new Queue<LightNode>();
 
         foreach(var chunk in topMostChunks)
@@ -147,6 +149,7 @@ public class LightMap
                 }
             }
         }
+
 
         PropagateLightNodes(
             lightNodes,
@@ -269,22 +272,35 @@ public class LightMap
         HashSet<Vector3Int> visitedNodes, 
         HashSet<Vector3Int> visitedChunks,
         bool isSunlight = false )
-    {
+    {        
+        //TODO:Alternative approach:
+        //TODO: - Connect all chunks via pointers
+        //TODO: - Move from voxel to voxel with local positions + current chunk pointer
+        //TODO: - If voxelPos < 0 or > 15, move over to appropriate chunk via pointer from current chunk
+        //TODO: - Update visitedChunks when crossing over chunks
+        //TODO: -> Avoid frequent conversions and chunk lookups, but need to update pointers when chunks are loaded/unloaded
+        //TODO: -> Chunk could "notify" its neighbors when it is created or deleted
         while(lightNodes.Count > 0)
         {
             var lightNode = lightNodes.Dequeue();
 
-            //TODO: Should we only do this for chunks where a light value was actually changed below?
+
             var localPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(lightNode.GlobalPos);
+
+            // ~250ms / ~1100ms
             foreach(var chunk in GetAffectedChunks(lightNode.Chunk.ChunkPos, localPos))
             {
                 visitedChunks.Add(chunk);
             }
 
-            foreach(var neighborDir in fillDirections)
-            {
+
+            foreach(var neighborFace in fillDirections)
+            {                
+                var neighborDir = BlockFaceHelper.GetVectorIntFromBlockFace(neighborFace);
                 var neighborGlobalPos = lightNode.GlobalPos + neighborDir;                
+                // ~280ms / ~1100ms
                 var neighborChunk = _world.GetChunkFromVoxelPosition(neighborGlobalPos, false);                 
+
                 if(neighborChunk == null)
                 {
                     visitedNodes.Add(neighborGlobalPos);
@@ -306,14 +322,17 @@ public class LightMap
                     }
                 }
 
+                var neighborOpaque = VoxelBuildHelper.NeighborVoxelHasOpaqueSide(_world, lightNode.GlobalPos, neighborFace, neighborDir);
+
                 if(neighborChunk != null 
-                    && !VoxelBuildHelper.NeighborVoxelHasOpaqueSide(_world, lightNode.GlobalPos, neighborDir)
+                    && !neighborOpaque
                     && neighborLightLevel + 2 <= currentLightLevel)
                 {
                     visitedNodes.Add(neighborGlobalPos);
 
                     byte newLightLevel = GetNewLightLevel(currentLightLevel, neighborDir, isSunlight);
                     neighborChunk.SetLightChannelValue(localNeighborPos, channel, newLightLevel);
+
 
                     //TODO: Do we actually need to store the chunk in the light node? Seems like we 
                     //TODO: fetch it for each neighbor anyways (compare performance with & without)
@@ -323,7 +342,8 @@ public class LightMap
                         Chunk = neighborChunk
                     });
                 }
-            }            
+
+            }                
         }
     }
 
@@ -374,14 +394,14 @@ public class LightMap
         public float LightLevel;
     }
 
-    private Vector3Int[] fillDirections = 
+    private BlockFace[] fillDirections = 
     {
-        Vector3Int.up,
-        Vector3Int.down,
-        Vector3Int.left,
-        Vector3Int.right,
-        Vector3Int.forward,
-        Vector3Int.back,   
+        BlockFace.Top,
+        BlockFace.Bottom,
+        BlockFace.Left,
+        BlockFace.Right,
+        BlockFace.Back,
+        BlockFace.Front
     };
 }
 
