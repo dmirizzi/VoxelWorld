@@ -5,7 +5,7 @@ using UnityEngine;
 
 class SunlightUpdateJob : IWorldUpdateJob
 {
-    public int UpdateStage => 5;
+    public int UpdateStage => 3;
 
     public Vector3Int ChunkPos { get; private set; }
 
