@@ -33,12 +33,12 @@ class WedgeBlockType : BlockTypeBase
             new Vector3(-size, +size, +size)
         };
 
-        var placementFace = GetProperty<PlacementFaceProperty>(world, globalVoxelPos);
-        var placementDir = Vector3.forward;
-        if(placementFace != null)
+        var placementFaceProperty = GetProperty<PlacementFaceProperty>(world, globalVoxelPos);
+        var placementDir = BlockFace.Back;
+        if(placementFaceProperty != null)
         {
-            placementDir = BlockFaceHelper.GetVectorFromBlockFace(placementFace.PlacementFace);
-            VoxelBuildHelper.PointVerticesTowardsInPlace(cornerVertices, placementDir);
+            placementDir = placementFaceProperty.PlacementFace;
+            VoxelBuildHelper.PointVerticesTowardsInPlace(cornerVertices, BlockFaceHelper.GetVectorFromBlockFace(placementDir));
         }
 
         var basePos = localVoxelPos + new Vector3(size, size, size);
@@ -47,7 +47,7 @@ class WedgeBlockType : BlockTypeBase
         int vertexBaseIdx = chunkMesh.Vertices.Count;
         var tileUV = VoxelBuildHelper.GetUVsForVoxelType(_voxelTypeTexture, BlockFace.Bottom);
 
-        if(VoxelBuildHelper.IsVoxelSideVisible(world, _voxelType, globalVoxelPos, Vector3Int.down))
+        if(VoxelBuildHelper.IsVoxelSideVisible(world, _voxelType, globalVoxelPos, BlockFace.Bottom))
         {
             chunkMesh.AddQuad(
                 new Vector3[] { cornerVertices[0], cornerVertices[1], cornerVertices[2], cornerVertices[3] },
@@ -55,7 +55,7 @@ class WedgeBlockType : BlockTypeBase
             );
         }
             
-        if(VoxelBuildHelper.IsVoxelSideVisible(world, _voxelType, globalVoxelPos, Vector3Int.FloorToInt(placementDir)))
+        if(VoxelBuildHelper.IsVoxelSideVisible(world, _voxelType, globalVoxelPos, placementDir))
         {
             chunkMesh.AddQuad(
                 new Vector3[] { cornerVertices[3], cornerVertices[2], cornerVertices[4], cornerVertices[5] },

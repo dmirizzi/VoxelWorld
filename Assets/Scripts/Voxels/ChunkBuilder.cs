@@ -214,7 +214,7 @@ public class ChunkBuilder
         for(int i = 0; i < VoxelInfo.VoxelFaceData.Length; ++i)
         {
             var faceData = VoxelInfo.VoxelFaceData[i];
-            if(VoxelBuildHelper.IsVoxelSideVisible(_world, voxelType, globalVoxelPos, faceData.Direction))
+            if(VoxelBuildHelper.IsVoxelSideVisible(_world, voxelType, globalVoxelPos, faceData.VoxelFace))
             {
                 _voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[0]]);
                 _voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[1]]);

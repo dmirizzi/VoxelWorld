@@ -13,6 +13,17 @@ public static class BlockFaceHelper
         { Vector3.left,     BlockFace.Left },
         { Vector3.right,    BlockFace.Right }
     };
+
+    private static Dictionary<BlockFace, Vector3> _reverseMapping = new Dictionary<BlockFace, Vector3>()
+    {
+        { BlockFace.Top,       Vector3.up },
+        { BlockFace.Bottom,    Vector3.down },
+        { BlockFace.Front,     Vector3.back },
+        { BlockFace.Back,      Vector3.forward },
+        { BlockFace.Left,      Vector3.left },
+        { BlockFace.Right,     Vector3.right }
+    };
+
     private static Dictionary<Vector3Int, BlockFace> _mappingInt = new Dictionary<Vector3Int, BlockFace>()
     {
         { Vector3Int.up,       BlockFace.Top },
@@ -21,6 +32,16 @@ public static class BlockFaceHelper
         { Vector3Int.forward,  BlockFace.Back },
         { Vector3Int.left,     BlockFace.Left },
         { Vector3Int.right,    BlockFace.Right }
+    };
+
+    private static Dictionary<BlockFace, Vector3Int> _reverseMappingInt = new Dictionary<BlockFace, Vector3Int>()
+    {
+        { BlockFace.Top,       Vector3Int.up },
+        { BlockFace.Bottom,    Vector3Int.down },
+        { BlockFace.Front,     Vector3Int.back },
+        { BlockFace.Back,      Vector3Int.forward },
+        { BlockFace.Left,      Vector3Int.left },
+        { BlockFace.Right,     Vector3Int.right }
     };
 
     public static BlockFaceSelector ToBlockFaceSelector(BlockFace face)
@@ -83,12 +104,12 @@ public static class BlockFaceHelper
 
     public static Vector3 GetVectorFromBlockFace(BlockFace face)
     {
-        return _mapping.Single(kv => kv.Value == face).Key;
+        return _reverseMapping[face];
     }
 
     public static Vector3Int GetVectorIntFromBlockFace(BlockFace face)
     {
-        return _mappingInt.Single(kv => kv.Value == face).Key;
+        return _reverseMappingInt[face];
     }
 
     public static BlockFace GetOppositeFace(BlockFace face)
