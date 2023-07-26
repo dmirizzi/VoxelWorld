@@ -53,6 +53,4 @@ public class ChunkUpdateBuilder
     public ChunkUpdate GetChunkUpdate() => _chunkUpdate;
 
     private ChunkUpdate _chunkUpdate;
-
-    private Vector3 _playerPos;
 }

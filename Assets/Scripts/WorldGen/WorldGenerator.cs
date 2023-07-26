@@ -1,16 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using UnityEngine;
 
 public class WorldGenerator : MonoBehaviour
 {
     public int ChunkGenerationRadius = 4;
-
-    public int MaxNumChunkGenerationTasks = 4;
-
-    public int MaxNumChunksCreatedPerFrame = 2;
 
     public int WorldSeed = 123456789;
 

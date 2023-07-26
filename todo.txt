@@ -19,6 +19,10 @@
 
 [ ] Reverse implementations for overloads with Vector vs (x,y,z) where unnecessary vector is created
 
+[ ] Maybe instead of copying mesh for every custom mesh voxel instance, instead have one source mesh
+    and have a mesh view object that can track translations, rotations etc. and once we actually read it out,
+    tracked transformations are applied on source data. Kind of similar to LINQ execution
+
 [ ] Refactor Voxel Mesh Building (e.g. DoorBlockType, WedgeBlockType)
     -> VoxelMeshBuilder Class
     -> Add vertices, uvs
