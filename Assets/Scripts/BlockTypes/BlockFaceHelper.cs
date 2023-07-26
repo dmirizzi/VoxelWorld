@@ -3,7 +3,7 @@ using UnityEngine;
 
 public static class BlockFaceHelper
 {
-    private static Dictionary<Vector3, BlockFace> _mapping = new Dictionary<Vector3, BlockFace>()
+    private static Dictionary<Vector3, BlockFace> _mapping = new Dictionary<Vector3, BlockFace>
     {
         { Vector3.up,       BlockFace.Top },
         { Vector3.down,     BlockFace.Bottom },
@@ -13,7 +13,7 @@ public static class BlockFaceHelper
         { Vector3.right,    BlockFace.Right }
     };
 
-    private static Dictionary<BlockFace, Vector3> _reverseMapping = new Dictionary<BlockFace, Vector3>()
+    private static Dictionary<BlockFace, Vector3> _reverseMapping = new Dictionary<BlockFace, Vector3>
     {
         { BlockFace.Top,       Vector3.up },
         { BlockFace.Bottom,    Vector3.down },
@@ -23,7 +23,7 @@ public static class BlockFaceHelper
         { BlockFace.Right,     Vector3.right }
     };
 
-    private static Dictionary<Vector3Int, BlockFace> _mappingInt = new Dictionary<Vector3Int, BlockFace>()
+    private static Dictionary<Vector3Int, BlockFace> _mappingInt = new Dictionary<Vector3Int, BlockFace>
     {
         { Vector3Int.up,       BlockFace.Top },
         { Vector3Int.down,     BlockFace.Bottom },
@@ -33,7 +33,7 @@ public static class BlockFaceHelper
         { Vector3Int.right,    BlockFace.Right }
     };
 
-    private static Dictionary<BlockFace, Vector3Int> _reverseMappingInt = new Dictionary<BlockFace, Vector3Int>()
+    private static Dictionary<BlockFace, Vector3Int> _reverseMappingInt = new Dictionary<BlockFace, Vector3Int>
     {
         { BlockFace.Top,       Vector3Int.up },
         { BlockFace.Bottom,    Vector3Int.down },
@@ -41,6 +41,22 @@ public static class BlockFaceHelper
         { BlockFace.Back,      Vector3Int.forward },
         { BlockFace.Left,      Vector3Int.left },
         { BlockFace.Right,     Vector3Int.right }
+    };
+
+    private static Dictionary<BlockFace, int> _blockFaceTurnNo = new Dictionary<BlockFace, int>()
+    {
+        { BlockFace.Front, 0},
+        { BlockFace.Left, 1 },
+        { BlockFace.Back, 2 },
+        { BlockFace.Right, 3 },
+    };
+
+    private static List<BlockFace> _yRotationClockwiseLookup = new List<BlockFace> 
+    {
+        BlockFace.Front,
+        BlockFace.Left,
+        BlockFace.Back,
+        BlockFace.Right
     };
 
     public static BlockFaceSelector ToBlockFaceSelector(BlockFace face)
@@ -71,23 +87,40 @@ public static class BlockFaceHelper
 
     public static BlockFace RotateFaceY(BlockFace face, int yAngleDeg)
     {
-        var vec = Quaternion.Euler(0, yAngleDeg, 0) * GetVectorFromBlockFace(face);
-
-        var result = GetBlockFaceFromVector(vec);
-        if(result == null)
+        if(face == BlockFace.Top || face == BlockFace.Bottom)
         {
-            throw new System.ArgumentException($"Y-Angle for BlockFace rotation must be a cardinal direction (i.e. a multiple of 90)");
+            return face;
         }
 
-        return result.Value;
+        var turn = _blockFaceTurnNo[face];
+        var turnOffset = yAngleDeg / 90;
+        return _yRotationClockwiseLookup[(turn + turnOffset) % 4];
     }
 
     public static int GetYAngleBetweenFaces(BlockFace from, BlockFace to)
     {
-        var fromVec = GetVectorFromBlockFace(from);
-        var toVec = GetVectorFromBlockFace(to);
-        return (int)Vector3.SignedAngle(fromVec, toVec, Vector3.up);
+        if(from == BlockFace.Top || from == BlockFace.Bottom || to == BlockFace.Top || to == BlockFace.Bottom )
+        {
+            return 0;
+        }
+
+        var turns = _blockFaceTurnNo[to] - _blockFaceTurnNo[from];
+
+        if(System.Math.Abs(turns) > 2)
+        {
+            // Wrap around for shortest rotation
+            return -System.Math.Sign(turns) * 90;
+        }
+        if(turns == -2)
+        {
+            // Just to mimic Vector3.SignedAngle's behavior which was used in a previous implementation
+            // of this method
+            return turns * -90;
+        }
+
+        return turns * 90;
     }
+
 
     public static BlockFace? GetBlockFaceFromVector(Vector3 vector)
     {
