@@ -143,6 +143,11 @@ class WorldUpdateScheduler : MonoBehaviour
             var next = jobNode.Next;
             if (jobNode.Value.JobTask.IsCompleted)
             {
+                if(jobNode.Value.JobTask.Exception != null)
+                {
+                    UnityEngine.Debug.LogException(jobNode.Value.JobTask.Exception);
+                }
+
                 //var token = Profiler.StartProfiling($"{jobNode.Value.Job.GetType()}-PostExecute");
                 jobNode.Value.Job.PostExecuteSync(_world, _worldGenerator, this);
                 //Profiler.StopProfiling(token);

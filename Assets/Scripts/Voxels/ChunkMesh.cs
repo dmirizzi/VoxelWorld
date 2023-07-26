@@ -6,31 +6,31 @@ public class ChunkMesh
 {
     public ChunkMesh()
     {
-        Vertices = new List<Vector3>();
-        Normals = new List<Vector3>();
-        UVCoordinates = new List<Vector2>();
-        Triangles = new List<int>();
+        _vertices = new List<Vector3>();
+        _normals = new List<Vector3>();
+        _uvCoordinates = new List<Vector2>();
+        _triangles = new List<int>();
     }
 
-    public List<Vector3> Vertices { get; }
+    public IReadOnlyList<Vector3> Vertices => _vertices;
 
-    public List<Vector3> Normals { get; }
+    public IReadOnlyList<Vector3> Normals => _normals;
     
-    public List<Vector2> UVCoordinates { get; }
+    public IReadOnlyList<Vector2> UVCoordinates => _uvCoordinates;
 
-    public List<int> Triangles { get; }
+    public IReadOnlyList<int> Triangles => _triangles;
 
     public void AddMesh(VoxelMesh mesh, Vector3 localBasePos, Vector3 dir)
     {
-        int vertexBaseIdx = Vertices.Count;
+        int vertexBaseIdx = _vertices.Count;
 
         mesh.PointTowards(dir);
         mesh.Translate(localBasePos + new Vector3(0.5f, 0f, 0.5f));
 
-        Vertices.AddRange(mesh.Vertices);
-        Normals.AddRange(mesh.Normals);
-        UVCoordinates.AddRange(mesh.UVs);
-        Triangles.AddRange(mesh.Triangles.Select( idx => idx + vertexBaseIdx));
+        _vertices.AddRange(mesh.Vertices);
+        _normals.AddRange(mesh.Normals);
+        _uvCoordinates.AddRange(mesh.UVs);
+        _triangles.AddRange(mesh.Triangles.Select( idx => idx + vertexBaseIdx));
     }
 
     public void AddBox(Vector3 centerPos, Vector3 size, Vector2[] uvCoordinates, Vector3 direction)
@@ -115,42 +115,67 @@ public class ChunkMesh
     {
         int vertexBaseIdx = Vertices.Count;
 
-        Vertices.Add(vertices[0]);
-        Vertices.Add(vertices[1]);
-        Vertices.Add(vertices[2]);
-        Vertices.Add(vertices[3]);
+        _vertices.Add(vertices[0]);
+        _vertices.Add(vertices[1]);
+        _vertices.Add(vertices[2]);
+        _vertices.Add(vertices[3]);
 
-        Normals.AddRange(Enumerable.Repeat(normal, 4));
+        _normals.AddRange(Enumerable.Repeat(normal, 4));
 
-        UVCoordinates.Add(uvCoordinates[0]);
-        UVCoordinates.Add(uvCoordinates[1]);
-        UVCoordinates.Add(uvCoordinates[2]);
-        UVCoordinates.Add(uvCoordinates[3]);
+        _uvCoordinates.Add(uvCoordinates[0]);
+        _uvCoordinates.Add(uvCoordinates[1]);
+        _uvCoordinates.Add(uvCoordinates[2]);
+        _uvCoordinates.Add(uvCoordinates[3]);
 
-        Triangles.Add(vertexBaseIdx);
-        Triangles.Add(vertexBaseIdx + 1);
-        Triangles.Add(vertexBaseIdx + 2);
-        Triangles.Add(vertexBaseIdx + 2);
-        Triangles.Add(vertexBaseIdx + 3);
-        Triangles.Add(vertexBaseIdx);
+        _triangles.Add(vertexBaseIdx);
+        _triangles.Add(vertexBaseIdx + 1);
+        _triangles.Add(vertexBaseIdx + 2);
+        _triangles.Add(vertexBaseIdx + 2);
+        _triangles.Add(vertexBaseIdx + 3);
+        _triangles.Add(vertexBaseIdx);
     }
 
     public void AddTriangle(Vector3[] vertices, Vector2[] uvCoordinates, Vector3 normal)
     {
         int vertexBaseIdx = Vertices.Count;
 
-        Vertices.Add(vertices[0]);
-        Vertices.Add(vertices[1]);
-        Vertices.Add(vertices[2]);
+        _vertices.Add(vertices[0]);
+        _vertices.Add(vertices[1]);
+        _vertices.Add(vertices[2]);
 
-        Normals.AddRange(Enumerable.Repeat(normal, 3));
+        _normals.AddRange(Enumerable.Repeat(normal, 3));
 
-        UVCoordinates.Add(uvCoordinates[0]);
-        UVCoordinates.Add(uvCoordinates[1]);
-        UVCoordinates.Add(uvCoordinates[2]);
+        _uvCoordinates.Add(uvCoordinates[0]);
+        _uvCoordinates.Add(uvCoordinates[1]);
+        _uvCoordinates.Add(uvCoordinates[2]);
 
-        Triangles.Add(vertexBaseIdx);
-        Triangles.Add(vertexBaseIdx + 1);
-        Triangles.Add(vertexBaseIdx + 2);
+        _triangles.Add(vertexBaseIdx);
+        _triangles.Add(vertexBaseIdx + 1);
+        _triangles.Add(vertexBaseIdx + 2);
     }
+
+    public void AddVertices(IEnumerable<Vector3> vertices) => _vertices.AddRange(vertices);
+
+    public void AddNormals(IEnumerable<Vector3> normals) => _normals.AddRange(normals);
+
+    public void AddTriangleIndex(int index) => _triangles.Add(index);
+
+    public void AddUVCoordinate(Vector2 uvCoordinate) => _uvCoordinates.Add(uvCoordinate);
+
+    public Vector3[] GetVerticesArray() => _vertices.ToArray();
+
+    public Vector3[] GetNormalsArray() => _normals.ToArray();
+
+    public Vector2[] GetUVArray() => _uvCoordinates.ToArray();
+
+    public int[] GetTrianglesArray() => _triangles.ToArray();
+
+    private List<Vector3> _vertices;
+
+    private List<Vector3> _normals;
+    
+    private List<Vector2> _uvCoordinates;
+
+    private List<int> _triangles;
+
 }

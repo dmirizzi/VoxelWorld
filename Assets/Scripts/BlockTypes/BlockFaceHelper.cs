@@ -92,6 +92,11 @@ public static class BlockFaceHelper
             return face;
         }
 
+        if(yAngleDeg < 0)
+        {
+            yAngleDeg = 360 - yAngleDeg;
+        }
+
         var turn = _blockFaceTurnNo[face];
         var turnOffset = yAngleDeg / 90;
         return _yRotationClockwiseLookup[(turn + turnOffset) % 4];

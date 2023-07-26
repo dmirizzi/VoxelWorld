@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -102,11 +103,11 @@ public class ChunkBuilder
 
         meshFilter.Clear();
         meshFilter.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
- 
-        meshFilter.vertices = chunkMesh.Vertices.ToArray();
-        meshFilter.triangles = chunkMesh.Triangles.ToArray();
-        meshFilter.normals = chunkMesh.Normals.ToArray();
-        meshFilter.uv = chunkMesh.UVCoordinates.ToArray();
+
+        meshFilter.vertices = chunkMesh.GetVerticesArray();
+        meshFilter.triangles = chunkMesh.GetTrianglesArray();
+        meshFilter.normals = chunkMesh.GetNormalsArray();
+        meshFilter.uv = chunkMesh.GetUVArray();
         meshFilter.Optimize();
     }
 
@@ -218,27 +219,27 @@ public class ChunkBuilder
                 _voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[2]]);
                 _voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[3]]);
 
-                chunkMesh.Normals.AddRange(faceData.Normals);
+                chunkMesh.AddNormals(faceData.Normals);
 
                 var uv = VoxelBuildHelper.GetUVsForVoxelType(voxelType, faceData.VoxelFace);
-                chunkMesh.UVCoordinates.Add(uv[faceData.UVIndices[0]]);
-                chunkMesh.UVCoordinates.Add(uv[faceData.UVIndices[1]]);
-                chunkMesh.UVCoordinates.Add(uv[faceData.UVIndices[2]]);
-                chunkMesh.UVCoordinates.Add(uv[faceData.UVIndices[3]]);
+                chunkMesh.AddUVCoordinate(uv[faceData.UVIndices[0]]);
+                chunkMesh.AddUVCoordinate(uv[faceData.UVIndices[1]]);
+                chunkMesh.AddUVCoordinate(uv[faceData.UVIndices[2]]);
+                chunkMesh.AddUVCoordinate(uv[faceData.UVIndices[3]]);
             }
         }
 
         int vertexBaseIdx = chunkMesh.Vertices.Count;
-        chunkMesh.Vertices.AddRange(_voxelVertices);
+        chunkMesh.AddVertices(_voxelVertices);
 
         for(int i = 0; i < _voxelVertices.Count; i += 4)
         {
-            chunkMesh.Triangles.Add(i + vertexBaseIdx);
-            chunkMesh.Triangles.Add(i + 1 + vertexBaseIdx);
-            chunkMesh.Triangles.Add(i + 2 + vertexBaseIdx);
-            chunkMesh.Triangles.Add(i + 2 + vertexBaseIdx);
-            chunkMesh.Triangles.Add(i + 3 + vertexBaseIdx);
-            chunkMesh.Triangles.Add(i + vertexBaseIdx);
+            chunkMesh.AddTriangleIndex(i + vertexBaseIdx);
+            chunkMesh.AddTriangleIndex(i + 1 + vertexBaseIdx);
+            chunkMesh.AddTriangleIndex(i + 2 + vertexBaseIdx);
+            chunkMesh.AddTriangleIndex(i + 2 + vertexBaseIdx);
+            chunkMesh.AddTriangleIndex(i + 3 + vertexBaseIdx);
+            chunkMesh.AddTriangleIndex(i + vertexBaseIdx);
         }
     }
 
