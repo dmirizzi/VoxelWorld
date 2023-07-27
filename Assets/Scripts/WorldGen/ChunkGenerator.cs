@@ -9,7 +9,6 @@ public class ChunkGenerator
         _torchType = BlockDataRepository.GetBlockTypeId("Torch");
         _logType = BlockDataRepository.GetBlockTypeId("Log");
         _leavesType = BlockDataRepository.GetBlockTypeId("Leaves");
-
     }
 
     public ChunkUpdate GenerateChunk(Vector3Int chunkPos)
