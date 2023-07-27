@@ -28,6 +28,10 @@
         {
             "Name": "Ladder",
             "BlockType": "Ladder"
+        },
+        {
+            "Name": "Log",
+            "BlockType": "Log"
         }
     ]
 }

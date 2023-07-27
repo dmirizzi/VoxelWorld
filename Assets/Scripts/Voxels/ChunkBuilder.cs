@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 
 public class ChunkBuilder
@@ -81,8 +82,8 @@ public class ChunkBuilder
     }
 
     public ChunkLightColorMapping CreateChunkLightColorMapping()
-    {
-        return new ChunkLightColorMapping
+    {   
+        return new ChunkLightColorMapping   
         {
             ChunkPos = ChunkPos,
             SolidMeshLightMapping = GetSmoothLightVertexColorMapping(_solidMesh),
@@ -150,6 +151,7 @@ public class ChunkBuilder
             var vp = mesh.Vertices[vi];
 
             var globalVoxelPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(VoxelPosHelper.WorldPosToGlobalVoxelPos(vp), _chunk.ChunkPos);
+
             int r = 0, g = 0, b = 0, sun = 0;
             int numVoxels = 0;
             for(int x = -1; x < 1; ++x)
@@ -159,10 +161,6 @@ public class ChunkBuilder
                     for(int y = -1; y < 1; ++y)
                     {   
                         var neighborPos = globalVoxelPos + new Vector3Int(x, y, z);
-
-                        // Enable this check to avoid darker shaded corners/edges (which provide a SSAO look)
-                        //if(_world.GetVoxel(neighborPos) != 0) continue;
-
                         var voxelColor = _world.GetVoxelLightColor(neighborPos);
                         r += voxelColor.r;
                         g += voxelColor.g;
@@ -173,13 +171,12 @@ public class ChunkBuilder
                 }
             }
 
-            if(numVoxels > 0)
-            {
-                r /= numVoxels;
-                g /= numVoxels;
-                b /= numVoxels;
-                sun /= numVoxels;
-            }
+            // Calc average of surrounding voxel light colors
+            r >>= 3;
+            g >>= 3;
+            b >>= 3;
+            sun >>= 3;
+
             colors[vi] = new Color32((byte)r, (byte)g, (byte)b, (byte)sun);
         }
 

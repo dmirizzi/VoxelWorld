@@ -94,7 +94,7 @@ public static class BlockFaceHelper
 
         if(yAngleDeg < 0)
         {
-            yAngleDeg = 360 - yAngleDeg;
+            yAngleDeg = 360 + yAngleDeg;
         }
 
         var turn = _blockFaceTurnNo[face];

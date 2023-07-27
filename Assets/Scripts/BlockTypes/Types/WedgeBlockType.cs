@@ -68,15 +68,22 @@ class WedgeBlockType : BlockTypeBase
             new Vector2[] { tileUV[0], tileUV[2], tileUV[3], tileUV[1] }
         );
 
-        chunkMesh.AddTriangle(
-            new Vector3[] { cornerVertices[5], cornerVertices[0], cornerVertices[3] },
-            new Vector2[] { tileUV[2], tileUV[1], tileUV[0] }
-        );
 
-        chunkMesh.AddTriangle(
-            new Vector3[] { cornerVertices[4], cornerVertices[2], cornerVertices[1] },
-            new Vector2[] { tileUV[3], tileUV[1], tileUV[0] }
-        );
+        if(VoxelBuildHelper.IsVoxelSideVisible(world, _voxelType, globalVoxelPos, BlockFaceHelper.RotateFaceY(placementDir, -90)))
+        {
+            chunkMesh.AddTriangle(
+                new Vector3[] { cornerVertices[5], cornerVertices[0], cornerVertices[3] },
+                new Vector2[] { tileUV[2], tileUV[1], tileUV[0] }
+            );
+        }
+
+        if(VoxelBuildHelper.IsVoxelSideVisible(world, _voxelType, globalVoxelPos, BlockFaceHelper.RotateFaceY(placementDir, 90)))
+        {
+            chunkMesh.AddTriangle(
+                new Vector3[] { cornerVertices[4], cornerVertices[2], cornerVertices[1] },
+                new Vector2[] { tileUV[3], tileUV[1], tileUV[0] }
+            );
+        }
     }
 
     public override bool OnPlace(
