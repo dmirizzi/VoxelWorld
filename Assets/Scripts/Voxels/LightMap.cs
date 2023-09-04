@@ -272,7 +272,11 @@ public class LightMap
         HashSet<Vector3Int> visitedNodes, 
         HashSet<Vector3Int> visitedChunks,
         bool isSunlight = false )
-    {        
+    {     
+        int numVoxelLightsChanged = 0;
+
+        if(channel == Chunk.SunlightChannel) WorldDbg.RemoveGizmosWithTag("UpdateSunlight");
+
         //TODO:Alternative approach:
         //TODO: - Connect all chunks via pointers
         //TODO: - Move from voxel to voxel with local positions + current chunk pointer
@@ -313,6 +317,7 @@ public class LightMap
                 // In case of sunlight, allow a light node to be set again if it is being lit directly by the sun and only 
                 // indirectly before
                 var currentLightLevel = lightNode.Chunk.GetLightChannelValue(localPos, channel);           
+                //TODO: We should be able to replace isSunlight by "channel == SunlightChannel"
                 if(!isSunlight || currentLightLevel < 15 || neighborLightLevel == 15 )
                 {
                     // Otherwise, skip already processed nodes
@@ -333,6 +338,9 @@ public class LightMap
                     byte newLightLevel = GetNewLightLevel(currentLightLevel, neighborDir, isSunlight);
                     neighborChunk.SetLightChannelValue(localNeighborPos, channel, newLightLevel);
 
+                    numVoxelLightsChanged++;
+
+                    //if(channel == Chunk.SunlightChannel) WorldDbg.AddVoxelGizmo(neighborChunk.ChunkPos, "UpdateSunlight", neighborGlobalPos, 0.25f, new Color32((byte)(newLightLevel * 16), (byte)(newLightLevel * 16), (byte)(newLightLevel * 16), 255));
 
                     //TODO: Do we actually need to store the chunk in the light node? Seems like we 
                     //TODO: fetch it for each neighbor anyways (compare performance with & without)
@@ -345,6 +353,7 @@ public class LightMap
 
             }                
         }
+        //if(numVoxelLightsChanged > 0) Debug.Log($"{numVoxelLightsChanged} voxel lights changed on channel {channel}");
     }
 
     private byte GetNewLightLevel(byte currentLightLevel, Vector3Int fillDir, bool isSunlight)

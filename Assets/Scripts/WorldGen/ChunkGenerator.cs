@@ -13,19 +13,25 @@ public class ChunkGenerator
 
     public ChunkUpdate GenerateChunk(Vector3Int chunkPos)
     {
+        if(chunkPos != Vector3Int.zero)
+        {
+            return new ChunkUpdateBuilder(chunkPos).GetChunkUpdate();
+        }
+
         var builder = new ChunkUpdateBuilder(chunkPos);
 
         var chunkBasePos = VoxelPosHelper.ChunkPosToGlobalChunkBaseVoxelPos(chunkPos);
 
-        for(int z = 0; z < VoxelInfo.ChunkSize; ++z)
+        for(int z = 0; z < 2/*VoxelInfo.ChunkSize*/; ++z)
         {
-            for(int y = 0; y < VoxelInfo.ChunkSize; ++y)
+            for(int y = 0; y <= 0/*VoxelInfo.ChunkSize*/; ++y)
             {
-                for(int x = 0; x < VoxelInfo.ChunkSize; ++x)
+                for(int x = 0; x < 2/*VoxelInfo.ChunkSize*/; ++x)
                 {
                     var localVoxelPos = new Vector3Int(x, y, z);
                     var globalVoxelPos = chunkBasePos + localVoxelPos;
-                    var terrainHeight = GetTerrainHeight(globalVoxelPos);
+                    //var terrainHeight = GetTerrainHeight(globalVoxelPos);
+                    var terrainHeight = 0;
 
                     if(globalVoxelPos.y < terrainHeight)
                     {

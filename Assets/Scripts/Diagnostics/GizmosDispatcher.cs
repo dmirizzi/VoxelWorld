@@ -38,10 +38,14 @@ public class GizmosDispatcher : MonoBehaviour
             {
                 while(_chunkGizmoCreationQueue.TryDequeue(out var creation))
                 {
-                    var parent = _world.GetChunk(creation.ChunkPos).ChunkGameObject.transform;
+                    var chunk = _world.GetChunk(creation.ChunkPos);
+                    var parent = chunk != null && chunk.ChunkGameObject != null ? chunk.ChunkGameObject.transform : GameObject.Find("Gizmos").transform;
 
                     var newGameObj = creation.Factory();
-                    newGameObj.transform.parent = GetOrCreateTagParent(parent, newGameObj.tag);
+
+                    Destroy(newGameObj.GetComponent<BoxCollider>());
+
+                    newGameObj.transform.parent = parent;// GetOrCreateTagParent(parent, newGameObj.tag);
                 }
 
                 while(_deletionByTagQueue.TryDequeue(out var tag))
@@ -70,7 +74,7 @@ public class GizmosDispatcher : MonoBehaviour
     
         var newTagParent = new GameObject($"Gizmo_{tag}");
         newTagParent.transform.parent = parent;
-        newTagParent.SetActive(false);
+        newTagParent.SetActive(true);
 
         return newTagParent.transform;
     }

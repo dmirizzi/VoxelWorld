@@ -45,6 +45,9 @@ class WedgeBlockType : BlockTypeBase
         VoxelBuildHelper.TranslateVerticesInPlace(cornerVertices, basePos);
 
         int vertexBaseIdx = chunkMesh.Vertices.Count;
+
+        Debug.Log($"Adding wedge @ vi {vertexBaseIdx}");
+
         var tileUV = VoxelBuildHelper.GetUVsForVoxelType(_voxelTypeTexture, BlockFace.Bottom);
 
         if(VoxelBuildHelper.IsVoxelSideVisible(world, _voxelType, globalVoxelPos, BlockFace.Bottom))

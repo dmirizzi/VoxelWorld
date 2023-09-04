@@ -18,7 +18,7 @@ public static class WorldDbg
 
                     newObj.transform.position = VoxelPosHelper.WorldPosToGlobalVoxelPos(worldPos);
                     newObj.transform.localScale = new Vector3(size, size, size);
-                    
+
                     var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
                     mat.color = color;
                     newObj.GetComponent<Renderer>().material = mat;

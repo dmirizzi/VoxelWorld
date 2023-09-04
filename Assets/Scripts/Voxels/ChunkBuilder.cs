@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Text;
 using UnityEngine;
 
 public class ChunkBuilder
@@ -142,9 +144,13 @@ public class ChunkBuilder
         return colors;
     }
 
+    private static int i = 0;
+
     private Color32[] GetSmoothLightVertexColorMapping(ChunkMesh mesh)
     {
         var colors = new Color32[mesh.Vertices.Count];
+
+        var sb = new StringBuilder();
 
         for(int vi = 0; vi < mesh.Vertices.Count; ++vi)
         {
@@ -152,8 +158,12 @@ public class ChunkBuilder
 
             var globalVoxelPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(VoxelPosHelper.WorldPosToGlobalVoxelPos(vp), _chunk.ChunkPos);
 
+            if(vi < 16)
+            {
+                sb.AppendLine($"******* vi = {vi} ");
+            }
+
             int r = 0, g = 0, b = 0, sun = 0;
-            int numVoxels = 0;
             for(int x = -1; x < 1; ++x)
             {
                 for(int z = -1; z < 1; ++z)
@@ -166,7 +176,12 @@ public class ChunkBuilder
                         g += voxelColor.g;
                         b += voxelColor.b;
                         sun += voxelColor.a;
-                        numVoxels++;
+
+                        if(vi < 16)
+                        {
+                            sb.AppendLine($"# Neighbor {neighborPos} = {voxelColor}");
+                        }
+
                     }
                 }
             }
@@ -178,6 +193,28 @@ public class ChunkBuilder
             sun >>= 3;
 
             colors[vi] = new Color32((byte)r, (byte)g, (byte)b, (byte)sun);
+
+            if(vi < 16)
+            {
+                sb.AppendLine($"Color = {colors[vi]}");
+            }
+
+        }
+
+/*
+        if(ChunkPos == Vector3Int.zero)
+        {
+            var sb = new StringBuilder();
+            for(int vi = 0; vi < colors.Length; ++vi)
+            {
+                sb.AppendLine($"{vi} => {colors[vi]}");
+            } 
+            File.WriteAllText(@$"./LightMapping{ChunkPos.x}-{ChunkPos.y}-{ChunkPos.z}-{i++}.txt", sb.ToString());
+        }
+*/
+        if(ChunkPos == Vector3Int.zero)
+        {
+            File.WriteAllText(@$"./VoxelLightColors{i++}.txt", sb.ToString());
         }
 
         return colors;
