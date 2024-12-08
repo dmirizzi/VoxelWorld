@@ -49,17 +49,16 @@ public class WorldGenerator : MonoBehaviour
         return chunks;
     }
 
-    public bool TryPopBackloggedChunk(Vector3Int chunkPos, out List<VoxelCreationAction> voxels)
+    public List<VoxelCreationAction> PopBackloggedChunk(Vector3Int chunkPos)
     {
         if(!_chunkCreationBacklog.ContainsKey(chunkPos))
         {
-            voxels = null;
-            return false;
+            return null;
         }
 
-        voxels = _chunkCreationBacklog[chunkPos];
+        var voxels = _chunkCreationBacklog[chunkPos];
         _chunkCreationBacklog.Remove(chunkPos);
-        return true;
+        return voxels;
     }
 
     void Awake()

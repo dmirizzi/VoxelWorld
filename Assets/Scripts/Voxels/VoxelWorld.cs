@@ -30,6 +30,15 @@ public class VoxelWorld : MonoBehaviour
 
     public Chunk GetChunk(Vector3Int chunkPos) => _chunks[chunkPos];
 
+    public Chunk GetOrCreateChunk(Vector3Int chunkPos)
+    {
+        if(_chunks.TryGetValue(chunkPos, out var chunk))
+        {
+            return chunk;
+        }
+        return CreateChunk(chunkPos);
+    }
+
     public bool TryGetChunk(Vector3Int chunkPos, out Chunk chunk)
     {
         if(_chunks.ContainsKey(chunkPos))
@@ -55,7 +64,7 @@ public class VoxelWorld : MonoBehaviour
 
     public bool ChunkBuilderExists(Vector3Int chunkPos) => _chunkBuilders.ContainsKey(chunkPos);
     
-    public void SetVoxelWithoutRebuild(
+    public void SetVoxel(
         Vector3Int globalPos, 
         ushort type, 
         BlockFace? placementDir = null, 
@@ -70,16 +79,7 @@ public class VoxelWorld : MonoBehaviour
             // Voxel cant be placed
             return;
         }
-    }
 
-    public void SetVoxel(
-        Vector3Int globalPos, 
-        ushort type, 
-        BlockFace? placementDir = null, 
-        BlockFace? lookDir = null, 
-        bool useExistingAuxData = false)
-    {
-        SetVoxelWithoutRebuild(globalPos, type, placementDir, lookDir, useExistingAuxData);
 
         QueueAffectedChunksForRebuild(globalPos);
     }
@@ -322,14 +322,7 @@ public class VoxelWorld : MonoBehaviour
         {
             if(create)
             {
-                var chunk = new Chunk(this, chunkPos);
-                _chunks.Add(chunkPos, chunk);
-
-                var chunkXZPos = new Vector2Int(globalVoxelPos.x, globalVoxelPos.z);
-                if(!_topMostChunks.ContainsKey(chunkXZPos) || globalVoxelPos.y > _topMostChunks[chunkXZPos].ChunkPos.y)
-                {
-                    _topMostChunks[chunkXZPos] = chunk;
-                }
+                return CreateChunk(chunkPos);
             }
             else
             {
@@ -337,6 +330,20 @@ public class VoxelWorld : MonoBehaviour
             }
         }
         return _chunks[chunkPos];
+    }
+
+    private Chunk CreateChunk(Vector3Int chunkPos)
+    {
+        var chunk = new Chunk(this, chunkPos);
+        _chunks.Add(chunkPos, chunk);
+
+        var chunkXZPos = new Vector2Int(chunkPos.x, chunkPos.z);
+        if(!_topMostChunks.ContainsKey(chunkXZPos) || chunkPos.y > _topMostChunks[chunkXZPos].ChunkPos.y)
+        {
+            _topMostChunks[chunkXZPos] = chunk;
+        }        
+
+        return chunk;
     }
 
     private Dictionary<Vector3Int, Chunk> _chunks;

@@ -27,20 +27,26 @@ class ChunkVoxelCreationJob : IWorldUpdateJob
 
     public void PostExecuteSync(VoxelWorld world, WorldGenerator worldGenerator, WorldUpdateScheduler worldUpdateScheduler)
     {
-        foreach(var voxel in _voxels)
-        {
-            var globalVoxelPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(voxel.LocalVoxelPos, ChunkPos);
-            world.SetVoxelWithoutRebuild(globalVoxelPos, voxel.Type);
-        }
-        world.QueueAffectedChunkForRebuild(ChunkPos);
+        var backloggedVoxels = worldGenerator.PopBackloggedChunk(ChunkPos);
 
-        if(worldGenerator.TryPopBackloggedChunk(ChunkPos, out var backloggedVoxels))
+        if(_voxels.Count > 0 || backloggedVoxels != null)
         {
-            foreach(var voxel in backloggedVoxels)
+            var chunk = world.GetOrCreateChunk(ChunkPos);
+
+            foreach(var voxel in _voxels)
             {
-                var globalVoxelPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(voxel.LocalVoxelPos, ChunkPos);
-                world.SetVoxel(globalVoxelPos, voxel.Type);
+                chunk.SetVoxel(voxel.LocalVoxelPos, voxel.Type);
             }
+
+            if(backloggedVoxels != null)
+            {
+                foreach(var voxel in backloggedVoxels)
+                {
+                    chunk.SetVoxel(voxel.LocalVoxelPos, voxel.Type);
+                }
+            }
+
+            world.QueueAffectedChunkForRebuild(ChunkPos);
         }
     }
 
