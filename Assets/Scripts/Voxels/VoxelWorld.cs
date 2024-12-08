@@ -55,7 +55,7 @@ public class VoxelWorld : MonoBehaviour
 
     public bool ChunkBuilderExists(Vector3Int chunkPos) => _chunkBuilders.ContainsKey(chunkPos);
     
-    public void SetVoxel(
+    public void SetVoxelWithoutRebuild(
         Vector3Int globalPos, 
         ushort type, 
         BlockFace? placementDir = null, 
@@ -70,6 +70,16 @@ public class VoxelWorld : MonoBehaviour
             // Voxel cant be placed
             return;
         }
+    }
+
+    public void SetVoxel(
+        Vector3Int globalPos, 
+        ushort type, 
+        BlockFace? placementDir = null, 
+        BlockFace? lookDir = null, 
+        bool useExistingAuxData = false)
+    {
+        SetVoxelWithoutRebuild(globalPos, type, placementDir, lookDir, useExistingAuxData);
 
         QueueAffectedChunksForRebuild(globalPos);
     }
@@ -286,6 +296,9 @@ public class VoxelWorld : MonoBehaviour
     {
         _updateScheduler.AddChunkLightMappingUpdateJob(chunkPos);
     }
+
+    public void QueueAffectedChunkForRebuild(Vector3Int chunkPos) 
+        => _updateScheduler.AddChunkRebuildJob(chunkPos);
 
     private void QueueAffectedChunksForRebuild(Vector3Int voxelPos)
     {        

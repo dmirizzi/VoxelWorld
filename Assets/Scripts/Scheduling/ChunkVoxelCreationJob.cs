@@ -30,8 +30,9 @@ class ChunkVoxelCreationJob : IWorldUpdateJob
         foreach(var voxel in _voxels)
         {
             var globalVoxelPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(voxel.LocalVoxelPos, ChunkPos);
-            world.SetVoxel(globalVoxelPos, voxel.Type);
+            world.SetVoxelWithoutRebuild(globalVoxelPos, voxel.Type);
         }
+        world.QueueAffectedChunkForRebuild(ChunkPos);
 
         if(worldGenerator.TryPopBackloggedChunk(ChunkPos, out var backloggedVoxels))
         {
