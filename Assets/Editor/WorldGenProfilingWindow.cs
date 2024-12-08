@@ -86,6 +86,8 @@ public class WorldGenProfilingWindow : EditorWindow
             ))
             .OrderByDescending(x => x.ElapsedMs);
 
+        Profiler.Clear();
+
         Repaint();
     }
 

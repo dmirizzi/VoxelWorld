@@ -36,6 +36,18 @@ public class Chunk
         BlockFace? lookDir = null, 
         bool useExistingAuxData = false)
     {
+        var oldVoxelType = _chunkData[localPos.x, localPos.y, localPos.z];
+        var oldBlockType = BlockTypeRegistry.GetBlockType(oldVoxelType);
+        var newBlockType = BlockTypeRegistry.GetBlockType(type);
+
+        _chunkData[localPos.x, localPos.y, localPos.z] = type;
+
+        if(oldBlockType == null && newBlockType == null)
+        {
+            // Shortcut for simple voxel to voxel change
+            return true;
+        }
+
         // Remove old aux data and gameobjects if it already exists at this voxel position
         if(_blockGameObjects.ContainsKey(localPos))
         {
@@ -43,14 +55,11 @@ public class Chunk
             _blockGameObjects.Remove(localPos);
         }
 
-        var globalPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(localPos, ChunkPos);
-
-        var oldVoxelType = _chunkData[localPos.x, localPos.y, localPos.z];
-        var oldBlockType = BlockTypeRegistry.GetBlockType(oldVoxelType);
-
-        // Delete old voxel if one already exists at this position
+        // Remove old block if one already exists at this position
         if(oldBlockType != null)
         {
+            var globalPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(localPos, ChunkPos);
+
             // Remove existing voxel collider at this position if any
             if(_voxelColliderGameObjects.ContainsKey(localPos))
             {
@@ -74,17 +83,16 @@ public class Chunk
         }
 
         // Execute place logic on old block if available
-        var newBlockType = BlockTypeRegistry.GetBlockType(type);
         if(newBlockType != null)
         {
+            var globalPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(localPos, ChunkPos);
+
             if(!newBlockType.OnPlace(_voxelWorld, this, globalPos, localPos, placementFace, lookDir))
             {
                 // Block cannot be placed
                 return false;
             }
         }
-
-        _chunkData[localPos.x, localPos.y, localPos.z] = type;
 
         return true;
     }

@@ -1,7 +1,10 @@
 ----------------------------------------------------------------------------------------------------------------
-    Refactoring
+    Refactoring / Cleanup
 ----------------------------------------------------------------------------------------------------------------
 [x] Avoid explicit Rebuild/Non Rebuild and just batch voxel changes & rebuild affected chunks once per frame
+
+[ ] Logged batch processing time is wrong when manually placing voxels -> no StartBatch/FinishBatch called
+    so timer is not handled correctly
 
 [ ] Separate Engine/Core and Game logic
     - e.g. World Generator (which handles chunk loading/unloading, backlogged voxels etc.) and Chunk Gen Logic (biomes, block types, trees etc.)
