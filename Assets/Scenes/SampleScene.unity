@@ -569,8 +569,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ChunkGenerationRadius: 4
-  MaxNumChunkGenerationTasks: 4
-  MaxNumChunksCreatedPerFrame: 1
   WorldSeed: 123456789
 --- !u!1 &2138034062
 GameObject:

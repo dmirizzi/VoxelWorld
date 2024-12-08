@@ -55,6 +55,19 @@ public static class Profiler
         _entries = new LinkedList<ProfilingEntry>();
     }
 
+    public static IEnumerable<ProfilingEntry> GetProfilingEntries() => _entries;
+
+    public static IEnumerable<(string Subject, double TotalElapsedMs)> GetProfilingResults()
+    {
+        return _entries
+            .GroupBy(entry => entry.Subject)
+            .Select(group => (
+                Subject: group.Key,
+                TotalElapsedMs: group.Sum(entry => entry.ElapsedMs)
+            ))
+            .OrderByDescending(entry => entry.TotalElapsedMs);
+    }
+
     public static void WriteProfilingResultsToCSV() 
     {
         var fileName = @"E:\Dev\VoxelProfilingData\Profiling.csv";

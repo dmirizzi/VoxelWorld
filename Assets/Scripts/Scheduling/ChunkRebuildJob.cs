@@ -29,9 +29,9 @@ class ChunkRebuildJob : IWorldUpdateJob
     {
         return Task.Run(() => 
         {
-            var token = Profiler.StartProfiling($"{GetType()}-Async");
+            //var token = Profiler.StartProfiling($"{GetType()}-Async");
             _chunkBuilder.Build();
-            Profiler.StopProfiling(token);
+            //Profiler.StopProfiling(token);
         });
     }
 

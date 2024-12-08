@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -75,7 +76,7 @@ public class WorldGenerator : MonoBehaviour
         {
             if(!WorldGenerated)
             {
-                Profiler.WriteProfilingResultsToCSV();
+                //Profiler.WriteProfilingResultsToCSV();
                 PlacePlayer(Vector3Int.zero);            
                 WorldGenerated = true;
             }

@@ -116,9 +116,10 @@ class WorldUpdateScheduler : MonoBehaviour
             && NextJobIsNotHigherStageThanActiveJobs()
             && _jobQueue.DequeueNext(x => CanReserveChunks(x.AffectedChunks), out var job))
         {
-            //var token = Profiler.StartProfiling($"{job.GetType()}-PreExecute");
+            var token = Profiler.StartProfiling($"Jobs/{job.GetType()}/PreExecute");
             var preExecute = job.PreExecuteSync(_world, _worldGenerator);
-            //Profiler.StopProfiling(token);
+            Profiler.StopProfiling(token);
+
             if(!preExecute)
             {
                 // Pre execution failed -> job is not executable -> skip
@@ -130,8 +131,23 @@ class WorldUpdateScheduler : MonoBehaviour
             _activeJobs.AddLast(new ActiveJob
             {
                 Job = job,
-                JobTask = job.ExecuteAsync()
+                JobTask = ProfileAsync(job.ExecuteAsync(), job.GetType())
             });
+        }
+    }
+
+    private async Task ProfileAsync(Task asyncJobTask, Type jobType)
+    {
+
+        var token = Profiler.StartProfiling($"Jobs/{jobType}/ExecuteAsync");
+
+        try
+        {
+            await asyncJobTask;
+        }
+        finally
+        {
+            Profiler.StopProfiling(token);
         }
     }
 
@@ -159,8 +175,7 @@ class WorldUpdateScheduler : MonoBehaviour
                 if(_activeJobs.Count == 0 && _jobQueue.Count == 0)
                 {
                     // Batch finished
-                    BatchFinished?.Invoke();
-                    
+                    BatchFinished?.Invoke();                    
                     _batchTimer.Stop();
                     UnityEngine.Debug.Log($"Processed batch in {_batchTimer.Elapsed.TotalMilliseconds}ms");
                 }
