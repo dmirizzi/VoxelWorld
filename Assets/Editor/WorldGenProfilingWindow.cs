@@ -8,7 +8,7 @@ using System.Linq;
 public class WorldGenProfilingWindow : EditorWindow
 {
     [MenuItem("Window/WorldGen Profiling")]
-    public void ShowWindow()
+    public static void ShowWindow()
     {
         GetWindow<WorldGenProfilingWindow>("WorldGen Profiling");
     }

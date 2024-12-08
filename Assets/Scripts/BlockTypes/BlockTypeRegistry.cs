@@ -4,11 +4,11 @@ public class BlockTypeRegistry
 {
     private static BlockTypeRegistry _instance;
 
-    private Dictionary<ushort, BlockTypeBase> _blockTypeMap;
+    private BlockTypeBase[] _blockTypeMap;
 
     private BlockTypeRegistry()
     {
-        _blockTypeMap = new Dictionary<ushort, BlockTypeBase>();
+        _blockTypeMap = new BlockTypeBase[256];
 
         //TODO: map via reflection in config?
         _blockTypeMap[5] = new TorchBlockType();
@@ -22,11 +22,6 @@ public class BlockTypeRegistry
         if(_instance == null)
         {
             _instance = new BlockTypeRegistry();
-        }
-
-        if(!_instance._blockTypeMap.ContainsKey(type))
-        {
-            return null;
         }
 
         return _instance._blockTypeMap[type];
