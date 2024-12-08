@@ -23,6 +23,21 @@ public class ProfilingEntry
 
 }
 
+public class MethodProfiler : IDisposable
+{
+    public MethodProfiler(string subject)
+    {
+        _token = Profiler.StartProfiling(subject);
+    }
+
+    public void Dispose()
+    {
+        Profiler.StopProfiling(_token);
+    }
+
+    private ProfilingEntry _token;
+}
+
 public static class Profiler
 {
     static Profiler()
@@ -49,6 +64,8 @@ public static class Profiler
         entry.Stopwatch.Stop();
         entry.ElapsedMs = entry.Stopwatch.Elapsed.TotalMilliseconds;
     }
+
+    public static MethodProfiler ProfileMethod(string subject) => new MethodProfiler(subject);
 
     public static void Clear()
     {

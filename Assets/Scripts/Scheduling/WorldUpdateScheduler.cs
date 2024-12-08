@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using UnityEngine;
 
-class WorldUpdateScheduler : MonoBehaviour
+public class WorldUpdateScheduler : MonoBehaviour
 {
     public int MaxNumSimultaneousJobs = 8;
 

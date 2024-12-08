@@ -7,23 +7,26 @@ using System.Linq;
 
 public class WorldGenProfilingWindow : EditorWindow
 {
-    private IEnumerable<(string Description, double ElapsedMs)> _profilingEntries;
-
-    private Vector2 _scrollPosition;
-
     [MenuItem("Window/WorldGen Profiling")]
-    public static void ShowWindow()
+    public void ShowWindow()
     {
         GetWindow<WorldGenProfilingWindow>("WorldGen Profiling");
+    }
+
+    void OnEnable()
+    {
+        EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
     }
 
     void OnGUI()
     {
         GUILayout.Label("Batch Profiling Results");
 
-        if( _profilingEntries != null )
+        if( _jobs != null )
         {
-            _scrollPosition = GUIHelper.Table(
+            GUILayout.BeginHorizontal();
+
+            _scrollPositionJobs = GUIHelper.Table(
                 800,
                 new[] { "Job", "Time Elapsed (ms)" },
                 new[] { 300, 150 },
@@ -31,33 +34,25 @@ public class WorldGenProfilingWindow : EditorWindow
                     row => row.Description,
                     row => $"{row.ElapsedMs:F1}"
                 },
-                _profilingEntries,
-                _scrollPosition
+                _jobs,
+                _scrollPositionJobs
             );
 
-/*
-            // Create a scrollable area
-            _scrollPosition = GUILayout.BeginScrollView(_scrollPosition, GUILayout.Height(800));
+            _scrollPositionMethods = GUIHelper.Table(
+                800,
+                new[] { "Method", "Time Elapsed (ms)" },
+                new[] { 300, 150 },
+                new Func<(string Description, double ElapsedMs), string>[] { 
+                    row => row.Description,
+                    row => $"{row.ElapsedMs:F1}"
+                },
+                _methods,
+                _scrollPositionMethods
+            );            
 
-            // Draw table headers
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Job", _borderedLabelStyle, GUILayout.Width(ProfilingTableDescriptionWidth));
-            GUILayout.Label("Time Elapsed (ms)", _borderedLabelStyle, GUILayout.Width(ProfilingTableElapsedWidth));
+
             GUILayout.EndHorizontal();
 
-            GUILayout.Space(5);
-
-            // Draw table rows
-            foreach (var entry in _profilingEntries)
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Label(entry.Description, _borderedLabelStyle, GUILayout.Width(ProfilingTableDescriptionWidth));
-                GUILayout.Label($"{entry.ElapsedMs:F1}", _borderedLabelStyle, GUILayout.Width(ProfilingTableElapsedWidth));
-                GUILayout.EndHorizontal();
-            }
-
-            GUILayout.EndScrollView();
-            */
         }
         else
         {
@@ -67,14 +62,63 @@ public class WorldGenProfilingWindow : EditorWindow
 
         if (GUILayout.Button("Refresh"))
         {
-            _profilingEntries = Profiler.GetProfilingEntries()
-                .Where(x => x.Subject.StartsWith("Jobs/"))
-                .GroupBy(x => x.Subject)
-                .Select(x => (
-                    Description: x.Key.Substring("Jobs/".Length),
-                    ElapsedMs: x.Sum(y => y.ElapsedMs)
-                ))
-                .OrderByDescending(x => x.ElapsedMs);
+            RefreshData();
         }
     }
+
+    private void RefreshData()
+    {
+        _jobs = Profiler.GetProfilingEntries()
+            .Where(x => x.Subject.StartsWith("Jobs/"))
+            .GroupBy(x => x.Subject)
+            .Select(x => (
+                Description: x.Key.Substring("Jobs/".Length),
+                ElapsedMs: x.Sum(y => y.ElapsedMs)
+            ))
+            .OrderByDescending(x => x.ElapsedMs);
+
+        _methods = Profiler.GetProfilingEntries()
+            .Where(x => x.Subject.StartsWith("Methods/"))
+            .GroupBy(x => x.Subject)
+            .Select(x => (
+                Description: x.Key.Substring("Methods/".Length),
+                ElapsedMs: x.Sum(y => y.ElapsedMs)
+            ))
+            .OrderByDescending(x => x.ElapsedMs);
+
+        Repaint();
+    }
+
+    private void Initialize()
+    {
+        _worldUpdateScheduler = GameObject.FindObjectOfType<WorldUpdateScheduler>();
+        _worldUpdateScheduler.BatchFinished += RefreshData;
+    }
+
+    private void Cleanup()
+    {
+        _worldUpdateScheduler.BatchFinished -= RefreshData;
+        _worldUpdateScheduler = null;
+    }
+
+    private void OnPlayModeStateChanged(PlayModeStateChange stateChange)
+    {
+        if(stateChange == PlayModeStateChange.EnteredPlayMode)
+        {
+            Initialize();
+        }
+
+        if(stateChange ==  PlayModeStateChange.ExitingPlayMode)
+        {
+            Cleanup();
+        }
+    }
+
+    private IEnumerable<(string Description, double ElapsedMs)> _jobs;
+
+    private IEnumerable<(string Description, double ElapsedMs)> _methods;
+
+    private Vector2 _scrollPositionJobs, _scrollPositionMethods;
+
+    private static WorldUpdateScheduler _worldUpdateScheduler;
 }
