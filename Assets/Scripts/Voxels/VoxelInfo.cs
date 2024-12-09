@@ -28,6 +28,8 @@ public static class VoxelInfo
     // MUST BE A POWER OF 2!!!
     public const int ChunkSize = 16;
 
+    public const int ChunkSizePowerOfTwo = 4;
+
     public const int NumVoxelsPerChunk = ChunkSize * ChunkSize * ChunkSize;
 
     // Do not change this. Voxels are not scaleable, this is just for code readability.

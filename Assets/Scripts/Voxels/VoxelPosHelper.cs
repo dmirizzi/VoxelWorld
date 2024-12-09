@@ -61,7 +61,11 @@ public static class VoxelPosHelper
 
     public static Vector3Int ChunkLocalVoxelPosToGlobal(Vector3Int localVoxelPos, Vector3Int chunkPos)
     {
-        return ChunkPosToGlobalChunkBaseVoxelPos(chunkPos) + localVoxelPos;
+        return new Vector3Int(
+            ( chunkPos.x << VoxelInfo.ChunkSizePowerOfTwo ) + localVoxelPos.x,
+            ( chunkPos.y << VoxelInfo.ChunkSizePowerOfTwo ) + localVoxelPos.y,
+            ( chunkPos.z << VoxelInfo.ChunkSizePowerOfTwo ) + localVoxelPos.z
+        );
     }
     
     public static Vector3Int GlobalToChunkLocalVoxelPos(Vector3Int voxelPos)
@@ -104,7 +108,11 @@ public static class VoxelPosHelper
 
     public static Vector3Int ChunkPosToGlobalChunkBaseVoxelPos(Vector3Int chunkPos)
     {
-        return chunkPos * VoxelInfo.ChunkSize;
+        return new Vector3Int(
+            chunkPos.x << VoxelInfo.ChunkSizePowerOfTwo,
+            chunkPos.y << VoxelInfo.ChunkSizePowerOfTwo,
+            chunkPos.z << VoxelInfo.ChunkSizePowerOfTwo
+        );
     }
 
     public static float GetChunkSqrDistanceToWorldPos(Vector3 worldPos, Vector3Int chunkPos)
