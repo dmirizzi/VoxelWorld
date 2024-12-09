@@ -314,6 +314,16 @@ public class VoxelWorld : MonoBehaviour
         if(localPos.z == VoxelInfo.ChunkSize - 1)   _updateScheduler.AddChunkRebuildJob(chunkPos + Vector3Int.forward);
     }
 
+    public Chunk GetChunkFromVoxelPosition(Vector3Int globalVoxelPos)
+    {
+        var chunkPos = VoxelPosHelper.GlobalVoxelPosToChunkPos(globalVoxelPos);
+        if(_chunks.TryGetValue(chunkPos, out var chunk))
+        {
+            return chunk;
+        }
+        return null;
+    }
+
     public Chunk GetChunkFromVoxelPosition(Vector3Int globalVoxelPos, bool create)
     {
         var chunkPos = VoxelPosHelper.GlobalVoxelPosToChunkPos(globalVoxelPos);

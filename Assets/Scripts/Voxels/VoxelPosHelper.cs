@@ -70,14 +70,13 @@ public static class VoxelPosHelper
     
     public static Vector3Int GlobalToChunkLocalVoxelPos(Vector3Int voxelPos)
     {
-        var x = voxelPos.x % VoxelInfo.ChunkSize;
-        if(x != 0 && voxelPos.x < 0) x += VoxelInfo.ChunkSize;
-        var y = voxelPos.y % VoxelInfo.ChunkSize;
-        if(y != 0 && voxelPos.y < 0) y += VoxelInfo.ChunkSize;
-        var z = voxelPos.z % VoxelInfo.ChunkSize;
-        if(z != 0 && voxelPos.z < 0) z += VoxelInfo.ChunkSize;
+        int mask = VoxelInfo.ChunkSize - 1;
 
-        return new Vector3Int(x, y, z);
+        return new Vector3Int(
+            voxelPos.x & mask, 
+            voxelPos.y & mask, 
+            voxelPos.z & mask
+        );
     }
 
     public static Vector3Int WorldPosToChunkPos(Vector3 worldPos)
@@ -88,23 +87,19 @@ public static class VoxelPosHelper
 
     public static Vector3Int GlobalVoxelPosToChunkPos(Vector3Int globalVoxelPos)
     {
-        var x = (int)globalVoxelPos.x;
-        if(globalVoxelPos.x < 0) x += 1;
-        x /= VoxelInfo.ChunkSize;
-        if(globalVoxelPos.x < 0) x -= 1;
+        int chunkSize = VoxelInfo.ChunkSize;
+        int x = globalVoxelPos.x;
+        int y = globalVoxelPos.y;
+        int z = globalVoxelPos.z;
 
-        var y = (int)globalVoxelPos.y;
-        if(globalVoxelPos.y < 0) y += 1;
-        y /= VoxelInfo.ChunkSize;
-        if(globalVoxelPos.y < 0) y -= 1;
-
-        var z = (int)globalVoxelPos.z;
-        if(globalVoxelPos.z < 0) z += 1;
-        z /= VoxelInfo.ChunkSize;
-        if(globalVoxelPos.z < 0) z -= 1;
+        // Equivalent to ((x + 1) / chunkSize - 1) for negative numbers and 
+        // (x / chunkSize) for positive numbers
+        x = (x + ((x >> 31) & 1)) / chunkSize + (x >> 31);
+        y = (y + ((y >> 31) & 1)) / chunkSize + (y >> 31);
+        z = (z + ((z >> 31) & 1)) / chunkSize + (z >> 31);
 
         return new Vector3Int(x, y, z);
-    }
+    }    
 
     public static Vector3Int ChunkPosToGlobalChunkBaseVoxelPos(Vector3Int chunkPos)
     {

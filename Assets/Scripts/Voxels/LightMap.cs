@@ -299,7 +299,7 @@ public class LightMap
                 var neighborDir = BlockFaceHelper.GetVectorIntFromBlockFace(neighborFace);
                 var neighborGlobalPos = lightNode.GlobalPos + neighborDir;                
                 // ~280ms / ~1100ms
-                var neighborChunk = _world.GetChunkFromVoxelPosition(neighborGlobalPos, false);                 
+                var neighborChunk = _world.GetChunkFromVoxelPosition(neighborGlobalPos);
 
                 if(neighborChunk == null)
                 {
