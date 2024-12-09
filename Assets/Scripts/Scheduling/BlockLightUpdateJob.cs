@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 class BlockLightUpdateJob : IWorldUpdateJob
 {
@@ -50,7 +51,7 @@ class BlockLightUpdateJob : IWorldUpdateJob
     {
         return Task.Run(() => 
         {
-            //var token = Profiler.StartProfiling($"{GetType()}-Async");
+            UnityEngine.Profiling.Profiler.BeginThreadProfiling("WorldUpdateJobs", "BlockLightUpdateJobThread");
 
             var colorChannels = new byte[]{
                 (byte)(LightColor.r >> 4),
@@ -77,7 +78,7 @@ class BlockLightUpdateJob : IWorldUpdateJob
                 }
             }
 
-            //Profiler.StopProfiling(token);
+            UnityEngine.Profiling.Profiler.EndThreadProfiling();
         });
     }
 

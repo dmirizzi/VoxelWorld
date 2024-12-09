@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 class ChunkLightFillUpdateJob : IWorldUpdateJob
 {
@@ -37,9 +38,9 @@ class ChunkLightFillUpdateJob : IWorldUpdateJob
     {
         return Task.Run(() => 
         {
-            //var token = Profiler.StartProfiling($"{GetType()}-Async");
+            UnityEngine.Profiling.Profiler.BeginThreadProfiling("WorldUpdateJobs", "ChunkLightFillUpdateJob");
             _lightMap.PropagateSurroundingLightsOnNewChunk(ChunkPos);
-            //Profiler.StopProfiling(token);
+            UnityEngine.Profiling.Profiler.EndThreadProfiling();
         });
     }
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 class ChunkRebuildJob : IWorldUpdateJob
 {
@@ -29,7 +30,9 @@ class ChunkRebuildJob : IWorldUpdateJob
     {
         return Task.Run(() => 
         {
+            UnityEngine.Profiling.Profiler.BeginThreadProfiling("WorldUpdateJobs", "ChunkRebuildJob");
             _chunkBuilder.Build();
+            UnityEngine.Profiling.Profiler.EndThreadProfiling();
         });
     }
 
