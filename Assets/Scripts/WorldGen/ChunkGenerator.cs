@@ -56,7 +56,17 @@ public class ChunkGenerator
         return builder.GetChunkUpdate();
     }
     private int GetTerrainHeight(Vector3Int globalVoxelPos)
-        => (int)(Mathf.PerlinNoise((float)globalVoxelPos.x / 40.0f, (float)globalVoxelPos.z / 40.0f) * 32) - 5;
+    {
+        var height = 0;
+        
+        // Local terrain variations
+        height += (int)(Mathf.PerlinNoise((float)globalVoxelPos.x / 40.0f, (float)globalVoxelPos.z / 40.0f) * 32) - 5;
+
+        // Macro terrain
+        height += (int)(Mathf.PerlinNoise((float)globalVoxelPos.x / 400.0f, (float)globalVoxelPos.z / 400.0f) * 512) - 256;
+
+        return height;
+    }
 
     private void PlaceTree(
         ChunkUpdateBuilder builder, 
