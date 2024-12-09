@@ -153,10 +153,10 @@ public class VoxelWorld : MonoBehaviour
 
     public Color32 GetVoxelLightColor(Vector3Int globalVoxelPos)
     {
-        var chunk = GetChunkFromVoxelPosition(globalVoxelPos, false);
+        var chunk = GetChunkFromVoxelPosition(globalVoxelPos);
         if(chunk == null)
         {
-            return new Color32(0, 0, 0, 0);
+            return _zeroColor;
         }
         var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(globalVoxelPos);
         return new Color32
@@ -347,6 +347,8 @@ public class VoxelWorld : MonoBehaviour
         var chunk = new Chunk(this, chunkPos);
         _chunks.Add(chunkPos, chunk);
 
+        ConnectChunkNeighbors(chunk);
+
         var chunkXZPos = new Vector2Int(chunkPos.x, chunkPos.z);
         if(!_topMostChunks.ContainsKey(chunkXZPos) || chunkPos.y > _topMostChunks[chunkXZPos].ChunkPos.y)
         {
@@ -355,6 +357,26 @@ public class VoxelWorld : MonoBehaviour
 
         return chunk;
     }
+
+    private void ConnectChunkNeighbors(Chunk chunk)
+    {
+        for(int z = -1; z <= 1; ++z)
+        {
+            for(int y = -1; y <= 1; ++y)
+            {
+                for(int x = -1; x <= 1; ++x)
+                {
+                    var neighborChunkPos = chunk.ChunkPos + new Vector3Int(x, y, z);
+                    if(TryGetChunk(neighborChunkPos, out var neighborChunk))
+                    {
+                        chunk.ConnectNeighbor(neighborChunk, true);
+                    }
+                }
+            }
+        }
+    }
+
+    private Color32 _zeroColor = new Color32(0, 0, 0, 0);
 
     private Dictionary<Vector3Int, Chunk> _chunks;
 

@@ -101,6 +101,24 @@ public static class VoxelPosHelper
         return new Vector3Int(x, y, z);
     }    
 
+    public static Vector3Int LocalVoxelPosToRelativeChunkPos(Vector3Int localVoxelPos)
+    {
+        return new Vector3Int(
+            localVoxelPos.x >> VoxelInfo.ChunkSizePowerOfTwo,
+            localVoxelPos.y >> VoxelInfo.ChunkSizePowerOfTwo,
+            localVoxelPos.z >> VoxelInfo.ChunkSizePowerOfTwo
+        );
+    }
+
+    public static Vector3Int LocalVoxelPosToNeighboringLocalVoxelPos(Vector3Int localVoxelPos)
+    {
+        return new Vector3Int(
+            localVoxelPos.x < 0 ?  (localVoxelPos.x % VoxelInfo.ChunkSize) + VoxelInfo.ChunkSize : (localVoxelPos.x % VoxelInfo.ChunkSize),
+            localVoxelPos.y < 0 ?  (localVoxelPos.y % VoxelInfo.ChunkSize) + VoxelInfo.ChunkSize : (localVoxelPos.y % VoxelInfo.ChunkSize),
+            localVoxelPos.z < 0 ?  (localVoxelPos.z % VoxelInfo.ChunkSize) + VoxelInfo.ChunkSize : (localVoxelPos.z % VoxelInfo.ChunkSize)
+        );
+    }
+
     public static Vector3Int ChunkPosToGlobalChunkBaseVoxelPos(Vector3Int chunkPos)
     {
         return new Vector3Int(

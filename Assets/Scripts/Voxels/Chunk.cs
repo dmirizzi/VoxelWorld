@@ -19,6 +19,17 @@ public class Chunk
         ResetLightMap();
     }
 
+    public void ConnectNeighbor(Chunk neighborChunk, bool propagate)
+    {
+        var offset = (neighborChunk.ChunkPos - ChunkPos) + Vector3Int.one;
+        _neighboringChunks[offset.x, offset.y, offset.z] = neighborChunk;
+
+        if(propagate == true)
+        {
+            neighborChunk.ConnectNeighbor(this, false);
+        }
+    }
+
     public ushort GetVoxel(Vector3Int localPos)
     {
         return _chunkData[localPos.x, localPos.y, localPos.z];
@@ -233,6 +244,27 @@ public class Chunk
     {
         return (byte)((_lightMap[pos.x, pos.y, pos.z] >> (channel * 4)) & 0xF);
     }
+
+    public bool LocalVoxelPosIsInChunk(Vector3Int pos)
+    {
+        if(pos.x < 0) return false;
+        if(pos.x >= VoxelInfo.ChunkSize) return false;
+        if(pos.y < 0) return false;
+        if(pos.y >= VoxelInfo.ChunkSize) return false;
+        if(pos.z < 0) return false;
+        if(pos.z >= VoxelInfo.ChunkSize) return false;
+        return true;
+    }
+
+    public bool TryGetNeighboringChunkVoxel(Vector3Int pos, out Chunk neighborChunk, out Vector3Int neighborChunkLocalVoxelPos)
+    {
+        var neighborChunkIndex = VoxelPosHelper.LocalVoxelPosToRelativeChunkPos(pos) + Vector3Int.one;
+        
+        neighborChunk = _neighboringChunks[neighborChunkIndex.x, neighborChunkIndex.y, neighborChunkIndex.z];
+        neighborChunkLocalVoxelPos = VoxelPosHelper.LocalVoxelPosToNeighboringLocalVoxelPos(pos);
+
+        return neighborChunk != null;
+    }
     
     public bool HasAnyBlockLight(Vector3Int pos)
     {
@@ -257,4 +289,6 @@ public class Chunk
 
     private Dictionary<Vector3Int, GameObject> _blockGameObjects = new Dictionary<Vector3Int, GameObject>();
 
+    // Offsets are shifted by one, so range is (0-2), so 0 would be -1 etc.
+    private Chunk[,,] _neighboringChunks = new Chunk[3, 3, 3];
 }

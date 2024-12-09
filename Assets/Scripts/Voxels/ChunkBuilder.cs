@@ -150,23 +150,30 @@ public class ChunkBuilder
         {
             var vp = mesh.Vertices[vi];
 
-            var globalVoxelPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(VoxelPosHelper.WorldPosToGlobalVoxelPos(vp), _chunk.ChunkPos);
+            var localVoxelPos = VoxelPosHelper.WorldPosToGlobalVoxelPos(vp);
 
             int r = 0, g = 0, b = 0, sun = 0;
-            int numVoxels = 0;
             for(int x = -1; x < 1; ++x)
             {
                 for(int z = -1; z < 1; ++z)
                 {   
                     for(int y = -1; y < 1; ++y)
                     {   
-                        var neighborPos = globalVoxelPos + new Vector3Int(x, y, z);
-                        var voxelColor = _world.GetVoxelLightColor(neighborPos);
-                        r += voxelColor.r;
-                        g += voxelColor.g;
-                        b += voxelColor.b;
-                        sun += voxelColor.a;
-                        numVoxels++;
+                        var neighborPos = localVoxelPos + new Vector3Int(x, y, z);
+                        if(_chunk.LocalVoxelPosIsInChunk(neighborPos))
+                        {
+                            r += (byte)(_chunk.GetLightChannelValue(neighborPos, 0) << 4);
+                            g += (byte)(_chunk.GetLightChannelValue(neighborPos, 1) << 4);
+                            b += (byte)(_chunk.GetLightChannelValue(neighborPos, 2) << 4);
+                            sun += (byte)(_chunk.GetLightChannelValue(neighborPos, 3) << 4);
+                        }
+                        else if(_chunk.TryGetNeighboringChunkVoxel(neighborPos, out var neighborChunk, out var neighborChunkLocalVoxelPos))
+                        {
+                            r += (byte)(neighborChunk.GetLightChannelValue(neighborChunkLocalVoxelPos, 0) << 4);
+                            g += (byte)(neighborChunk.GetLightChannelValue(neighborChunkLocalVoxelPos, 1) << 4);
+                            b += (byte)(neighborChunk.GetLightChannelValue(neighborChunkLocalVoxelPos, 2) << 4);
+                            sun += (byte)(neighborChunk.GetLightChannelValue(neighborChunkLocalVoxelPos, 3) << 4);
+                        }
                     }
                 }
             }
