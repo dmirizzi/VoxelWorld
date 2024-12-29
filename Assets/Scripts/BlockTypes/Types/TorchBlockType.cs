@@ -28,7 +28,11 @@ public class TorchBlockType : BlockTypeBase
         }
     }
 
-    public override bool OnPlace(VoxelWorld world, Chunk chunk, Vector3Int globalPos, Vector3Int localPos, BlockFace? placementFace, BlockFace? lookDir)
+    public override bool OnPlace(
+        VoxelWorld world, 
+        Vector3Int globalPos, 
+        BlockFace? placementFace, 
+        BlockFace? lookDir)
     {
         if(placementFace.HasValue && placementFace == BlockFace.Top)
         {
@@ -47,7 +51,7 @@ public class TorchBlockType : BlockTypeBase
         return true;
     }
 
-    public override bool OnRemove(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition)
+    public override bool OnRemove(VoxelWorld world, Vector3Int globalPosition)
     {
         var data = BlockDataRepository.GetBlockData("Torch");
         world.RemoveLight(globalPosition, false);

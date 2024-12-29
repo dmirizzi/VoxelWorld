@@ -59,7 +59,7 @@ public class Chunk
             }            
 
             // Execute remove logic on old block if available 
-            if(!oldBlockType.OnRemove(_voxelWorld, this, globalPos, localPos))
+            if(!oldBlockType.OnRemove(_voxelWorld, globalPos))
             {
                  // Block cannot be removed
                 return false;
@@ -77,7 +77,7 @@ public class Chunk
         var newBlockType = BlockDataRepository.GetBlockType(type);
         if(newBlockType != null)
         {
-            if(!newBlockType.OnPlace(_voxelWorld, this, globalPos, localPos, placementFace, lookDir))
+            if(!newBlockType.OnPlace(_voxelWorld, globalPos, placementFace, lookDir))
             {
                 // Block cannot be placed
                 return false;

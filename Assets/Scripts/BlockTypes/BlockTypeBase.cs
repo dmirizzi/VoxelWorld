@@ -23,7 +23,7 @@ public abstract class BlockTypeBase
     // Is called when the player attempts to place a block of this type. This will always be called before the build methods,
     // so that voxel auxiliary data can be set for building.
     // Returns true if it can be placed, false otherwise
-    public virtual bool OnPlace(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition, BlockFace? placementFace, BlockFace? lookDir) { return true; }
+    public virtual bool OnPlace(VoxelWorld world, Vector3Int globalPosition, BlockFace? placementFace, BlockFace? lookDir) { return true; }
 
     // Called when a chunk mesh is being built. Custom meshes can be added here that will use
     // the global voxel material (ie texture atlas).
@@ -34,7 +34,7 @@ public abstract class BlockTypeBase
 
     // Is called when the player attempts to remove/replace a block of this type.
     // Returns true if it can be removed, false otherwise
-    public virtual bool OnRemove(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition) { return true; }
+    public virtual bool OnRemove(VoxelWorld world, Vector3Int globalPosition) { return true; }
 
     // Is called when the player looks at and uses a specific block of this type
     public virtual bool OnUse(VoxelWorld world, Vector3Int globalPosition, BlockFace lookDir) { return true; }

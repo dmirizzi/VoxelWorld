@@ -91,9 +91,7 @@ class WedgeBlockType : BlockTypeBase
 
     public override bool OnPlace(
         VoxelWorld world, 
-        Chunk chunk, 
         Vector3Int globalPosition, 
-        Vector3Int localPosition, 
         BlockFace? placementFace,
         BlockFace? lookDir)
     {

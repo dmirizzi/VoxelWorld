@@ -63,9 +63,7 @@ public class DoorBlockType : BlockTypeBase
 
     public override bool OnPlace(
         VoxelWorld world, 
-        Chunk chunk, 
         Vector3Int globalPosition, 
-        Vector3Int localPosition, 
         BlockFace? placementFace, 
         BlockFace? lookDir)
     {
@@ -163,9 +161,7 @@ public class DoorBlockType : BlockTypeBase
 
     public override bool OnRemove(
         VoxelWorld world, 
-        Chunk chunk, 
-        Vector3Int globalPosition, 
-        Vector3Int localPosition)
+        Vector3Int globalPosition)
     {
         // Automatically delete the second door part
         var doorStateProp = GetProperty<DoorStateProperty>(world, globalPosition);

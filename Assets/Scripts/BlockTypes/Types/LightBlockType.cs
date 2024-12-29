@@ -30,9 +30,7 @@ public class LightBlockType : BlockTypeBase
 
     public override bool OnPlace(
         VoxelWorld world, 
-        Chunk chunk, 
         Vector3Int globalPosition, 
-        Vector3Int localPosition, 
         BlockFace? placementFace, 
         BlockFace? lookDir) 
     {         
@@ -44,9 +42,7 @@ public class LightBlockType : BlockTypeBase
 
     public override bool OnRemove(
         VoxelWorld world, 
-        Chunk chunk, 
-        Vector3Int globalPosition, 
-        Vector3Int localPosition) 
+        Vector3Int globalPosition) 
     { 
         world.RemoveLight(globalPosition, false);
 
