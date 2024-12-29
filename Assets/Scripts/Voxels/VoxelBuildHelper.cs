@@ -78,7 +78,7 @@ public static class VoxelBuildHelper
         var neighbor = world.GetVoxel(globalNeighborPos);
         var neighborFace = BlockFaceHelper.GetOppositeFace(direction);
 
-        var blockType = BlockTypeRegistry.GetBlockType(neighbor);
+        var blockType = BlockDataRepository.GetBlockType(neighbor);
         int yRotation = 0;
         if(blockType != null)
         {
@@ -102,7 +102,7 @@ public static class VoxelBuildHelper
             return voxelType != neighbor;
         }
 
-        var blockType = BlockTypeRegistry.GetBlockType(neighbor);
+        var blockType = BlockDataRepository.GetBlockType(neighbor);
         int yRotation = 0;
         if(blockType != null)
         {

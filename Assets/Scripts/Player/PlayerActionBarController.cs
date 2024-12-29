@@ -44,12 +44,13 @@ public class PlayerActionBarController : MonoBehaviour
         ActionBarItems = new ItemData[10];
         ActionBarItems[0] = ItemDataRepository.GetItemData("Torch");
         ActionBarItems[1] = ItemDataRepository.GetItemData("Grass");
-        ActionBarItems[2] = ItemDataRepository.GetItemData("Dirt");
-        ActionBarItems[3] = ItemDataRepository.GetItemData("Cobblestone");
-        ActionBarItems[4] = ItemDataRepository.GetItemData("CobblestoneWedge");
-        ActionBarItems[5] = ItemDataRepository.GetItemData("Door");
-        ActionBarItems[6] = ItemDataRepository.GetItemData("Ladder");
-        ActionBarItems[6] = ItemDataRepository.GetItemData("Log");
+        ActionBarItems[2] = ItemDataRepository.GetItemData("Cobblestone");
+        ActionBarItems[3] = ItemDataRepository.GetItemData("CobblestoneWedge");
+        ActionBarItems[4] = ItemDataRepository.GetItemData("Door");
+        ActionBarItems[5] = ItemDataRepository.GetItemData("Ladder");
+        ActionBarItems[6] = ItemDataRepository.GetItemData("YellowLightblock");
+        ActionBarItems[7] = ItemDataRepository.GetItemData("RedLightblock");
+        ActionBarItems[8] = ItemDataRepository.GetItemData("BlueLightblock");
 
         SelectActionBarSlot(0);
     }

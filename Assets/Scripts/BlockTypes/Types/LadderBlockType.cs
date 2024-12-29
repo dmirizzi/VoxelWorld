@@ -3,8 +3,10 @@ using UnityEngine;
 
 public class LadderBlockType : BlockTypeBase
 {
-    public LadderBlockType()
-        : base(new PlacementFaceProperty())
+    public LadderBlockType(ushort voxelType, BlockData blockData)
+        : base( voxelType,
+                blockData,
+                new PlacementFaceProperty())
     {
         var meshObj = Resources.Load<GameObject>("Models/Ladder");
         _mesh = new VoxelMesh(meshObj.GetComponentInChildren<MeshFilter>().sharedMesh);

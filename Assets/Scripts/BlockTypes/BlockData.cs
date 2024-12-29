@@ -44,6 +44,10 @@ public class BlockData
 {
     public string Name { get; set; }
 
+    public string BlockTypeClass { get; set; }
+
+    public Dictionary<string, string> CustomArgs { get; set; }
+
     [JsonConverter(typeof(StringEnumConverter))]
     public BlockRenderType RenderType { get; set; }
 

@@ -46,7 +46,7 @@ public class Chunk
         var globalPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(localPos, ChunkPos);
 
         var oldVoxelType = _chunkData[localPos.x, localPos.y, localPos.z];
-        var oldBlockType = BlockTypeRegistry.GetBlockType(oldVoxelType);
+        var oldBlockType = BlockDataRepository.GetBlockType(oldVoxelType);
 
         // Delete old voxel if one already exists at this position
         if(oldBlockType != null)
@@ -74,7 +74,7 @@ public class Chunk
         }
 
         // Execute place logic on old block if available
-        var newBlockType = BlockTypeRegistry.GetBlockType(type);
+        var newBlockType = BlockDataRepository.GetBlockType(type);
         if(newBlockType != null)
         {
             if(!newBlockType.OnPlace(_voxelWorld, this, globalPos, localPos, placementFace, lookDir))
@@ -149,7 +149,7 @@ public class Chunk
             {
                 for(int x = 0; x < VoxelInfo.ChunkSize; ++x)
                 {
-                    var blockType = BlockTypeRegistry.GetBlockType(_chunkData[x, y, z]);
+                    var blockType = BlockDataRepository.GetBlockType(_chunkData[x, y, z]);
                     if(blockType != null)
                     {
                         var localPos = new Vector3Int(x, y, z);

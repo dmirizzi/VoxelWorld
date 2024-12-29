@@ -3,8 +3,10 @@ using UnityEngine;
 
 public class DoorBlockType : BlockTypeBase
 {
-    public DoorBlockType(ushort voxelType)
-        : base( new PlacementFaceProperty(),
+    public DoorBlockType(ushort voxelType, BlockData blockData)
+        : base( voxelType,
+                blockData,
+                new PlacementFaceProperty(),
                 new DoorStateProperty() )
     {
         this._voxelType = voxelType;

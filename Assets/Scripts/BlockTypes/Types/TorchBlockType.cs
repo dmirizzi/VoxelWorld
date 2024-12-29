@@ -2,7 +2,10 @@ using UnityEngine;
 
 public class TorchBlockType : BlockTypeBase
 {
-    public TorchBlockType() : base( new PlacementFaceProperty() )
+    public TorchBlockType(ushort voxelType, BlockData blockData) 
+    : base( voxelType,
+            blockData,
+            new PlacementFaceProperty() )
     {
         _torchPrefab = (GameObject)Resources.Load("Prefabs/Torch", typeof(GameObject));
     }
@@ -39,8 +42,7 @@ public class TorchBlockType : BlockTypeBase
             SetProperty<PlacementFaceProperty>(world, globalPos, new PlacementFaceProperty(placementFace.Value));
         }
 
-        var data = BlockDataRepository.GetBlockData("Torch");
-        world.AddLight(globalPos, data.LightColor.Value);
+        world.AddLight(globalPos, BlockData.LightColor.Value);
 
         return true;
     }

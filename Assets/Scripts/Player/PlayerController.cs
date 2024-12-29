@@ -117,7 +117,7 @@ public class PlayerController : MonoBehaviour
             var voxel = _voxelWorld.GetVoxel(addedVoxelPos);
             if(voxel != 0)
             {
-                var blockType = BlockTypeRegistry.GetBlockType(voxel);
+                var blockType = BlockDataRepository.GetBlockType(voxel);
                 if(blockType != null)
                 {
                     blockType.OnTouchStart(_voxelWorld, addedVoxelPos, this);
@@ -131,7 +131,7 @@ public class PlayerController : MonoBehaviour
             var voxel = _voxelWorld.GetVoxel(removedVoxelPos);
             if(voxel != 0)
             {
-                var blockType = BlockTypeRegistry.GetBlockType(voxel);
+                var blockType = BlockDataRepository.GetBlockType(voxel);
                 if(blockType != null)
                 {
                     blockType.OnTouchEnd(_voxelWorld, removedVoxelPos, this);
@@ -239,7 +239,7 @@ public class PlayerController : MonoBehaviour
                 if(voxelPos.Item1.HasValue)
                 {
                     var voxelType = world.GetVoxel(voxelPos.Item1.Value);
-                    var blockType = BlockTypeRegistry.GetBlockType(voxelType);
+                    var blockType = BlockDataRepository.GetBlockType(voxelType);
                     if(blockType != null)
                     {
                         blockType.OnUse(_voxelWorld, voxelPos.Item1.Value, GetLookDir());

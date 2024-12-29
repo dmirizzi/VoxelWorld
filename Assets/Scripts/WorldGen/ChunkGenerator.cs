@@ -43,8 +43,7 @@ public class ChunkGenerator
                     }
                     else if(globalVoxelPos.y == terrainHeight + 1)
                     {
-                        var rand = new System.Random();
-                        if(rand.NextDouble() > 0.999)
+                        if((globalVoxelPos.x % 30) == 0 && (globalVoxelPos.z % 30) == 0)
                         {
                             builder.QueueVoxel(localVoxelPos, _torchType);
                         }

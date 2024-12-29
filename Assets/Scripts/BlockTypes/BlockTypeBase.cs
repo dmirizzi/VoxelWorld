@@ -5,8 +5,11 @@ using UnityEngine;
 
 public abstract class BlockTypeBase
 {
-    public BlockTypeBase(params IBlockProperty[] blockProperties)
+    public BlockTypeBase(ushort voxelType, BlockData blockData, params IBlockProperty[] blockProperties)
     {
+        VoxelType = voxelType;
+        BlockData = blockData;
+
         _blockProperties = new List<IBlockProperty>();
         _propertyTypeOffset = new Dictionary<Type, int>();
 
@@ -69,6 +72,10 @@ public abstract class BlockTypeBase
         var newAuxData = updateFunc(GetProperty<T>(world, globalPos));
         SetProperty(world, globalPos, newAuxData);
     }
+
+    protected BlockData BlockData { get; private set; }
+
+    protected ushort VoxelType { get; private set; }
 
     private List<IBlockProperty> _blockProperties;
 

@@ -57,7 +57,7 @@ public class ChunkBuilder
 
                     if(renderType == BlockRenderType.CustomMesh)
                     {
-                        var blockType = BlockTypeRegistry.GetBlockType(voxelType);
+                        var blockType = BlockDataRepository.GetBlockType(voxelType);
                         blockType.OnChunkVoxelMeshBuild(
                             _world,
                             _chunk,
@@ -183,7 +183,7 @@ public class ChunkBuilder
         return colors;
     }
 
-    private void AddVoxelVertices(
+    public void AddVoxelVertices(
         ushort voxelType, 
         Vector3Int globalVoxelPos,
         Vector3Int localVoxelPos,

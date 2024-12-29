@@ -32,6 +32,18 @@
         {
             "Name": "Log",
             "BlockType": "Log"
+        },
+        {
+            "Name": "YellowLightblock",
+            "BlockType": "YellowLightblock"
+        },
+        {
+            "Name": "RedLightblock",
+            "BlockType": "RedLightblock"
+        },
+        {
+            "Name": "BlueLightblock",
+            "BlockType": "BlueLightblock"
         }
     ]
 }
