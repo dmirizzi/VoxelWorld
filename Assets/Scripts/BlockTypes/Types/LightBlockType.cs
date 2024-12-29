@@ -1,9 +1,13 @@
+using System;
 using UnityEngine;
 
 public class LightBlockType : BlockTypeBase
 {
     public LightBlockType(ushort voxelType, BlockData blockData)
-        : base(voxelType, blockData)
+        : base(
+            voxelType, 
+            blockData,
+            new OnOffProperty())
     {
     }
 
@@ -33,6 +37,7 @@ public class LightBlockType : BlockTypeBase
         BlockFace? lookDir) 
     {         
         world.AddLight(globalPosition, BlockData.LightColor.Value);
+        SetProperty<OnOffProperty>(world, globalPosition, OnOffProperty.On);
 
         return true; 
     }
@@ -53,6 +58,23 @@ public class LightBlockType : BlockTypeBase
         Vector3Int globalPosition, 
         BlockFace lookDir) 
     { 
+        Func<OnOffProperty, OnOffProperty> updateFunc = prop => 
+        {
+            if(prop.OnOffState)
+            {
+                world.RemoveLight(globalPosition, false);
+            }
+            else
+            {
+                world.AddLight(globalPosition, BlockData.LightColor.Value);
+            }
+
+            prop.OnOffState = !prop.OnOffState;
+            return prop;
+        };
+
+        UpdateProperty<OnOffProperty>(world, globalPosition, updateFunc);
+
         return true; 
     }
 
