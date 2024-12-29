@@ -30,7 +30,7 @@ public static class BlockDataRepository
                 }
                 catch(Exception e)
                 {
-                    Debug.Log($"Failed to instantiate block type class {blockData.BlockTypeClass}: {e.Message}\n{e.StackTrace}");
+                    Debug.Log($"Failed to instantiate block type class {blockData.BlockTypeClass}\n\n{ExceptionHelper.GetFullExceptionDetails(e)}");
                 }            
             }
         }

@@ -5,20 +5,18 @@ using UnityEngine;
 
 public abstract class BlockTypeBase
 {
-    public BlockTypeBase(ushort voxelType, BlockData blockData, params IBlockProperty[] blockProperties)
+    public BlockTypeBase(ushort voxelType, BlockData blockData, params object[] blockProperties)
     {
         VoxelType = voxelType;
         BlockData = blockData;
 
-        _blockProperties = new List<IBlockProperty>();
         _propertyTypeOffset = new Dictionary<Type, int>();
 
         int offset = 0;
         foreach(var prop in blockProperties)
         {
-            _blockProperties.Add(prop);
             _propertyTypeOffset[prop.GetType()] = offset;
-            offset += prop.SerializedLengthInBits;
+            offset += PropertySerializer.GetTotalBitsForType(prop.GetType());
         }
     }
 
@@ -52,22 +50,22 @@ public abstract class BlockTypeBase
     // This is important for hidden face removal during chunk mesh building.
     public abstract BlockFace GetForwardFace(VoxelWorld world, Vector3Int globalPosition);
 
-    protected T GetProperty<T>(VoxelWorld world, Vector3Int globalPos) where T : IBlockProperty
+    protected T GetProperty<T>(VoxelWorld world, Vector3Int globalPos) where T : new()
     {
         var auxData = world.GetVoxelAuxiliaryData(globalPos);
         return auxData != null 
-                ? _blockProperties.Single(x => x is T).GetSerializer<T>().Deserialize(auxData.Value, _propertyTypeOffset[typeof(T)]) 
+                ? PropertySerializer.Deserialize<T>(auxData.Value, _propertyTypeOffset[typeof(T)])
                 : default(T);
     }
 
-    protected void SetProperty<T>(VoxelWorld world, Vector3Int globalPos, T property) where T : IBlockProperty
+    protected void SetProperty<T>(VoxelWorld world, Vector3Int globalPos, T property) where T : new()
     {
         var oldAuxData = world.GetVoxelAuxiliaryData(globalPos) ?? 0;
-        var newAuxData = property.GetSerializer<T>().Serialize(property, oldAuxData, _propertyTypeOffset[typeof(T)]);
+        var newAuxData = PropertySerializer.Serialize<T>(property, oldAuxData, _propertyTypeOffset[typeof(T)]);
         world.SetVoxelAuxiliaryData(globalPos, newAuxData);
     }
 
-    protected void UpdateProperty<T>(VoxelWorld world, Vector3Int globalPos, Func<T, T> updateFunc) where T : IBlockProperty
+    protected void UpdateProperty<T>(VoxelWorld world, Vector3Int globalPos, Func<T, T> updateFunc) where T : new()
     {
         var newAuxData = updateFunc(GetProperty<T>(world, globalPos));
         SetProperty(world, globalPos, newAuxData);
@@ -76,8 +74,6 @@ public abstract class BlockTypeBase
     protected BlockData BlockData { get; private set; }
 
     protected ushort VoxelType { get; private set; }
-
-    private List<IBlockProperty> _blockProperties;
 
     private Dictionary<Type, int> _propertyTypeOffset;
 }
