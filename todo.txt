@@ -6,7 +6,7 @@
 [ ] Separate Engine/Core and Game logic
     - e.g. World Generator (which handles chunk loading/unloading, backlogged voxels etc.) and Chunk Gen Logic (biomes, block types, trees etc.)
 
-[ ] Refactor Chunk GameObject life cycle handling 
+[x] Refactor Chunk GameObject life cycle handling 
     -> Shouldnt be created in Property!
     -> Do we even need to delete it on reset/clear? Or just when it is unloaded from world?
 
@@ -60,7 +60,7 @@
     -> Even GameObject voxels by themselves in large numbers seem to have a high performance impact
         -> Bake torch mesh into chunk mesh with static flame and display particles only when close by?
 
-[ ] Parallelize light map updates that cannot possibly overlap
+[x] Parallelize light map updates that cannot possibly overlap
     -> max distance + some buffer between them
 
 ----------------------------------------------------------------------------------------------------------------
@@ -170,8 +170,8 @@ World Gen
     [ ] ChunkLightFillUpdateJob -> This shouldn't propagate lights on world gen occluded borders between chunks
         -> e.g. torch at the edge of a chunk propagating down the side of the chunk b/c the bordering chunk hasn'take
             been generated yet
-    [ ] Refactor away Job Queuing Methods from VoxelWorld, Jobs should call AddJobs methods directly
-    [ ] Integrate world gen scheduling into WorldUpdateScheduler?
+    [x] Refactor away Job Queuing Methods from VoxelWorld, Jobs should call AddJobs methods directly
+    [x] Integrate world gen scheduling into WorldUpdateScheduler?
     [x] Bug: Fully-sunlit chunks when generating new area
         -> All voxels within this chunk are fully sun-lit (even inside voxels)
         -> This only seems to happen at the border between old and newly generated area
@@ -194,7 +194,7 @@ World Gen
     [ ] ChunkLightMappingUpdate 
         -> Only recreate GameObject if chunk was actually rebuilt, not if only the lighting changed
     [ ] Unload chunks player is moving away from when generating new chunks in front
-    [ ] Incorporate backlogged voxels into newly loaded chunks
+    [x] Incorporate backlogged voxels into newly loaded chunks
 
 [ ] Serialization / Deserialization
     [ ] Chunk serialization / Deserialization
@@ -277,7 +277,7 @@ Player
     -> Live block preview
     -> Rotateable
 
-[ ] JUMPING SUCKS - Ground detection doesnt always work (especially on edges, inclines etc)
+[x] JUMPING SUCKS - Ground detection doesnt always work (especially on edges, inclines etc)
     -> Use sphere casting instead of raycasting for ground detection?
 
 [x] Unequipped item after switching item in action bar can be left in world if switching really fast
