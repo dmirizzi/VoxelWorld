@@ -48,7 +48,7 @@ public class ChunkBuilder
             {
                 for(int z = 0; z < VoxelInfo.ChunkSize; ++z)
                 {
-                    var voxelType = _chunk.GetVoxel(x, y, z);
+                    var voxelType = _chunk.GetVoxelInsideChunk(x, y, z);
                     if(voxelType == 0) continue;
 
                     var localVoxelPos =  new Vector3Int(x, y, z);
@@ -216,7 +216,8 @@ public class ChunkBuilder
         for(int i = 0; i < VoxelInfo.VoxelFaceData.Length; ++i)
         {
             var faceData = VoxelInfo.VoxelFaceData[i];
-            if(VoxelBuildHelper.IsVoxelSideVisible(_world, voxelType, globalVoxelPos, faceData.VoxelFace))
+            if(VoxelBuildHelper.IsVoxelSideVisible(_world, _chunk, voxelType, globalVoxelPos, localVoxelPos, faceData.VoxelFace))
+            //if(VoxelBuildHelper.IsVoxelSideVisible(_world, voxelType, globalVoxelPos, faceData.VoxelFace))
             {
                 _voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[0]]);
                 _voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[1]]);

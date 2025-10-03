@@ -94,7 +94,7 @@ public class VoxelWorld : MonoBehaviour
         var chunk = GetChunkFromVoxelPosition(globalVoxelPos, true);
         var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(globalVoxelPos);
 
-        var oldVoxelType = chunk.GetVoxel(chunkLocalPos);
+        var oldVoxelType = chunk.GetVoxelInsideChunk(chunkLocalPos);
 
         var chunksAffectedByLightUpdate = new HashSet<Vector3Int>();
 
@@ -201,7 +201,7 @@ public class VoxelWorld : MonoBehaviour
             return 0;
         }
         var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(voxelPos);
-        return chunk.GetVoxel(chunkLocalPos);
+        return chunk.GetVoxelInsideChunk(chunkLocalPos);
     }
 
     public (Vector3Int, Vector3Int) GetWorldBoundaries()
@@ -265,7 +265,7 @@ public class VoxelWorld : MonoBehaviour
             var chunk = _chunks[chunkPos];
             for(int y = VoxelInfo.ChunkSize - 1; y >= 0; --y)
             {
-                if(chunk.GetVoxel(localVoxelPos.x, y, localVoxelPos.z) != 0)
+                if(chunk.GetVoxelInsideChunk(localVoxelPos.x, y, localVoxelPos.z) != 0)
                 {
                     return VoxelPosHelper.ChunkLocalVoxelPosToGlobal(
                         new Vector3Int(localVoxelPos.x, y, localVoxelPos.z),

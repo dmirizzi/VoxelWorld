@@ -376,44 +376,29 @@ public class LightMap
             {
                 iterations++;
 
-                var entry2 = Profiler.StartProfiling("PropagateLightNodes/NeighborProcessing-GetVectorIntFromBlockFace");
-
                 Chunk neighborChunk = null;
                 var neighborDir = BlockFaceHelper.GetVectorIntFromBlockFace(neighborFace);
                 var neighborLocalPos = lightNode.LocalPos + neighborDir;
                 var neighborGlobalPos = lightNode.GlobalPos + neighborDir;
 
-                Profiler.StopProfiling(entry2);
-
-                entry2 = Profiler.StartProfiling("PropagateLightNodes/NeighborProcessing-LocalPosInChunkCheck");
-
                 // We stay within the current chunk
                 if (lightNode.Chunk.LocalVoxelPosIsInChunk(neighborLocalPos))
                 {
-                    Profiler.StopProfiling(entry2);
                     neighborChunk = lightNode.Chunk;
                 }
                 // We are moving to a different chunk
                 else
                 {
-                    Profiler.StopProfiling(entry2);
-                    entry2 = Profiler.StartProfiling("PropagateLightNodes/NeighborProcessing-TryGetNeighboringChunkVoxel");
-
                     if (!lightNode.Chunk.TryGetNeighboringChunkVoxel(neighborLocalPos, out neighborChunk, out neighborLocalPos))
                     {
                         visitedNodes.Add(neighborGlobalPos);
-                        Profiler.StopProfiling(entry2);
                         continue;
                     }
 
                     visitedChunks.Add(neighborChunk.ChunkPos);
                 }
-                Profiler.StopProfiling(entry2);
-
 
                 var neighborLightLevel = neighborChunk.GetLightChannelValue(neighborLocalPos, channel);
-
-                var sw3 = Profiler.StartProfiling("PropagateLightNodes/CheckVisited");
 
                 // In case of sunlight, allow a light node to be set again if it is being lit directly by the sun and only 
                 // indirectly before
@@ -423,14 +408,11 @@ public class LightMap
                     // Otherwise, skip already processed nodes
                     if (visitedNodes.Contains(neighborGlobalPos))
                     {
-                        Profiler.StopProfiling(sw3);
                         continue;
                     }
                 }
-                Profiler.StopProfiling(sw3);
 
                 //TODO: Rewrite to work without _world
-                var sw4 = Profiler.StartProfiling("PropagateLightNodes/CheckOpaque");
                 var neighborOpaque = VoxelBuildHelper.NeighborVoxelHasOpaqueSide(_world, lightNode.GlobalPos, neighborFace, neighborDir);
 
                 if (neighborChunk != null && !neighborOpaque && neighborLightLevel + 2 <= currentLightLevel)
@@ -449,7 +431,6 @@ public class LightMap
                         Chunk = neighborChunk
                     });
                 }
-                Profiler.StopProfiling(sw4);
             }
         }
 

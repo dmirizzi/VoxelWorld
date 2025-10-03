@@ -30,21 +30,37 @@ public class Chunk
         }
     }
 
-    public ushort GetVoxel(Vector3Int localPos)
+    public ushort GetVoxelInsideChunk(Vector3Int localPos)
     {
         return _chunkData[localPos.x, localPos.y, localPos.z];
     }
 
-    public ushort GetVoxel(int localX, int localY, int localZ)
+    public ushort GetVoxelInsideChunk(int localX, int localY, int localZ)
     {
         return _chunkData[localX, localY, localZ];
     }
 
+    public ushort GetVoxel(Vector3Int localPos)
+    {
+        if(LocalVoxelPosIsInChunk(localPos))
+        {
+            return _chunkData[localPos.x, localPos.y, localPos.z];
+        }
+        else if(TryGetNeighboringChunkVoxel(localPos, out var neighborChunk, out var neighborLocalPos))
+        {
+            return neighborChunk.GetVoxelInsideChunk(neighborLocalPos);
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
     public bool SetVoxel(
-        Vector3Int localPos, 
-        ushort type, 
-        BlockFace? placementFace = null, 
-        BlockFace? lookDir = null, 
+        Vector3Int localPos,
+        ushort type,
+        BlockFace? placementFace = null,
+        BlockFace? lookDir = null,
         bool useExistingAuxData = false)
     {
         var oldVoxelType = _chunkData[localPos.x, localPos.y, localPos.z];
@@ -53,52 +69,52 @@ public class Chunk
 
         _chunkData[localPos.x, localPos.y, localPos.z] = type;
 
-        if(oldBlockType == null && newBlockType == null)
+        if (oldBlockType == null && newBlockType == null)
         {
             // Shortcut for simple voxel to voxel change
             return true;
         }
 
         // Remove old aux data and gameobjects if it already exists at this voxel position
-        if(_blockGameObjects.ContainsKey(localPos))
+        if (_blockGameObjects.ContainsKey(localPos))
         {
             GameObject.Destroy(_blockGameObjects[localPos]);
             _blockGameObjects.Remove(localPos);
         }
 
         // Remove old block if one already exists at this position
-        if(oldBlockType != null)
+        if (oldBlockType != null)
         {
             var globalPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(localPos, ChunkPos);
 
             // Remove existing voxel collider at this position if any
-            if(_voxelColliderGameObjects.ContainsKey(localPos))
+            if (_voxelColliderGameObjects.ContainsKey(localPos))
             {
                 GameObject.Destroy(_voxelColliderGameObjects[localPos]);
                 _voxelColliderGameObjects.Remove(localPos);
-            }            
+            }
 
             // Execute remove logic on old block if available 
-            if(!oldBlockType.OnRemove(_voxelWorld, this, globalPos, localPos))
+            if (!oldBlockType.OnRemove(_voxelWorld, this, globalPos, localPos))
             {
-                 // Block cannot be removed
+                // Block cannot be removed
                 return false;
             }
         }
 
         // Clear auxiliary data before setting new voxel unless it should explicitly be kept,
         // e.g. when setting initial aux data for a new voxel
-        if(!useExistingAuxData && _blockAuxiliaryData.ContainsKey(localPos))
+        if (!useExistingAuxData && _blockAuxiliaryData.ContainsKey(localPos))
         {
             _blockAuxiliaryData.Remove(localPos);
         }
 
         // Execute place logic on old block if available
-        if(newBlockType != null)
+        if (newBlockType != null)
         {
             var globalPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(localPos, ChunkPos);
 
-            if(!newBlockType.OnPlace(_voxelWorld, this, globalPos, localPos, placementFace, lookDir))
+            if (!newBlockType.OnPlace(_voxelWorld, this, globalPos, localPos, placementFace, lookDir))
             {
                 // Block cannot be placed
                 return false;
