@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -51,11 +52,6 @@ public static class Profiler
         entry.Subject = subject;
         entry.Stopwatch.Restart();
 
-        lock(_entries)
-        {
-            _entries.AddLast(entry);
-        }
-
         return entry;
     }
 
@@ -63,29 +59,30 @@ public static class Profiler
     {
         entry.Stopwatch.Stop();
         entry.ElapsedMs = entry.Stopwatch.Elapsed.TotalMilliseconds;
+
+        // Merge the elapsed time into the dictionary
+        _cumulativeTimes.AddOrUpdate(
+            entry.Subject,
+            entry.ElapsedMs, // If the subject doesn't exist, initialize with this value
+            (key, existingValue) => existingValue + entry.ElapsedMs // If it exists, add the elapsed time
+        );
     }
 
     public static MethodProfiler ProfileMethod(string subject) => new MethodProfiler(subject);
 
     public static void Clear()
     {
-        _entries = new LinkedList<ProfilingEntry>();
+        _cumulativeTimes = new ConcurrentDictionary<string, double>();
     }
-
-    public static IEnumerable<ProfilingEntry> GetProfilingEntries() => _entries;
 
     public static IEnumerable<(string Subject, double TotalElapsedMs)> GetProfilingResults()
     {
-        return _entries
-            .GroupBy(entry => entry.Subject)
-            .Select(group => (
-                Subject: group.Key,
-                TotalElapsedMs: group.Sum(entry => entry.ElapsedMs)
-            ))
-            .OrderByDescending(entry => entry.TotalElapsedMs);
+        return _cumulativeTimes
+            .OrderByDescending(entry => entry.Value)
+            .Select(entry => (Subject: entry.Key, TotalElapsedMs: entry.Value));
     }
 
-    public static void WriteProfilingResultsToCSV() 
+    public static void WriteProfilingResultsToCSV()
     {
         var fileName = @"E:\Dev\VoxelProfilingData\Profiling.csv";
         InitProfilingCSV(fileName);
@@ -98,21 +95,13 @@ public static class Profiler
         sb.Append(GitHelper.GetGitCommitMessage());
         sb.Append(";");
 
-        var elapsedPerSubject = _entries
-            .GroupBy(entry => entry.Subject)
-            .Select(group => new {
-                Subject = group.Key,
-                TotalElapsedMs = group.Sum(entry => entry.ElapsedMs)
-            })
-            .OrderBy(entry => entry.Subject);
-
-        var total = 0.0;        
-        foreach(var entry in elapsedPerSubject)
+        var total = 0.0;
+        foreach (var entry in _cumulativeTimes.OrderBy(entry => entry.Key))
         {
-            sb.Append(entry.TotalElapsedMs);
+            sb.Append(entry.Value);
             sb.Append(";");
 
-            total += entry.TotalElapsedMs;
+            total += entry.Value;
         }
         UnityEngine.Debug.Log($"Synchronous batch processing time: {total}ms");
 
@@ -123,26 +112,23 @@ public static class Profiler
 
     private static void InitProfilingCSV(string fileName)
     {
-        if(!File.Exists(fileName))
+        if (!File.Exists(fileName))
         {
             var sb = new StringBuilder();
             sb.Append("Commit;");
             sb.Append("CommitMessage;");
 
-            var allSubjects = _entries.Select(x => x.Subject).Distinct();
-            foreach(var entry in allSubjects)
+            foreach (var subject in _cumulativeTimes.Keys.OrderBy(x => x))
             {
-                sb.Append(entry);
+                sb.Append(subject);
                 sb.Append(";");
             }
             sb.Append("Total");
             sb.Append(Environment.NewLine);
-            
+
             File.WriteAllText(fileName, sb.ToString());
         }
     }
 
-    private static LinkedList<ProfilingEntry> _entries;
-
-    private static int _currentIndex = 0;
+    private static ConcurrentDictionary<string, double> _cumulativeTimes;
 }

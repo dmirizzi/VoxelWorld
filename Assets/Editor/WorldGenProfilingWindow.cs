@@ -68,21 +68,21 @@ public class WorldGenProfilingWindow : EditorWindow
 
     private void RefreshData()
     {
-        _jobs = Profiler.GetProfilingEntries()
+        _jobs = Profiler.GetProfilingResults()
             .Where(x => x.Subject.StartsWith("Jobs/"))
             .GroupBy(x => x.Subject)
             .Select(x => (
                 Description: x.Key.Substring("Jobs/".Length),
-                ElapsedMs: x.Sum(y => y.ElapsedMs)
+                ElapsedMs: x.Sum(y => y.TotalElapsedMs)
             ))
             .OrderByDescending(x => x.ElapsedMs);
 
-        _methods = Profiler.GetProfilingEntries()
+        _methods = Profiler.GetProfilingResults()
             .Where(x => x.Subject.StartsWith("Methods/"))
             .GroupBy(x => x.Subject)
             .Select(x => (
                 Description: x.Key.Substring("Methods/".Length),
-                ElapsedMs: x.Sum(y => y.ElapsedMs)
+                ElapsedMs: x.Sum(y => y.TotalElapsedMs)
             ))
             .OrderByDescending(x => x.ElapsedMs);
 

@@ -247,13 +247,8 @@ public class Chunk
 
     public bool LocalVoxelPosIsInChunk(Vector3Int pos)
     {
-        if(pos.x < 0) return false;
-        if(pos.x >= VoxelInfo.ChunkSize) return false;
-        if(pos.y < 0) return false;
-        if(pos.y >= VoxelInfo.ChunkSize) return false;
-        if(pos.z < 0) return false;
-        if(pos.z >= VoxelInfo.ChunkSize) return false;
-        return true;
+        int mask = VoxelInfo.ChunkSize - 1;
+        return ((pos.x | pos.y | pos.z) & ~mask) == 0;
     }
 
     public bool TryGetNeighboringChunkVoxel(Vector3Int pos, out Chunk neighborChunk, out Vector3Int neighborChunkLocalVoxelPos)

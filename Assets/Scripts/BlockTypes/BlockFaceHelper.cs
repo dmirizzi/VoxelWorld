@@ -51,7 +51,7 @@ public static class BlockFaceHelper
         { BlockFace.Right, 3 },
     };
 
-    private static List<BlockFace> _yRotationClockwiseLookup = new List<BlockFace> 
+    private static List<BlockFace> _yRotationClockwiseLookup = new List<BlockFace>
     {
         BlockFace.Front,
         BlockFace.Left,
@@ -61,14 +61,14 @@ public static class BlockFaceHelper
 
     public static BlockFaceSelector ToBlockFaceSelector(BlockFace face)
     {
-        switch(face)
+        switch (face)
         {
-            case BlockFace.Top:     return BlockFaceSelector.Top;
-            case BlockFace.Bottom:  return BlockFaceSelector.Bottom;
-            case BlockFace.Front:   return BlockFaceSelector.Front;
-            case BlockFace.Back:    return BlockFaceSelector.Back;
-            case BlockFace.Left:    return BlockFaceSelector.Left;
-            case BlockFace.Right:   return BlockFaceSelector.Right;
+            case BlockFace.Top: return BlockFaceSelector.Top;
+            case BlockFace.Bottom: return BlockFaceSelector.Bottom;
+            case BlockFace.Front: return BlockFaceSelector.Front;
+            case BlockFace.Back: return BlockFaceSelector.Back;
+            case BlockFace.Left: return BlockFaceSelector.Left;
+            case BlockFace.Right: return BlockFaceSelector.Right;
 
             default: throw new System.ArgumentException($"Unknown block face {face}");
         }
@@ -87,12 +87,12 @@ public static class BlockFaceHelper
 
     public static BlockFace RotateFaceY(BlockFace face, int yAngleDeg)
     {
-        if(face == BlockFace.Top || face == BlockFace.Bottom)
+        if (face == BlockFace.Top || face == BlockFace.Bottom)
         {
             return face;
         }
 
-        if(yAngleDeg < 0)
+        if (yAngleDeg < 0)
         {
             yAngleDeg = 360 + yAngleDeg;
         }
@@ -104,19 +104,19 @@ public static class BlockFaceHelper
 
     public static int GetYAngleBetweenFaces(BlockFace from, BlockFace to)
     {
-        if(from == BlockFace.Top || from == BlockFace.Bottom || to == BlockFace.Top || to == BlockFace.Bottom )
+        if (from == BlockFace.Top || from == BlockFace.Bottom || to == BlockFace.Top || to == BlockFace.Bottom)
         {
             return 0;
         }
 
         var turns = _blockFaceTurnNo[to] - _blockFaceTurnNo[from];
 
-        if(System.Math.Abs(turns) > 2)
+        if (System.Math.Abs(turns) > 2)
         {
             // Wrap around for shortest rotation
             return -System.Math.Sign(turns) * 90;
         }
-        if(turns == -2)
+        if (turns == -2)
         {
             // Just to mimic Vector3.SignedAngle's behavior which was used in a previous implementation
             // of this method
@@ -129,9 +129,9 @@ public static class BlockFaceHelper
 
     public static BlockFace? GetBlockFaceFromVector(Vector3 vector)
     {
-        foreach(var vec in _mapping.Keys)
+        foreach (var vec in _mapping.Keys)
         {
-            if(Mathf.Approximately(Vector3.Dot(vector, vec), 1f))
+            if (Mathf.Approximately(Vector3.Dot(vector, vec), 1f))
             {
                 return _mapping[vec];
             }
@@ -152,7 +152,7 @@ public static class BlockFaceHelper
     public static BlockFace GetOppositeFace(BlockFace face)
     {
         int faceInt = (int)face;
-        if(faceInt % 2 == 0)
+        if (faceInt % 2 == 0)
         {
             faceInt++;
         }

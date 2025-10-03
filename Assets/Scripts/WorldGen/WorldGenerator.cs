@@ -2,6 +2,7 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class WorldGenerator : MonoBehaviour
 {
@@ -116,15 +117,15 @@ public class WorldGenerator : MonoBehaviour
 
     void OnGUI()
     {
-        /*
-        var profiling = Profiler.GetProfilingResults().OrderByDescending(x => x.Value);
+        if (!WorldGenerated) return;
+
+        var profiling = Profiler.GetProfilingResults().OrderByDescending(x => x.Subject);
         int i = 0;
         foreach(var prof in profiling)
         {
-            GUI.Label(new Rect(10, 400 + 20 * i, 600, 30), $"{prof.Key}: {prof.Value}ms");
+            GUI.Label(new Rect(10, 400 + 20 * i, 600, 30), $"{prof.Subject}: {prof.TotalElapsedMs}ms");
             i++;
         }
-        */
     }
     
     private void GenerateChunksAroundCenter(Vector3Int centerChunkPos)

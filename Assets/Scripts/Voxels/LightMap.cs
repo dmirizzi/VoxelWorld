@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -86,30 +85,27 @@ public class LightMap
         while(removeLightNodes.Count > 0)
         {
             var removeLightNode = removeLightNodes.Dequeue();
-            foreach(var chunk in GetAffectedChunks(removeLightNode.Chunk.ChunkPos, localPos))
-            {
-                visitedChunks.Add(chunk);
-            }
+            UpdateAffectedChunks(removeLightNode.Chunk.ChunkPos, localPos, visitedChunks);
 
-            foreach(var neighborFace in fillDirections)
+            foreach (var neighborFace in fillDirections)
             {
                 var neighborDir = BlockFaceHelper.GetVectorIntFromBlockFace(neighborFace);
                 var neighborGlobalPos = removeLightNode.GlobalPos + neighborDir;
-                if(visitedNodes.Contains(neighborGlobalPos))
+                if (visitedNodes.Contains(neighborGlobalPos))
                 {
                     continue;
                 }
                 visitedNodes.Add(neighborGlobalPos);
 
                 var neighborChunk = _world.GetChunkFromVoxelPosition(neighborGlobalPos, true);
-                if(neighborChunk != null)
+                if (neighborChunk != null)
                 {
                     var localNeighborPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(neighborGlobalPos);
                     var neighborLightLevel = neighborChunk.GetLightChannelValue(localNeighborPos, channel);
-                    if(neighborLightLevel > 0 && neighborLightLevel < removeLightNode.LightLevel
+                    if (neighborLightLevel > 0 && neighborLightLevel < removeLightNode.LightLevel
 
                         // Remove sunlight downwards as long as its at max level
-                        || (neighborDir == Vector3Int.down && channel == Chunk.SunlightChannel && removeLightNode.LightLevel == 15))                
+                        || (neighborDir == Vector3Int.down && channel == Chunk.SunlightChannel && removeLightNode.LightLevel == 15))
                     {
                         neighborChunk.SetLightChannelValue(localNeighborPos, channel, 0);
                         removeLightNodes.Enqueue(new RemoveLightNode
@@ -119,7 +115,7 @@ public class LightMap
                             LightLevel = neighborLightLevel
                         });
                     }
-                    else if(neighborLightLevel >= removeLightNode.LightLevel)
+                    else if (neighborLightLevel >= removeLightNode.LightLevel)
                     {
                         lightNodes.Enqueue(new LightNode
                         {
@@ -358,76 +354,92 @@ public class LightMap
             }                
         }
 
-        if(isSunlight) Debug.Log($"Iterations: {iterations}, LightUpdates: {lightupdates}");
+        if(isSunlight) UnityEngine.Debug.Log($"Iterations: {iterations}, LightUpdates: {lightupdates}");
     }
 
 
     private void PropagateLightNodes(
-        Queue<LightNode> lightNodes, 
-        int channel, 
-        HashSet<Vector3Int> visitedNodes, 
+        Queue<LightNode> lightNodes,
+        int channel,
+        HashSet<Vector3Int> visitedNodes,
         HashSet<Vector3Int> visitedChunks,
-        bool isSunlight = false )
-    {        
+        bool isSunlight = false)
+    {
         int iterations = 0;
         int lightupdates = 0;
 
-        while(lightNodes.Count > 0)
+        while (lightNodes.Count > 0)
         {
             var lightNode = lightNodes.Dequeue();
 
-            //TODO: Only when crossing over chunk borders?
-            foreach(var chunk in GetAffectedChunks(lightNode.Chunk.ChunkPos, lightNode.LocalPos))
-            {
-                visitedChunks.Add(chunk);
-            }	
-
-            foreach(var neighborFace in fillDirections)
+            foreach (var neighborFace in fillDirections)
             {
                 iterations++;
+
+                var entry2 = Profiler.StartProfiling("PropagateLightNodes/NeighborProcessing-GetVectorIntFromBlockFace");
 
                 Chunk neighborChunk = null;
                 var neighborDir = BlockFaceHelper.GetVectorIntFromBlockFace(neighborFace);
                 var neighborLocalPos = lightNode.LocalPos + neighborDir;
                 var neighborGlobalPos = lightNode.GlobalPos + neighborDir;
-                
+
+                Profiler.StopProfiling(entry2);
+
+                entry2 = Profiler.StartProfiling("PropagateLightNodes/NeighborProcessing-LocalPosInChunkCheck");
+
                 // We stay within the current chunk
-                if(lightNode.Chunk.LocalVoxelPosIsInChunk(neighborLocalPos))
+                if (lightNode.Chunk.LocalVoxelPosIsInChunk(neighborLocalPos))
                 {
+                    Profiler.StopProfiling(entry2);
                     neighborChunk = lightNode.Chunk;
                 }
-                
                 // We are moving to a different chunk
-                else if(!lightNode.Chunk.TryGetNeighboringChunkVoxel(neighborLocalPos, out neighborChunk, out neighborLocalPos))
+                else
                 {
-                    visitedNodes.Add(neighborGlobalPos);
-                    continue;
-                }
-                
-                var neighborLightLevel = neighborChunk.GetLightChannelValue(neighborLocalPos, channel);		
-                
-                // In case of sunlight, allow a light node to be set again if it is being lit directly by the sun and only 
-                // indirectly before
-                var currentLightLevel = lightNode.Chunk.GetLightChannelValue(lightNode.LocalPos, channel);           
-                if(!isSunlight || currentLightLevel < 15 || neighborLightLevel == 15)
-                {
-                    // Otherwise, skip already processed nodes
-                    if(visitedNodes.Contains(neighborGlobalPos))
+                    Profiler.StopProfiling(entry2);
+                    entry2 = Profiler.StartProfiling("PropagateLightNodes/NeighborProcessing-TryGetNeighboringChunkVoxel");
+
+                    if (!lightNode.Chunk.TryGetNeighboringChunkVoxel(neighborLocalPos, out neighborChunk, out neighborLocalPos))
                     {
+                        visitedNodes.Add(neighborGlobalPos);
+                        Profiler.StopProfiling(entry2);
                         continue;
                     }
-                }		
-                
+
+                    visitedChunks.Add(neighborChunk.ChunkPos);
+                }
+                Profiler.StopProfiling(entry2);
+
+
+                var neighborLightLevel = neighborChunk.GetLightChannelValue(neighborLocalPos, channel);
+
+                var sw3 = Profiler.StartProfiling("PropagateLightNodes/CheckVisited");
+
+                // In case of sunlight, allow a light node to be set again if it is being lit directly by the sun and only 
+                // indirectly before
+                var currentLightLevel = lightNode.Chunk.GetLightChannelValue(lightNode.LocalPos, channel);
+                if (!isSunlight || currentLightLevel < 15 || neighborLightLevel == 15)
+                {
+                    // Otherwise, skip already processed nodes
+                    if (visitedNodes.Contains(neighborGlobalPos))
+                    {
+                        Profiler.StopProfiling(sw3);
+                        continue;
+                    }
+                }
+                Profiler.StopProfiling(sw3);
+
                 //TODO: Rewrite to work without _world
-                var neighborOpaque = VoxelBuildHelper.NeighborVoxelHasOpaqueSide(_world, lightNode.GlobalPos, neighborFace, neighborDir);		
-                
-                if(neighborChunk != null && !neighborOpaque && neighborLightLevel + 2 <= currentLightLevel)
+                var sw4 = Profiler.StartProfiling("PropagateLightNodes/CheckOpaque");
+                var neighborOpaque = VoxelBuildHelper.NeighborVoxelHasOpaqueSide(_world, lightNode.GlobalPos, neighborFace, neighborDir);
+
+                if (neighborChunk != null && !neighborOpaque && neighborLightLevel + 2 <= currentLightLevel)
                 {
                     visitedNodes.Add(neighborGlobalPos);
-                    
+
                     byte newLightLevel = GetNewLightLevel(currentLightLevel, neighborDir, isSunlight);
                     neighborChunk.SetLightChannelValue(neighborLocalPos, channel, newLightLevel);
-                    
+
                     lightupdates++;
 
                     lightNodes.Enqueue(new LightNode
@@ -437,10 +449,11 @@ public class LightMap
                         Chunk = neighborChunk
                     });
                 }
+                Profiler.StopProfiling(sw4);
             }
         }
 
-        if(isSunlight) Debug.Log($"Iterations: {iterations}, LightUpdates: {lightupdates}");
+        if (isSunlight) UnityEngine.Debug.Log($"Iterations: {iterations}, LightUpdates: {lightupdates}");   
     }    
 
     private byte GetNewLightLevel(byte currentLightLevel, Vector3Int fillDir, bool isSunlight)
@@ -457,18 +470,31 @@ public class LightMap
         }
     }
 
+    private void UpdateAffectedChunks(Vector3Int chunkPos, Vector3Int localVoxelPos, HashSet<Vector3Int> visitedChunks)
+    {
+        visitedChunks.Add(chunkPos);
+
+        if (localVoxelPos.x == 0)                           visitedChunks.Add(chunkPos + Vector3Int.left);
+        if (localVoxelPos.x == VoxelInfo.ChunkSize - 1)     visitedChunks.Add(chunkPos + Vector3Int.right);
+        if (localVoxelPos.y == 0)                           visitedChunks.Add(chunkPos + Vector3Int.up);
+        if (localVoxelPos.y == VoxelInfo.ChunkSize - 1)     visitedChunks.Add(chunkPos + Vector3Int.down);
+        if (localVoxelPos.z == 0)                           visitedChunks.Add(chunkPos + Vector3Int.back);
+        if (localVoxelPos.z == VoxelInfo.ChunkSize - 1)     visitedChunks.Add(chunkPos + Vector3Int.forward);
+    }
+
     private IEnumerable<Vector3Int> GetAffectedChunks(Vector3Int chunkPos, Vector3Int localVoxelPos)
     {
-        var chunks = new List<Vector3Int>();
+        var chunks = new List<Vector3Int>
+        {
+            chunkPos
+        };
 
-        chunks.Add(chunkPos);
-
-        if(localVoxelPos.x == 0)                           chunks.Add(chunkPos + Vector3Int.left);
-        if(localVoxelPos.x == VoxelInfo.ChunkSize - 1)     chunks.Add(chunkPos + Vector3Int.right);
-        if(localVoxelPos.y == 0)                           chunks.Add(chunkPos + Vector3Int.up);
-        if(localVoxelPos.y == VoxelInfo.ChunkSize - 1)     chunks.Add(chunkPos + Vector3Int.down);
-        if(localVoxelPos.z == 0)                           chunks.Add(chunkPos + Vector3Int.back);
-        if(localVoxelPos.z == VoxelInfo.ChunkSize - 1)     chunks.Add(chunkPos + Vector3Int.forward);
+        if (localVoxelPos.x == 0) chunks.Add(chunkPos + Vector3Int.left);
+        if (localVoxelPos.x == VoxelInfo.ChunkSize - 1) chunks.Add(chunkPos + Vector3Int.right);
+        if (localVoxelPos.y == 0) chunks.Add(chunkPos + Vector3Int.up);
+        if (localVoxelPos.y == VoxelInfo.ChunkSize - 1) chunks.Add(chunkPos + Vector3Int.down);
+        if (localVoxelPos.z == 0) chunks.Add(chunkPos + Vector3Int.back);
+        if (localVoxelPos.z == VoxelInfo.ChunkSize - 1) chunks.Add(chunkPos + Vector3Int.forward);
 
         return chunks;
     }
