@@ -9,7 +9,7 @@ public static class BlockDataRepository
         var blockTypesContent = Resources.Load<TextAsset>("BlockTypes").text;
         _blockDataList = JsonConvert.DeserializeObject<BlockDataList>(blockTypesContent);
 
-        for (ushort idx = 0; idx < _blockDataList.BlockData.Count; ++idx)
+        for (ushort idx = 0; idx < _blockDataList.BlockData.Length; ++idx)
         {
             var blockType = _blockDataList.BlockData[idx];
             _blockDataByName[blockType.Name] = blockType;
@@ -53,6 +53,6 @@ public static class BlockDataRepository
     [System.Serializable]
     private class BlockDataList
     {
-        public List<BlockData> BlockData;
+        public BlockData[] BlockData;
     }
 }

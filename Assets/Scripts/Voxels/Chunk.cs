@@ -56,6 +56,22 @@ public class Chunk
         }
     }
 
+    public ushort GetVoxel(int localX, int localY, int localZ)
+    {
+        if(LocalVoxelPosIsInChunk(localX, localY, localZ))
+        {
+            return _chunkData[localX, localY, localZ];
+        }
+        else if(TryGetNeighboringChunkVoxel(localX, localY, localZ, out var neighborChunk, out var neighborX, out var neighborY, out var neighborZ))
+        {
+            return neighborChunk.GetVoxelInsideChunk(neighborX, neighborY, neighborZ);
+        }
+        else
+        {
+            return 0;
+        }
+    }    
+
     public bool SetVoxel(
         Vector3Int localPos,
         ushort type,
@@ -266,13 +282,29 @@ public class Chunk
         int mask = VoxelInfo.ChunkSize - 1;
         return ((pos.x | pos.y | pos.z) & ~mask) == 0;
     }
+    
+    public bool LocalVoxelPosIsInChunk(int x, int y, int z)
+    {
+        int mask = VoxelInfo.ChunkSize - 1;
+        return ((x | y | z) & ~mask) == 0;
+    }
 
     public bool TryGetNeighboringChunkVoxel(Vector3Int pos, out Chunk neighborChunk, out Vector3Int neighborChunkLocalVoxelPos)
     {
         var neighborChunkIndex = VoxelPosHelper.LocalVoxelPosToRelativeChunkPos(pos) + Vector3Int.one;
-        
+
         neighborChunk = _neighboringChunks[neighborChunkIndex.x, neighborChunkIndex.y, neighborChunkIndex.z];
         neighborChunkLocalVoxelPos = VoxelPosHelper.LocalVoxelPosToNeighboringLocalVoxelPos(pos);
+
+        return neighborChunk != null;
+    }
+
+    public bool TryGetNeighboringChunkVoxel(int x, int y, int z, out Chunk neighborChunk, out int neighborX, out int neighborY, out int neighborZ)
+    {
+        VoxelPosHelper.LocalVoxelPosToRelativeChunkPos(x, y, z, out var neighborChunkX, out var neighborChunkY, out var neighborChunkZ);
+        neighborChunk = _neighboringChunks[neighborChunkX, neighborChunkY, neighborChunkZ];
+
+        VoxelPosHelper.LocalVoxelPosToNeighboringLocalVoxelPos(x, y, z, out neighborX, out neighborY, out neighborZ);
 
         return neighborChunk != null;
     }

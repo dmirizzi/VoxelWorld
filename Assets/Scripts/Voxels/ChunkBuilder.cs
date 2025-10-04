@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
 using UnityEngine;
 
 public class ChunkBuilder
@@ -191,34 +192,45 @@ public class ChunkBuilder
     }
 
     private void AddVoxelVertices(
-        ushort voxelType, 
+        ushort voxelType,
         Vector3Int globalVoxelPos,
         Vector3Int localVoxelPos,
         ChunkMesh chunkMesh)
     {
-        var heightOffset = _world.GetVoxel(globalVoxelPos + Vector3Int.up) != voxelType ?
-            VoxelInfo.GetVoxelHeightOffset(voxelType)
-            : 0.0f;
 
-        var voxelCornerVertices = new Vector3[]
-        {
-            localVoxelPos,
-            localVoxelPos + new Vector3(VoxelInfo.VoxelSize, 0, 0),
-            localVoxelPos + new Vector3(VoxelInfo.VoxelSize, 0, VoxelInfo.VoxelSize),
-            localVoxelPos + new Vector3(0, 0, VoxelInfo.VoxelSize),
-            localVoxelPos + new Vector3(0, VoxelInfo.VoxelSize - heightOffset, 0),
-            localVoxelPos + new Vector3(VoxelInfo.VoxelSize, VoxelInfo.VoxelSize - heightOffset, 0),
-            localVoxelPos + new Vector3(VoxelInfo.VoxelSize, VoxelInfo.VoxelSize - heightOffset, VoxelInfo.VoxelSize),
-            localVoxelPos + new Vector3(0, VoxelInfo.VoxelSize - heightOffset, VoxelInfo.VoxelSize)
-        };
+        /*
+            //TODO: Optimize before re-enabling
+            var heightOffset = _world.GetVoxel(globalVoxelPos + Vector3Int.up) != voxelType ?
+                VoxelInfo.GetVoxelHeightOffset(voxelType)
+                : 0.0f;
+        */
+        var heightOffset = 0.0f;
+
+        Vector3[] voxelCornerVertices = null;
 
         _voxelVertices.Clear();
-        for(int i = 0; i < VoxelInfo.VoxelFaceData.Length; ++i)
+        for (int i = 0; i < VoxelInfo.VoxelFaceData.Length; ++i)
         {
             var faceData = VoxelInfo.VoxelFaceData[i];
-            if(VoxelBuildHelper.IsVoxelSideVisible(_world, _chunk, voxelType, globalVoxelPos, localVoxelPos, faceData.VoxelFace))
-            //if(VoxelBuildHelper.IsVoxelSideVisible(_world, voxelType, globalVoxelPos, faceData.VoxelFace))
+            if (VoxelBuildHelper.IsVoxelSideVisible(_world, _chunk, voxelType, globalVoxelPos, localVoxelPos, faceData.VoxelFace))
             {
+                if (voxelCornerVertices == null)
+                {
+                    // Calculate voxel corner vertices only if at least one face is visible
+                    var localVoxelPosF = new Vector3(localVoxelPos.x, localVoxelPos.y, localVoxelPos.z);
+                    voxelCornerVertices = new Vector3[]
+                    {
+                        localVoxelPosF,
+                        localVoxelPosF + new Vector3(VoxelInfo.VoxelSize, 0, 0),
+                        localVoxelPosF + new Vector3(VoxelInfo.VoxelSize, 0, VoxelInfo.VoxelSize),
+                        localVoxelPosF + new Vector3(0, 0, VoxelInfo.VoxelSize),
+                        localVoxelPosF + new Vector3(0, VoxelInfo.VoxelSize - heightOffset, 0),
+                        localVoxelPosF + new Vector3(VoxelInfo.VoxelSize, VoxelInfo.VoxelSize - heightOffset, 0),
+                        localVoxelPosF + new Vector3(VoxelInfo.VoxelSize, VoxelInfo.VoxelSize - heightOffset, VoxelInfo.VoxelSize),
+                        localVoxelPosF + new Vector3(0, VoxelInfo.VoxelSize - heightOffset, VoxelInfo.VoxelSize)
+                    };
+                }
+
                 _voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[0]]);
                 _voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[1]]);
                 _voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[2]]);
@@ -237,7 +249,7 @@ public class ChunkBuilder
         int vertexBaseIdx = chunkMesh.Vertices.Count;
         chunkMesh.AddVertices(_voxelVertices);
 
-        for(int i = 0; i < _voxelVertices.Count; i += 4)
+        for (int i = 0; i < _voxelVertices.Count; i += 4)
         {
             chunkMesh.AddTriangleIndex(i + vertexBaseIdx);
             chunkMesh.AddTriangleIndex(i + 1 + vertexBaseIdx);

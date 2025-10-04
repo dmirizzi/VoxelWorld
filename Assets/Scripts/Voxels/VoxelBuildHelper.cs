@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -116,7 +117,7 @@ public static class VoxelBuildHelper
         var neighborFace = BlockFaceHelper.GetOppositeFace(direction);
         return !VoxelInfo.IsOpaque(neighbor, neighborFace, yRotation);
     }
-    
+
     public static bool IsVoxelSideVisible(
         VoxelWorld world,
         Chunk chunk,
@@ -124,11 +125,20 @@ public static class VoxelBuildHelper
         Vector3Int globalVoxelPos,
         Vector3Int localVoxelPos,
         BlockFace direction)
-    {       
+    {
         var dirVector = BlockFaceHelper.GetVectorIntFromBlockFace(direction);
-        var neighbor = chunk.GetVoxel(localVoxelPos + dirVector);
+        var neighborLocalPos = localVoxelPos + dirVector;
+        var neighbor = chunk.GetVoxel(neighborLocalPos.x, neighborLocalPos.y, neighborLocalPos.z);
 
-        if(VoxelInfo.IsTransparent(voxelType))
+        if (neighbor == 0)
+        {
+            // Neighbor voxel is air, so the face is definitely visible
+            return true;
+        }
+
+        var neighborBlockData = BlockDataRepository.GetBlockData(neighbor);
+
+        if (neighborBlockData.Transparent)
         {
             // Transparent neighboring voxels only hide their shared face if they are of the same type
             return voxelType != neighbor;
@@ -136,7 +146,7 @@ public static class VoxelBuildHelper
 
         var blockType = BlockTypeRegistry.GetBlockType(neighbor);
         int yRotation = 0;
-        if(blockType != null)
+        if (blockType != null)
         {
             yRotation = BlockFaceHelper.GetYAngleBetweenFaces(
                 blockType.GetForwardFace(world, globalVoxelPos + dirVector),
@@ -145,7 +155,7 @@ public static class VoxelBuildHelper
         }
 
         var neighborFace = BlockFaceHelper.GetOppositeFace(direction);
-        return !VoxelInfo.IsOpaque(neighbor, neighborFace, yRotation);
+        return !neighborBlockData.IsFaceOpaque(neighborFace, yRotation);
     }    
 
     public static void BuildVoxelUVCache()

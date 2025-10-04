@@ -109,14 +109,37 @@ public static class VoxelPosHelper
             localVoxelPos.z >> VoxelInfo.ChunkSizePowerOfTwo
         );
     }
+    
+    public static void LocalVoxelPosToRelativeChunkPos(int x, int y, int z, out int chunkX, out int chunkY, out int chunkZ)
+    {
+        chunkX = (x >> VoxelInfo.ChunkSizePowerOfTwo) + 1;
+        chunkY = (y >> VoxelInfo.ChunkSizePowerOfTwo) + 1;
+        chunkZ = (z >> VoxelInfo.ChunkSizePowerOfTwo) + 1;
+    }
 
     public static Vector3Int LocalVoxelPosToNeighboringLocalVoxelPos(Vector3Int localVoxelPos)
     {
         return new Vector3Int(
-            localVoxelPos.x < 0 ?  (localVoxelPos.x % VoxelInfo.ChunkSize) + VoxelInfo.ChunkSize : (localVoxelPos.x % VoxelInfo.ChunkSize),
-            localVoxelPos.y < 0 ?  (localVoxelPos.y % VoxelInfo.ChunkSize) + VoxelInfo.ChunkSize : (localVoxelPos.y % VoxelInfo.ChunkSize),
-            localVoxelPos.z < 0 ?  (localVoxelPos.z % VoxelInfo.ChunkSize) + VoxelInfo.ChunkSize : (localVoxelPos.z % VoxelInfo.ChunkSize)
+            localVoxelPos.x < 0 ? (localVoxelPos.x % VoxelInfo.ChunkSize) + VoxelInfo.ChunkSize : (localVoxelPos.x % VoxelInfo.ChunkSize),
+            localVoxelPos.y < 0 ? (localVoxelPos.y % VoxelInfo.ChunkSize) + VoxelInfo.ChunkSize : (localVoxelPos.y % VoxelInfo.ChunkSize),
+            localVoxelPos.z < 0 ? (localVoxelPos.z % VoxelInfo.ChunkSize) + VoxelInfo.ChunkSize : (localVoxelPos.z % VoxelInfo.ChunkSize)
         );
+    }
+
+    public static Vector3Int LocalVoxelPosToNeighboringLocalVoxelPos(int x, int y, int z)
+    {
+        return new Vector3Int(
+            x < 0 ? (x % VoxelInfo.ChunkSize) + VoxelInfo.ChunkSize : (x % VoxelInfo.ChunkSize),
+            y < 0 ? (y % VoxelInfo.ChunkSize) + VoxelInfo.ChunkSize : (y % VoxelInfo.ChunkSize),
+            z < 0 ? (z % VoxelInfo.ChunkSize) + VoxelInfo.ChunkSize : (z % VoxelInfo.ChunkSize)
+        );
+    }
+
+    public static void LocalVoxelPosToNeighboringLocalVoxelPos(int x, int y, int z, out int neighborX, out int neighborY, out int neighborZ)
+    {
+        neighborX = x < 0 ? (x % VoxelInfo.ChunkSize) + VoxelInfo.ChunkSize : (x % VoxelInfo.ChunkSize);
+        neighborY = y < 0 ? (y % VoxelInfo.ChunkSize) + VoxelInfo.ChunkSize : (y % VoxelInfo.ChunkSize);
+        neighborZ = z < 0 ? (z % VoxelInfo.ChunkSize) + VoxelInfo.ChunkSize : (z % VoxelInfo.ChunkSize);
     }
 
     public static Vector3Int ChunkPosToGlobalChunkBaseVoxelPos(Vector3Int chunkPos)
