@@ -590,7 +590,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d579a22e09cf424db8b3da88262f13f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ChunkGenerationRadius: 2
+  ChunkGenerationRadius: 12
   WorldSeed: 123456789
 --- !u!1 &2138034062
 GameObject:
