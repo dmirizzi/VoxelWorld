@@ -154,12 +154,12 @@ public class ChunkBuilder
             var localVoxelPos = VoxelPosHelper.WorldPosToGlobalVoxelPos(vp);
 
             int r = 0, g = 0, b = 0, sun = 0;
-            for(int x = -1; x < 1; ++x)
+            for(int x = -1; x <= 1; ++x)
             {
-                for(int z = -1; z < 1; ++z)
-                {   
-                    for(int y = -1; y < 1; ++y)
-                    {   
+                for(int z = -1; z <= 1; ++z)
+                {
+                    for(int y = -1; y <= 1; ++y)
+                    {
                         var neighborPos = localVoxelPos + new Vector3Int(x, y, z);
                         if(_chunk.LocalVoxelPosIsInChunk(neighborPos))
                         {
@@ -180,10 +180,10 @@ public class ChunkBuilder
             }
 
             // Calc average of surrounding voxel light colors
-            r >>= 3;
-            g >>= 3;
-            b >>= 3;
-            sun >>= 3;
+            r >>= 4;
+            g >>= 4;
+            b >>= 4;
+            sun >>= 4;
 
             colors[vi] = new Color32((byte)r, (byte)g, (byte)b, (byte)sun);
         }
