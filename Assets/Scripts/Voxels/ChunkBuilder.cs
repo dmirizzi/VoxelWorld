@@ -110,7 +110,6 @@ public class ChunkBuilder
         meshFilter.triangles = chunkMesh.GetTrianglesArray();
         meshFilter.normals = chunkMesh.GetNormalsArray();
         meshFilter.uv = chunkMesh.GetUVArray();
-        meshFilter.Optimize();
     }
 
     private Color32[] GetBlockyLightVertexColorMapping(ChunkMesh mesh)
