@@ -318,6 +318,9 @@ public class LightMap
 
                 var neighborLightLevel = neighborChunk.GetLightChannelValue(neighborLocalPos, channel);
 
+                // Skip if the neighboring node is already at a light level that is too high to be affected by the current node
+                if(neighborLightLevel + 2 > currentLightLevel) continue;
+
                 // In case of sunlight, allow a light node to be set again if it is being lit directly by the sun and only 
                 // indirectly before
                 if (!isSunlight || currentLightLevel < 15 || neighborLightLevel == 15)
@@ -330,7 +333,7 @@ public class LightMap
                 }
 
                 bool neighborOpaque = IsNeighborFaceOpaque(neighborFace, neighborChunk, neighborLocalPos, neighborGlobalPos);
-                if (!neighborOpaque && neighborLightLevel + 2 <= currentLightLevel)
+                if (!neighborOpaque && neighborLightLevel +2 <= currentLightLevel)
                 {
                     visitedNodes.Add(neighborGlobalPos);
 
