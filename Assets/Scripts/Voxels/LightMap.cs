@@ -402,23 +402,6 @@ public class LightMap
         if (localVoxelPos.z == VoxelInfo.ChunkSize - 1)     visitedChunks.Add(chunkPos + Vector3Int.forward);
     }
 
-    private IEnumerable<Vector3Int> GetAffectedChunks(Vector3Int chunkPos, Vector3Int localVoxelPos)
-    {
-        var chunks = new List<Vector3Int>
-        {
-            chunkPos
-        };
-
-        if (localVoxelPos.x == 0) chunks.Add(chunkPos + Vector3Int.left);
-        if (localVoxelPos.x == VoxelInfo.ChunkSize - 1) chunks.Add(chunkPos + Vector3Int.right);
-        if (localVoxelPos.y == 0) chunks.Add(chunkPos + Vector3Int.up);
-        if (localVoxelPos.y == VoxelInfo.ChunkSize - 1) chunks.Add(chunkPos + Vector3Int.down);
-        if (localVoxelPos.z == 0) chunks.Add(chunkPos + Vector3Int.back);
-        if (localVoxelPos.z == VoxelInfo.ChunkSize - 1) chunks.Add(chunkPos + Vector3Int.forward);
-
-        return chunks;
-    }
-
     private VoxelWorld _world;
 
     private struct LightNode
