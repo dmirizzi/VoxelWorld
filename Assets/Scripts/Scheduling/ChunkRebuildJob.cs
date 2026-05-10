@@ -6,7 +6,7 @@ using UnityEngine.Profiling;
 
 class ChunkRebuildJob : IWorldUpdateJob
 {
-    public int UpdateStage => 3;
+    public int UpdateStage => 4;
 
     public Vector3Int ChunkPos { get; private set; }
 

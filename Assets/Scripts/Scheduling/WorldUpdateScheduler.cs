@@ -68,6 +68,9 @@ public class WorldUpdateScheduler : MonoBehaviour
 
     public void AddSunlightUpdateJob() => AddJob(new SunlightUpdateJob());
 
+    public void AddSunlightColumnJob(Chunk topChunk) => AddJob(new SunlightColumnJob(topChunk));
+    public void AddSunlightHorizontalSpillJob() => AddJob(new SunlightHorizontalSpillJob());
+
     public void AddChunkLightFillUpdateJob(Vector3Int chunkPos)
     {
         if(!_world.ChunkExists(chunkPos)) return;

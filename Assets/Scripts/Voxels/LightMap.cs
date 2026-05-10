@@ -269,6 +269,89 @@ public class LightMap
         }
     }
 
+    public void UpdateSunlightColumnVertical(Chunk topChunk, List<LightNode> spilloverOut)
+    {
+        var queue = new Queue<LightNode>();
+
+        for (int x = 0; x < VoxelInfo.ChunkSize; ++x)
+        {
+            for (int z = 0; z < VoxelInfo.ChunkSize; ++z)
+            {
+                var localVoxelPos = new Vector3Int(x, VoxelInfo.ChunkSize - 1, z);
+                topChunk.SetLightChannelValue(localVoxelPos, Chunk.SunlightChannel, 15);
+                var node = new LightNode
+                {
+                    LocalPos = localVoxelPos,
+                    Chunk = topChunk,
+                    GlobalPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(localVoxelPos, topChunk.ChunkPos)
+                };
+                queue.Enqueue(node);
+                spilloverOut.Add(node);
+            }
+        }
+
+        var visitedByChunk = new Dictionary<Chunk, bool[,,]>();
+
+        while (queue.Count > 0)
+        {
+            var lightNode = queue.Dequeue();
+            var currentLightLevel = lightNode.Chunk.GetLightChannelValue(lightNode.LocalPos, Chunk.SunlightChannel);
+            if (currentLightLevel != 15) continue;
+
+            Chunk neighborChunk;
+            var neighborDir = Vector3Int.down;
+            var neighborLocalPos = lightNode.LocalPos + neighborDir;
+            var neighborGlobalPos = lightNode.GlobalPos + neighborDir;
+
+            if (!lightNode.Chunk.LocalVoxelPosIsInChunk(neighborLocalPos))
+            {
+                if (!lightNode.Chunk.TryGetNeighboringChunkVoxel(neighborLocalPos, out neighborChunk, out neighborLocalPos))
+                    continue;
+            }
+            else
+            {
+                neighborChunk = lightNode.Chunk;
+            }
+
+            var neighborLightLevel = neighborChunk.GetLightChannelValue(neighborLocalPos, Chunk.SunlightChannel);
+
+            if (neighborLightLevel + 2 > currentLightLevel) continue;
+
+            if (!visitedByChunk.TryGetValue(neighborChunk, out var neighborVisited))
+            {
+                neighborVisited = new bool[VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize];
+                visitedByChunk[neighborChunk] = neighborVisited;
+            }
+
+            if (neighborLightLevel == 15)
+            {
+                if (neighborVisited[neighborLocalPos.x, neighborLocalPos.y, neighborLocalPos.z])
+                    continue;
+            }
+
+            if (IsNeighborFaceOpaque(BlockFace.Bottom, neighborChunk, neighborLocalPos, neighborGlobalPos))
+                continue;
+
+            neighborVisited[neighborLocalPos.x, neighborLocalPos.y, neighborLocalPos.z] = true;
+            neighborChunk.SetLightChannelValue(neighborLocalPos, Chunk.SunlightChannel, 15);
+
+            var newNode = new LightNode
+            {
+                GlobalPos = neighborGlobalPos,
+                LocalPos = neighborLocalPos,
+                Chunk = neighborChunk
+            };
+            queue.Enqueue(newNode);
+            spilloverOut.Add(newNode);
+        }
+    }
+
+    public void PropagateSpilloverNodes(List<LightNode> seeds, HashSet<Vector3Int> visitedChunks)
+    {
+        var queue = new Queue<LightNode>(seeds);
+        PropagateLightNodes(queue, Chunk.SunlightChannel, new HashSet<Vector3Int>(), visitedChunks, true);
+    }
+
     private void PropagateLightNodes(
         Queue<LightNode> lightNodes,
         int channel,
@@ -404,7 +487,7 @@ public class LightMap
 
     private VoxelWorld _world;
 
-    private struct LightNode
+    public struct LightNode
     {
         public Chunk Chunk;
 

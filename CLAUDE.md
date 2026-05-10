@@ -117,14 +117,18 @@ Three coordinate spaces are used throughout:
 
 ### Job Pipeline (`Assets/Scripts/Scheduling/`)
 
-`WorldUpdateScheduler` runs a priority queue of jobs across four ordered stages:
+`WorldUpdateScheduler` runs a priority queue of jobs across ordered stages:
 
 | Stage | Jobs |
 |-------|------|
 | 0 | `ChunkGenerationJob` |
-| 1 | `ChunkVoxelCreationJob`, `SunlightUpdateJob`, `BlockLightUpdateJob` |
-| 2 | `ChunkLightFillUpdateJob`, `ChunkLightMappingUpdateJob` |
-| 3 | `ChunkRebuildJob` |
+| 1 | `ChunkVoxelCreationJob` |
+| 2 | `BackloggedVoxelCreationJob` |
+| 3 | `SunlightUpdateJob` (coordinator — no-op async, spawns column + spill jobs) |
+| 4 | `SunlightColumnJob` (one per XZ column, parallel), `ChunkRebuildJob` |
+| 5 | `SunlightHorizontalSpillJob` (single, sequential) |
+| 6 | `BlockLightUpdateJob`, `ChunkLightFillUpdateJob` |
+| 7 | `ChunkLightMappingUpdateJob` |
 
 Each job has three phases: `PreExecuteSync()` (main thread, reserves chunks), `ExecuteAsync()` (background `Task`), `PostExecuteSync()` (main thread, queues follow-up jobs). Chunk reservations prevent concurrent modification. Within a stage, jobs are prioritized by squared distance to the player.
 

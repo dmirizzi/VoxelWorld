@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static LightMap;
 
 public class VoxelWorld : MonoBehaviour
 {
@@ -25,6 +26,9 @@ public class VoxelWorld : MonoBehaviour
     void Update()
     {
     }
+
+    public List<LightNode> SunlightSpilloverBuffer { get; } = new List<LightNode>();
+    public IEnumerable<Vector3Int> GetAllChunkPositions() => _chunks.Keys;
 
     public LightMap GetLightMap() => _lightMap;
 

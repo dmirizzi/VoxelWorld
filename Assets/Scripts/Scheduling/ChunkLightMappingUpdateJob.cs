@@ -6,7 +6,7 @@ using UnityEngine.Profiling;
 
 class ChunkLightMappingUpdateJob : IWorldUpdateJob
 {
-    public int UpdateStage => 6;
+    public int UpdateStage => 7;
 
     public Vector3Int ChunkPos { get; private set; }
 
