@@ -368,13 +368,22 @@ public class LightMap
         int iterations = 0;
         int lightupdates = 0;
 
+
+
         while (lightNodes.Count > 0)
         {
             var lightNode = lightNodes.Dequeue();
 
+            var currentLightLevel = lightNode.Chunk.GetLightChannelValue(lightNode.LocalPos, channel);
+            if (currentLightLevel <= 1)
+            {
+                continue;
+            }   
+
+            iterations++;
+
             foreach (var neighborFace in fillDirections)
             {
-                iterations++;
 
                 Chunk neighborChunk = null;
                 var neighborDir = BlockFaceHelper.GetVectorIntFromBlockFace(neighborFace);
@@ -391,7 +400,7 @@ public class LightMap
                 {
                     if (!lightNode.Chunk.TryGetNeighboringChunkVoxel(neighborLocalPos, out neighborChunk, out neighborLocalPos))
                     {
-                        visitedNodes.Add(neighborGlobalPos);
+                        //visitedNodes.Add(neighborGlobalPos);
                         continue;
                     }
 
@@ -402,7 +411,6 @@ public class LightMap
 
                 // In case of sunlight, allow a light node to be set again if it is being lit directly by the sun and only 
                 // indirectly before
-                var currentLightLevel = lightNode.Chunk.GetLightChannelValue(lightNode.LocalPos, channel);
                 if (!isSunlight || currentLightLevel < 15 || neighborLightLevel == 15)
                 {
                     // Otherwise, skip already processed nodes
@@ -415,7 +423,7 @@ public class LightMap
                 //TODO: Rewrite to work without _world
                 var neighborOpaque = VoxelBuildHelper.NeighborVoxelHasOpaqueSide(_world, lightNode.GlobalPos, neighborFace, neighborDir);
 
-                if (neighborChunk != null && !neighborOpaque && neighborLightLevel + 2 <= currentLightLevel)
+                if (!neighborOpaque && neighborLightLevel + 2 <= currentLightLevel)
                 {
                     visitedNodes.Add(neighborGlobalPos);
 
