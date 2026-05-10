@@ -233,8 +233,10 @@ Items / Blocks
         -> normals incorrect?
         -> normals need to be rotated as well!
 
-[ ] Wedge causes lighting problems: set wedge, then light nearby, some surrounding voxels are then too dark
+[x] Wedge causes lighting problems: set wedge, then light nearby, some surrounding voxels are then too dark
         -> then when removing wedge and placing it again, it looks fine
+        -> was due to MeshFilter.Optimize() call after applying vertex light mapping, as Optimize() can shift
+           vertex indices if a voxel has less than 8 vertices
 
 [ ] Quarter Wedge
 
