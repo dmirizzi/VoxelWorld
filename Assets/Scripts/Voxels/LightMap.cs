@@ -368,8 +368,6 @@ public class LightMap
         int iterations = 0;
         int lightupdates = 0;
 
-
-
         while (lightNodes.Count > 0)
         {
             var lightNode = lightNodes.Dequeue();
@@ -420,9 +418,7 @@ public class LightMap
                     }
                 }
 
-                //TODO: Rewrite to work without _world
-                var neighborOpaque = VoxelBuildHelper.NeighborVoxelHasOpaqueSide(_world, lightNode.GlobalPos, neighborFace, neighborDir);
-
+                bool neighborOpaque = IsNeighborFaceOpaque(neighborFace, neighborChunk, neighborLocalPos, neighborGlobalPos);
                 if (!neighborOpaque && neighborLightLevel + 2 <= currentLightLevel)
                 {
                     visitedNodes.Add(neighborGlobalPos);
@@ -442,8 +438,23 @@ public class LightMap
             }
         }
 
-        if (isSunlight) UnityEngine.Debug.Log($"Iterations: {iterations}, LightUpdates: {lightupdates}");   
-    }    
+        if (isSunlight)    UnityEngine.Debug.Log($"Iterations: {iterations}, LightUpdates: {lightupdates}");  
+    }
+
+    private bool IsNeighborFaceOpaque(BlockFace neighborFace, Chunk neighborChunk, Vector3Int neighborLocalPos, Vector3Int neighborGlobalPos)
+    {
+        var neighborVoxelType = neighborChunk.GetVoxelInsideChunk(neighborLocalPos);
+        var blockType = BlockTypeRegistry.GetBlockType(neighborVoxelType);
+        
+        int yRotation = 0;        
+        if (blockType != null)
+        {
+            yRotation = BlockFaceHelper.GetYAngleBetweenFaces(blockType.GetForwardFace(_world, neighborGlobalPos), BlockFace.Back);
+        }
+        
+        var neighborOpaque = VoxelInfo.IsOpaque(neighborVoxelType, BlockFaceHelper.GetOppositeFace(neighborFace), yRotation);
+        return neighborOpaque;
+    }
 
     private byte GetNewLightLevel(byte currentLightLevel, Vector3Int fillDir, bool isSunlight)
     {
