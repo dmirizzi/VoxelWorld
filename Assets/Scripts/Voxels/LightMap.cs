@@ -279,6 +279,8 @@ public class LightMap
         int iterations = 0;
         int lightupdates = 0;
 
+        var visitedByChunk = new Dictionary<Chunk, bool[,,]>();
+
         while (lightNodes.Count > 0)
         {
             var lightNode = lightNodes.Dequeue();
@@ -287,13 +289,12 @@ public class LightMap
             if (currentLightLevel <= 1)
             {
                 continue;
-            }   
+            }
 
             iterations++;
 
             foreach (var neighborFace in fillDirections)
             {
-
                 Chunk neighborChunk = null;
                 var neighborDir = BlockFaceHelper.GetVectorIntFromBlockFace(neighborFace);
                 var neighborLocalPos = lightNode.LocalPos + neighborDir;
@@ -309,7 +310,6 @@ public class LightMap
                 {
                     if (!lightNode.Chunk.TryGetNeighboringChunkVoxel(neighborLocalPos, out neighborChunk, out neighborLocalPos))
                     {
-                        //visitedNodes.Add(neighborGlobalPos);
                         continue;
                     }
 
@@ -319,23 +319,29 @@ public class LightMap
                 var neighborLightLevel = neighborChunk.GetLightChannelValue(neighborLocalPos, channel);
 
                 // Skip if the neighboring node is already at a light level that is too high to be affected by the current node
-                if(neighborLightLevel + 2 > currentLightLevel) continue;
+                if (neighborLightLevel + 2 > currentLightLevel) continue;
 
-                // In case of sunlight, allow a light node to be set again if it is being lit directly by the sun and only 
+                if (!visitedByChunk.TryGetValue(neighborChunk, out var neighborVisited))
+                {
+                    neighborVisited = new bool[VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize];
+                    visitedByChunk[neighborChunk] = neighborVisited;
+                }
+
+                // In case of sunlight, allow a light node to be set again if it is being lit directly by the sun and only
                 // indirectly before
                 if (!isSunlight || currentLightLevel < 15 || neighborLightLevel == 15)
                 {
                     // Otherwise, skip already processed nodes
-                    if (visitedNodes.Contains(neighborGlobalPos))
+                    if (neighborVisited[neighborLocalPos.x, neighborLocalPos.y, neighborLocalPos.z])
                     {
                         continue;
                     }
                 }
 
                 bool neighborOpaque = IsNeighborFaceOpaque(neighborFace, neighborChunk, neighborLocalPos, neighborGlobalPos);
-                if (!neighborOpaque && neighborLightLevel +2 <= currentLightLevel)
+                if (!neighborOpaque)
                 {
-                    visitedNodes.Add(neighborGlobalPos);
+                    neighborVisited[neighborLocalPos.x, neighborLocalPos.y, neighborLocalPos.z] = true;
 
                     byte newLightLevel = GetNewLightLevel(currentLightLevel, neighborDir, isSunlight);
                     neighborChunk.SetLightChannelValue(neighborLocalPos, channel, newLightLevel);
@@ -352,7 +358,7 @@ public class LightMap
             }
         }
 
-        if (isSunlight)    UnityEngine.Debug.Log($"Iterations: {iterations}, LightUpdates: {lightupdates}");  
+        if (isSunlight) UnityEngine.Debug.Log($"Iterations: {iterations}, LightUpdates: {lightupdates}");
     }
 
     private bool IsNeighborFaceOpaque(BlockFace neighborFace, Chunk neighborChunk, Vector3Int neighborLocalPos, Vector3Int neighborGlobalPos)
