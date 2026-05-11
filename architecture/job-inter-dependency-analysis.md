@@ -43,7 +43,7 @@ Several `PostExecuteSync` implementations schedule follow-up work by calling met
 
 | Call site | VoxelWorld method | Ultimately calls |
 |-----------|------------------|-----------------|
-| `ChunkRebuildJob.PostExecuteSync` | `world.QueueLightFillOnNewChunk(chunkPos)` | `_updateScheduler.AddChunkLightFillUpdateJob(...)` |
+| `ChunkMeshRebuildJob.PostExecuteSync` | `world.QueueLightFillOnNewChunk(chunkPos)` | `_updateScheduler.AddChunkLightFillUpdateJob(...)` |
 | `ChunkLightFillUpdateJob.PostExecuteSync` | `world.QueueChunkForLightMappingUpdate(chunkPos)` | `_updateScheduler.AddChunkLightMappingUpdateJob(...)` |
 | `BlockLightUpdateJob.PostExecuteSync` | `world.QueueChunksForLightMappingUpdate(...)` | `_updateScheduler.AddChunkLightMappingUpdateJob(...)` × N |
 | `SunlightColumnJob.PostExecuteSync` | `world.QueueChunksForLightMappingUpdate(...)` | same |
@@ -145,7 +145,7 @@ _spilloverSeeds = seeds ?? new List<LightNode>();
 Regardless of which option is chosen for the spillover buffer, the VoxelWorld scheduling round-trips (section 2a) should be cleaned up. In `PostExecuteSync`, jobs already receive `worldUpdateScheduler` — they can call it directly:
 
 ```csharp
-// ChunkRebuildJob.PostExecuteSync — before
+// ChunkMeshRebuildJob.PostExecuteSync — before
 world.QueueLightFillOnNewChunk(ChunkPos);
 // after
 worldUpdateScheduler.AddChunkLightFillUpdateJob(ChunkPos);

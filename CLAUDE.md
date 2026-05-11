@@ -72,7 +72,7 @@ Assets/
     │   ├── ChunkGenerationJob.cs
     │   ├── ChunkLightFillUpdateJob.cs
     │   ├── ChunkLightMappingUpdateJob.cs
-    │   ├── ChunkRebuildJob.cs
+    │   ├── ChunkMeshRebuildJob.cs
     │   ├── ChunkVoxelCreationJob.cs
     │   ├── IWorldUpdateJob.cs
     │   ├── JobPriority.cs
@@ -125,7 +125,7 @@ Three coordinate spaces are used throughout:
 | 1 | `ChunkVoxelCreationJob` |
 | 2 | `BackloggedVoxelCreationJob` |
 | 3 | `SunlightUpdateJob` (coordinator — no-op async, spawns column + spill jobs) |
-| 4 | `SunlightColumnJob` (one per XZ column, parallel), `ChunkRebuildJob` |
+| 4 | `SunlightColumnJob` (one per XZ column, parallel), `ChunkMeshRebuildJob` |
 | 5 | `SunlightHorizontalSpillJob` (single, sequential) |
 | 6 | `BlockLightUpdateJob`, `ChunkLightFillUpdateJob` |
 | 7 | `ChunkLightMappingUpdateJob` |

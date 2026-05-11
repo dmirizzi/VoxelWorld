@@ -1,14 +1,11 @@
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading;
 using UnityEngine;
 
-public class ChunkBuilder
+public class ChunkMeshBuilder
 {
     public Vector3Int ChunkPos { get; private set; }
 
-    public ChunkBuilder(VoxelWorld world, Vector3Int chunkPos, Chunk chunk, Material textureAtlasMaterial, Material textureAtlasTransparentMaterial)
+    public ChunkMeshBuilder(VoxelWorld world, Vector3Int chunkPos, Chunk chunk, Material textureAtlasMaterial, Material textureAtlasTransparentMaterial)
     {
         _world = world;
         ChunkPos = chunkPos;

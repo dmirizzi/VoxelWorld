@@ -2,9 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.Profiling;
 
-class ChunkRebuildJob : IWorldUpdateJob
+class ChunkMeshRebuildJob : IWorldUpdateJob
 {
     public int UpdateStage => 4;
 
@@ -12,11 +11,13 @@ class ChunkRebuildJob : IWorldUpdateJob
 
     public HashSet<Vector3Int> AffectedChunks { get; private set; }
 
-    public ChunkRebuildJob(Vector3Int chunkPos)
+    public ChunkMeshRebuildJob(Vector3Int chunkPos)
     {
         ChunkPos = chunkPos;
-        AffectedChunks = new HashSet<Vector3Int>();
-        AffectedChunks.Add(chunkPos);
+        AffectedChunks = new HashSet<Vector3Int>
+        {
+            chunkPos
+        };
     }
 
     public bool PreExecuteSync(VoxelWorld world, WorldGenerator worldGenerator)
@@ -30,7 +31,7 @@ class ChunkRebuildJob : IWorldUpdateJob
     {
         return Task.Run(() => 
         {
-            UnityEngine.Profiling.Profiler.BeginThreadProfiling("WorldUpdateJobs", "ChunkRebuildJob");
+            UnityEngine.Profiling.Profiler.BeginThreadProfiling("WorldUpdateJobs", "ChunkMeshRebuildJob");
             _chunkBuilder.Build();
             UnityEngine.Profiling.Profiler.EndThreadProfiling();
         });
@@ -42,16 +43,16 @@ class ChunkRebuildJob : IWorldUpdateJob
     }
 
     public override bool Equals(object rhs) =>
-        (rhs is ChunkRebuildJob rhsJob)
+        (rhs is ChunkMeshRebuildJob rhsJob)
             && (ChunkPos == rhsJob.ChunkPos);
 
     public override int GetHashCode() => 
         HashCode.Combine(
-            typeof(ChunkRebuildJob), 
+            typeof(ChunkMeshRebuildJob), 
             ChunkPos);    
 
     public override string ToString()
-     => $"ChunkRebuildJob(ChunkPos={ChunkPos})";
+     => $"ChunkMeshRebuildJob(ChunkPos={ChunkPos})";
 
-    private ChunkBuilder _chunkBuilder;
+    private ChunkMeshBuilder _chunkBuilder;
 }

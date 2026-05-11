@@ -65,10 +65,10 @@ public class WorldUpdateScheduler : MonoBehaviour
 
     public void FinishBatch() => _batching = false;
 
-    public void AddChunkRebuildJob(Vector3Int chunkPos)
+    public void AddChunkMeshRebuildJob(Vector3Int chunkPos)
     {
         if(!_world.ChunkExists(chunkPos)) return;
-        AddJob(new ChunkRebuildJob(chunkPos));
+        AddJob(new ChunkMeshRebuildJob(chunkPos));
     }
 
     public void AddSunlightUpdateJob() => AddJob(new SunlightUpdateJob());

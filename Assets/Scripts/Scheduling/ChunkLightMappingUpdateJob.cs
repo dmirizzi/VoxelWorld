@@ -62,7 +62,7 @@ class ChunkLightMappingUpdateJob : IWorldUpdateJob
     public override string ToString()
      => $"ChunkLightMappingUpdateJob(ChunkPos={ChunkPos})";
 
-    private ChunkBuilder.ChunkLightColorMapping _lightColorMapping;
+    private ChunkMeshBuilder.ChunkLightColorMapping _lightColorMapping;
 
-    private ChunkBuilder _chunkBuilder;
+    private ChunkMeshBuilder _chunkBuilder;
 }
