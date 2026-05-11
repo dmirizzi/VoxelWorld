@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using static LightMap;
@@ -54,9 +55,11 @@ public class WorldUpdateScheduler : MonoBehaviour
     }
 
     public void StartBatch()
-    { 
+    {
         _batching = true;
         _batchTimer.Restart();
+        _currentBatchStage = -1;
+        _stageTimings.Clear();
     }
 
     public void FinishBatch() => _batching = false;
@@ -121,6 +124,15 @@ public class WorldUpdateScheduler : MonoBehaviour
             && NextJobIsNotHigherStageThanActiveJobs()
             && _jobQueue.DequeueNext(x => CanReserveChunks(x.AffectedChunks), out var job))
         {
+            if (job.UpdateStage != _currentBatchStage)
+            {
+                var now = _batchTimer.Elapsed.TotalMilliseconds;
+                if (_currentBatchStage >= 0)
+                    _stageTimings[_currentBatchStage] = (_stageTimings[_currentBatchStage].start, now);
+                _currentBatchStage = job.UpdateStage;
+                _stageTimings[_currentBatchStage] = (now, -1);
+            }
+
             var token = Profiler.StartProfiling($"Jobs/{job.GetType()}/PreExecute");
             var preExecute = job.PreExecuteSync(_world, _worldGenerator);
             Profiler.StopProfiling(token);
@@ -179,10 +191,17 @@ public class WorldUpdateScheduler : MonoBehaviour
 
                 if(_activeJobs.Count == 0 && _jobQueue.Count == 0)
                 {
-                    // Batch finished
-                    BatchFinished?.Invoke();                    
                     _batchTimer.Stop();
-                    UnityEngine.Debug.Log($"Processed batch in {_batchTimer.Elapsed.TotalMilliseconds}ms");
+
+                    if (_currentBatchStage >= 0)
+                        _stageTimings[_currentBatchStage] = (_stageTimings[_currentBatchStage].start, _batchTimer.Elapsed.TotalMilliseconds);
+
+                    var sb = new StringBuilder($"Batch finished in {_batchTimer.Elapsed.TotalMilliseconds:F1}ms | ");
+                    foreach (var kvp in _stageTimings)
+                        sb.Append($"Stage {kvp.Key}: {(kvp.Value.end - kvp.Value.start):F1}ms  ");
+                    UnityEngine.Debug.Log(sb.ToString());
+
+                    BatchFinished?.Invoke();
                 }
             }
             jobNode = next;
@@ -223,7 +242,9 @@ public class WorldUpdateScheduler : MonoBehaviour
         _reservedChunks.ExceptWith(chunks);
     }
 
-    private int? _currentUpdateStage;
+    private int _currentBatchStage = -1;
+
+    private SortedDictionary<int, (double start, double end)> _stageTimings = new SortedDictionary<int, (double start, double end)>();
 
     private bool _batching;
 
