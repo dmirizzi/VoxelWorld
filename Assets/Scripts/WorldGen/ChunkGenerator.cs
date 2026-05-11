@@ -37,10 +37,12 @@ public class ChunkGenerator
                     {
                         builder.QueueVoxelInChunk(x, y, z, _grassType);
 
+                        /*
                         if(TreeShouldBePlaced(new Vector3Int(x, y, z)) && (x % 15 == 0 || y % 15 == 0 || z % 15 == 0))
                         {
                             PlaceTree(builder, new Vector3Int(x, y, z), 4, 3);
                         }
+                        */
                     }
                     else if(globalY == terrainHeight + 1)
                     {
