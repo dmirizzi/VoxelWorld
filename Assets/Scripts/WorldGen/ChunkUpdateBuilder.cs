@@ -24,9 +24,11 @@ public class ChunkUpdateBuilder
 
     public void QueueVoxel(Vector3Int localVoxelPos, ushort type)
     {
-        bool voxelInsideChunk = localVoxelPos.x >= 0 && localVoxelPos.x < VoxelInfo.ChunkSize &&
-                                localVoxelPos.y >= 0 && localVoxelPos.y < VoxelInfo.ChunkSize &&
-                                localVoxelPos.z >= 0 && localVoxelPos.z < VoxelInfo.ChunkSize;
+        // Fast check if local voxel position is inside the chunk using bitwise operations. 
+        // This is equivalent to checking if any of the local voxel position's components are greater than or equal 
+        // to the chunk size, but without branching.
+        const int mask = ~(VoxelInfo.ChunkSize - 1);
+        bool voxelInsideChunk = ((localVoxelPos.x | localVoxelPos.y | localVoxelPos.z) & mask) == 0;
 
         if(voxelInsideChunk)
         {
