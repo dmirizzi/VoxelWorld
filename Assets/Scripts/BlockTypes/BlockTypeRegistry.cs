@@ -1,29 +1,22 @@
-using System.Collections.Generic;
-
 public class BlockTypeRegistry
 {
-    private static BlockTypeRegistry _instance;
+    private static readonly BlockTypeBase[] _blockTypeMap = BuildMap();
 
-    private BlockTypeBase[] _blockTypeMap;
-
-    private BlockTypeRegistry()
+    private static BlockTypeBase[] BuildMap()
     {
-        _blockTypeMap = new BlockTypeBase[256];
+        var map = new BlockTypeBase[256];
 
         //TODO: map via reflection in config?
-        _blockTypeMap[5] = new TorchBlockType();
-        _blockTypeMap[6] = new WedgeBlockType(6, 4);
-        _blockTypeMap[7] = new DoorBlockType(7);
-        _blockTypeMap[8] = new LadderBlockType();
+        map[5] = new TorchBlockType();
+        map[6] = new WedgeBlockType(6, 4);
+        map[7] = new DoorBlockType(7);
+        map[8] = new LadderBlockType();
+
+        return map;
     }
 
     public static BlockTypeBase GetBlockType(ushort type)
     {
-        if(_instance == null)
-        {
-            _instance = new BlockTypeRegistry();
-        }
-
-        return _instance._blockTypeMap[type];
+        return _blockTypeMap[type];
     }
 }

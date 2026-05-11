@@ -103,10 +103,10 @@ public class ChunkMeshBuilder
         meshFilter.Clear();
         meshFilter.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
 
-        meshFilter.vertices = chunkMesh.GetVerticesArray();
-        meshFilter.triangles = chunkMesh.GetTrianglesArray();
-        meshFilter.normals = chunkMesh.GetNormalsArray();
-        meshFilter.uv = chunkMesh.GetUVArray();
+        meshFilter.SetVertices(chunkMesh.Vertices);
+        meshFilter.SetNormals(chunkMesh.Normals);
+        meshFilter.SetUVs(0, chunkMesh.UVCoordinates);
+        meshFilter.SetTriangles(chunkMesh.Triangles, 0);
     }
 
     private Color32[] GetBlockyLightVertexColorMapping(ChunkMesh mesh)
@@ -205,7 +205,7 @@ public class ChunkMeshBuilder
         */
         var heightOffset = 0.0f;
 
-        Vector3[] voxelCornerVertices = null;
+        bool cornersComputed = false;
 
         _voxelVertices.Clear();
         for (int i = 0; i < VoxelInfo.VoxelFaceData.Length; ++i)
@@ -213,27 +213,26 @@ public class ChunkMeshBuilder
             var faceData = VoxelInfo.VoxelFaceData[i];
             if (VoxelBuildHelper.IsVoxelSideVisible(_world, _chunk, voxelType, globalVoxelPos, localVoxelPos, faceData.VoxelFace))
             {
-                if (voxelCornerVertices == null)
+                if (!cornersComputed)
                 {
                     // Calculate voxel corner vertices only if at least one face is visible
-                    var localVoxelPosF = new Vector3(localVoxelPos.x, localVoxelPos.y, localVoxelPos.z);
-                    voxelCornerVertices = new Vector3[]
-                    {
-                        localVoxelPosF,
-                        localVoxelPosF + new Vector3(VoxelInfo.VoxelSize, 0, 0),
-                        localVoxelPosF + new Vector3(VoxelInfo.VoxelSize, 0, VoxelInfo.VoxelSize),
-                        localVoxelPosF + new Vector3(0, 0, VoxelInfo.VoxelSize),
-                        localVoxelPosF + new Vector3(0, VoxelInfo.VoxelSize - heightOffset, 0),
-                        localVoxelPosF + new Vector3(VoxelInfo.VoxelSize, VoxelInfo.VoxelSize - heightOffset, 0),
-                        localVoxelPosF + new Vector3(VoxelInfo.VoxelSize, VoxelInfo.VoxelSize - heightOffset, VoxelInfo.VoxelSize),
-                        localVoxelPosF + new Vector3(0, VoxelInfo.VoxelSize - heightOffset, VoxelInfo.VoxelSize)
-                    };
+                    float x = localVoxelPos.x, y = localVoxelPos.y, z = localVoxelPos.z;
+                    float s = VoxelInfo.VoxelSize, top = s - heightOffset;
+                    _voxelCornerVertices[0] = new Vector3(x,     y,       z);
+                    _voxelCornerVertices[1] = new Vector3(x + s, y,       z);
+                    _voxelCornerVertices[2] = new Vector3(x + s, y,       z + s);
+                    _voxelCornerVertices[3] = new Vector3(x,     y,       z + s);
+                    _voxelCornerVertices[4] = new Vector3(x,     y + top, z);
+                    _voxelCornerVertices[5] = new Vector3(x + s, y + top, z);
+                    _voxelCornerVertices[6] = new Vector3(x + s, y + top, z + s);
+                    _voxelCornerVertices[7] = new Vector3(x,     y + top, z + s);
+                    cornersComputed = true;
                 }
 
-                _voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[0]]);
-                _voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[1]]);
-                _voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[2]]);
-                _voxelVertices.Add(voxelCornerVertices[faceData.VertexIndices[3]]);
+                _voxelVertices.Add(_voxelCornerVertices[faceData.VertexIndices[0]]);
+                _voxelVertices.Add(_voxelCornerVertices[faceData.VertexIndices[1]]);
+                _voxelVertices.Add(_voxelCornerVertices[faceData.VertexIndices[2]]);
+                _voxelVertices.Add(_voxelCornerVertices[faceData.VertexIndices[3]]);
 
                 chunkMesh.AddNormals(faceData.Normals);
 
@@ -268,8 +267,9 @@ public class ChunkMeshBuilder
         public Color32[] TransparentMeshLightMapping;
     }
 
-    // List of potential vertices for a voxel during building. We only instantiate it once to improve performance.
+    // Reused across all voxels during Build() to avoid per-voxel heap allocation.
     private List<Vector3> _voxelVertices = new List<Vector3>(24);
+    private Vector3[] _voxelCornerVertices = new Vector3[8];
 
     private VoxelWorld _world;
 

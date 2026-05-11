@@ -12,13 +12,13 @@ public class ChunkMesh
         _triangles = new List<int>();
     }
 
-    public IReadOnlyList<Vector3> Vertices => _vertices;
+    public List<Vector3> Vertices => _vertices;
 
-    public IReadOnlyList<Vector3> Normals => _normals;
-    
-    public IReadOnlyList<Vector2> UVCoordinates => _uvCoordinates;
+    public List<Vector3> Normals => _normals;
 
-    public IReadOnlyList<int> Triangles => _triangles;
+    public List<Vector2> UVCoordinates => _uvCoordinates;
+
+    public List<int> Triangles => _triangles;
 
     public void AddMesh(VoxelMesh mesh, Vector3 localBasePos, Vector3 dir)
     {
@@ -120,7 +120,10 @@ public class ChunkMesh
         _vertices.Add(vertices[2]);
         _vertices.Add(vertices[3]);
 
-        _normals.AddRange(Enumerable.Repeat(normal, 4));
+        _normals.Add(normal);
+        _normals.Add(normal);
+        _normals.Add(normal);
+        _normals.Add(normal);
 
         _uvCoordinates.Add(uvCoordinates[0]);
         _uvCoordinates.Add(uvCoordinates[1]);
@@ -143,7 +146,9 @@ public class ChunkMesh
         _vertices.Add(vertices[1]);
         _vertices.Add(vertices[2]);
 
-        _normals.AddRange(Enumerable.Repeat(normal, 3));
+        _normals.Add(normal);
+        _normals.Add(normal);
+        _normals.Add(normal);
 
         _uvCoordinates.Add(uvCoordinates[0]);
         _uvCoordinates.Add(uvCoordinates[1]);
