@@ -201,13 +201,8 @@ public class WorldUpdateScheduler : MonoBehaviour
                     if (_currentBatchStage >= 0)
                         _stageTimings[_currentBatchStage] = (_stageTimings[_currentBatchStage].start, _batchTimer.Elapsed.TotalMilliseconds);
 
-                    var sb = new StringBuilder($"Batch finished in {_batchTimer.Elapsed.TotalMilliseconds:F1}ms");
-                    foreach (var kvp in _stageTimings)
-                    {
-                        var jobNames = _stageJobNames.TryGetValue(kvp.Key, out var names) ? string.Join(", ", names) : "";
-                        sb.Append($"\n  Stage {kvp.Key} ({(kvp.Value.end - kvp.Value.start):F1}ms): {jobNames}");
-                    }
-                    UnityEngine.Debug.Log(sb.ToString());
+                    LogBatchUpdateTimings();
+                    Profiler.LogProfilingResults();
 
                     BatchFinished?.Invoke();
                 }
@@ -215,6 +210,17 @@ public class WorldUpdateScheduler : MonoBehaviour
             jobNode = next;
         }
     }    
+
+    private void LogBatchUpdateTimings()
+    {
+        var sb = new StringBuilder($"Batch finished in {_batchTimer.Elapsed.TotalMilliseconds:F1}ms");
+        foreach (var kvp in _stageTimings)
+        {
+            var jobNames = _stageJobNames.TryGetValue(kvp.Key, out var names) ? string.Join(", ", names) : "";
+            sb.Append($"\n  Stage {kvp.Key} ({(kvp.Value.end - kvp.Value.start):F1}ms): {jobNames}");
+        }
+        UnityEngine.Debug.Log(sb.ToString());
+    }
 
     private bool NextJobIsNotHigherStageThanActiveJobs()
     {

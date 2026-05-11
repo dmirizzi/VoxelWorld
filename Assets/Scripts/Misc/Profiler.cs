@@ -110,6 +110,17 @@ public static class Profiler
         File.AppendAllText(fileName, sb.ToString());
     }
 
+    public static void LogProfilingResults()
+    {
+        var results = GetProfilingResults();
+        var sb = new StringBuilder("Profiling Results:");
+        foreach (var result in results)
+        {
+            sb.Append($"\n  {result.Subject}: {result.TotalElapsedMs}ms");
+        }
+        UnityEngine.Debug.Log(sb.ToString());
+    }    
+
     private static void InitProfilingCSV(string fileName)
     {
         if (!File.Exists(fileName))
