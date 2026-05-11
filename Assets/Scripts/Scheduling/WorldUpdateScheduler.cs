@@ -60,6 +60,7 @@ public class WorldUpdateScheduler : MonoBehaviour
         _batchTimer.Restart();
         _currentBatchStage = -1;
         _stageTimings.Clear();
+        _stageJobNames.Clear();
     }
 
     public void FinishBatch() => _batching = false;
@@ -133,6 +134,10 @@ public class WorldUpdateScheduler : MonoBehaviour
                 _stageTimings[_currentBatchStage] = (now, -1);
             }
 
+            if (!_stageJobNames.TryGetValue(job.UpdateStage, out var names))
+                _stageJobNames[job.UpdateStage] = names = new HashSet<string>();
+            names.Add(job.GetType().Name);
+
             var token = Profiler.StartProfiling($"Jobs/{job.GetType()}/PreExecute");
             var preExecute = job.PreExecuteSync(_world, _worldGenerator);
             Profiler.StopProfiling(token);
@@ -196,9 +201,12 @@ public class WorldUpdateScheduler : MonoBehaviour
                     if (_currentBatchStage >= 0)
                         _stageTimings[_currentBatchStage] = (_stageTimings[_currentBatchStage].start, _batchTimer.Elapsed.TotalMilliseconds);
 
-                    var sb = new StringBuilder($"Batch finished in {_batchTimer.Elapsed.TotalMilliseconds:F1}ms | ");
+                    var sb = new StringBuilder($"Batch finished in {_batchTimer.Elapsed.TotalMilliseconds:F1}ms");
                     foreach (var kvp in _stageTimings)
-                        sb.Append($"Stage {kvp.Key}: {(kvp.Value.end - kvp.Value.start):F1}ms  ");
+                    {
+                        var jobNames = _stageJobNames.TryGetValue(kvp.Key, out var names) ? string.Join(", ", names) : "";
+                        sb.Append($"\n  Stage {kvp.Key} ({(kvp.Value.end - kvp.Value.start):F1}ms): {jobNames}");
+                    }
                     UnityEngine.Debug.Log(sb.ToString());
 
                     BatchFinished?.Invoke();
@@ -245,6 +253,8 @@ public class WorldUpdateScheduler : MonoBehaviour
     private int _currentBatchStage = -1;
 
     private SortedDictionary<int, (double start, double end)> _stageTimings = new SortedDictionary<int, (double start, double end)>();
+
+    private SortedDictionary<int, HashSet<string>> _stageJobNames = new SortedDictionary<int, HashSet<string>>();
 
     private bool _batching;
 
