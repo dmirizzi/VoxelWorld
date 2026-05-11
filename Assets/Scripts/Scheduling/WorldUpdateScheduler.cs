@@ -100,9 +100,9 @@ public class WorldUpdateScheduler : MonoBehaviour
         AddJob(new ChunkGenerationJob(chunkPos));
     }
 
-    public void AddChunkVoxelCreationJob(Vector3Int chunkPos, List<VoxelCreationAction> voxels)
+    public void AddChunkVoxelCreationJob(Vector3Int chunkPos, ushort[,,] voxelData, bool hasVoxelData)
     {
-        AddJob(new ChunkVoxelCreationJob(chunkPos, voxels));
+        AddJob(new ChunkVoxelCreationJob(chunkPos, voxelData, hasVoxelData));
     }
 
     public void AddBackloggedVoxelCreationJob() => AddJob(new BackloggedVoxelCreationJob());
@@ -186,9 +186,9 @@ public class WorldUpdateScheduler : MonoBehaviour
                     UnityEngine.Debug.LogException(jobNode.Value.JobTask.Exception);
                 }
 
-                //var token = Profiler.StartProfiling($"{jobNode.Value.Job.GetType()}-PostExecute");
+                var token = Profiler.StartProfiling($"Jobs/{jobNode.Value.Job.GetType()}/PostExecuteSync");
                 jobNode.Value.Job.PostExecuteSync(_world, _worldGenerator, this);
-                //Profiler.StopProfiling(token);
+                Profiler.StopProfiling(token);
 
                 _activeJobs.Remove(jobNode);
 

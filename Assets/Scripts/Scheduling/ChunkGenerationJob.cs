@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.Profiling;
 
 class ChunkGenerationJob : IWorldUpdateJob
 {
@@ -36,9 +35,7 @@ class ChunkGenerationJob : IWorldUpdateJob
     {
         return Task.Run(() => 
         {
-            UnityEngine.Profiling.Profiler.BeginThreadProfiling("WorldUpdateJobs", "ChunkGenerationJob");
             _chunkUpdate = _chunkGenerator.GenerateChunk(ChunkPos);
-            UnityEngine.Profiling.Profiler.EndThreadProfiling();
         });
     }
 
@@ -49,7 +46,7 @@ class ChunkGenerationJob : IWorldUpdateJob
             worldGenerator.AddBackloggedVoxels(chunkBacklog.Key, chunkBacklog.Value);
         }
 
-        worldUpdateScheduler.AddChunkVoxelCreationJob(ChunkPos, _chunkUpdate.Voxels);
+        worldUpdateScheduler.AddChunkVoxelCreationJob(ChunkPos, _chunkUpdate.VoxelData, _chunkUpdate.HasVoxelData);
     }
 
     public override bool Equals(object rhs) =>

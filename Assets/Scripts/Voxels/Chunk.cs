@@ -192,6 +192,32 @@ public class Chunk
 
     public ReadOnly3DArray<ushort> GetAllVoxelData() => new ReadOnly3DArray<ushort>(_chunkData);
 
+    // Populates an empty chunk directly from a generated voxel buffer. Assumes no prior data exists —
+    // plain voxels are written directly to _chunkData, special voxels go through SetVoxel so OnPlace fires.
+    public void PopulateFromBuffer(ushort[,,] voxelData)
+    {
+        for (int z = 0; z < VoxelInfo.ChunkSize; ++z)
+        {
+            for (int y = 0; y < VoxelInfo.ChunkSize; ++y)
+            {
+                for (int x = 0; x < VoxelInfo.ChunkSize; ++x)
+                {
+                    var type = voxelData[x, y, z];
+                    if (type == 0) continue;
+
+                    if (BlockTypeRegistry.GetBlockType(type) != null)
+                    {
+                        SetVoxel(new Vector3Int(x, y, z), type);
+                    }
+                    else
+                    {
+                        _chunkData[x, y, z] = type;
+                    }
+                }
+            }
+        }
+    }
+
     public void BuildBlockGameObjects()
     {
         for(int z = 0; z < VoxelInfo.ChunkSize; ++z)
