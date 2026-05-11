@@ -27,7 +27,6 @@ public class VoxelWorld : MonoBehaviour
     {
     }
 
-    public List<LightNode> SunlightSpilloverBuffer { get; } = new List<LightNode>();
     public IEnumerable<Vector3Int> GetAllChunkPositions() => _chunks.Keys;
 
     public LightMap GetLightMap() => _lightMap;
@@ -137,11 +136,6 @@ public class VoxelWorld : MonoBehaviour
             true,
             false
         );
-    }
-
-    public void QueueLightFillOnNewChunk(Vector3Int chunkPos)
-    {
-        _updateScheduler.AddChunkLightFillUpdateJob(chunkPos);
     }
 
     public void RemoveLight(Vector3Int globalLightPos, bool sunlight)
@@ -288,21 +282,13 @@ public class VoxelWorld : MonoBehaviour
         _updateScheduler.AddChunkRebuildJob(chunkPos);
     }
 
-    public void QueueChunksForLightMappingUpdate(IEnumerable<Vector3Int> chunkPositions)
+    private void QueueChunksForLightMappingUpdate(IEnumerable<Vector3Int> chunkPositions)
     {
         foreach(var chunkPos in chunkPositions)
         {
             _updateScheduler.AddChunkLightMappingUpdateJob(chunkPos);
         }
     }
-
-    public void QueueChunkForLightMappingUpdate(Vector3Int chunkPos)
-    {
-        _updateScheduler.AddChunkLightMappingUpdateJob(chunkPos);
-    }
-
-    public void QueueAffectedChunkForRebuild(Vector3Int chunkPos) 
-        => _updateScheduler.AddChunkRebuildJob(chunkPos);
 
     private void QueueAffectedChunksForRebuild(Vector3Int voxelPos)
     {        

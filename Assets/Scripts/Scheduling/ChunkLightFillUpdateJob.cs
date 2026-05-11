@@ -46,7 +46,7 @@ class ChunkLightFillUpdateJob : IWorldUpdateJob
 
     public void PostExecuteSync(VoxelWorld world, WorldGenerator worldGenerator, WorldUpdateScheduler worldUpdateScheduler)
     {
-        world.QueueChunkForLightMappingUpdate(ChunkPos);
+        worldUpdateScheduler.AddChunkLightMappingUpdateJob(ChunkPos);
     }
 
     public override bool Equals(object rhs) =>

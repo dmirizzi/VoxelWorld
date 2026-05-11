@@ -46,7 +46,7 @@ class ChunkVoxelCreationJob : IWorldUpdateJob
                 }
             }
 
-            world.QueueAffectedChunkForRebuild(ChunkPos);
+            worldUpdateScheduler.AddChunkRebuildJob(ChunkPos);
         }
     }
 

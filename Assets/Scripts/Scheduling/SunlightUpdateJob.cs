@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
+using static LightMap;
 
 class SunlightUpdateJob : IWorldUpdateJob
 {
@@ -34,12 +35,12 @@ class SunlightUpdateJob : IWorldUpdateJob
 
     public void PostExecuteSync(VoxelWorld world, WorldGenerator worldGenerator, WorldUpdateScheduler worldUpdateScheduler)
     {
-        world.SunlightSpilloverBuffer.Clear();
+        var sharedSpillover = new List<LightNode>();
         foreach(var chunk in _topMostChunks)
         {
-            worldUpdateScheduler.AddSunlightColumnJob(chunk);
+            worldUpdateScheduler.AddSunlightColumnJob(chunk, sharedSpillover);
         }
-        worldUpdateScheduler.AddSunlightHorizontalSpillJob();
+        worldUpdateScheduler.AddSunlightHorizontalSpillJob(sharedSpillover);
     }
 
     public override string ToString() => $"SunlightUpdateJob()";

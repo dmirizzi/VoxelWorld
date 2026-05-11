@@ -84,7 +84,8 @@ class BlockLightUpdateJob : IWorldUpdateJob
 
     public void PostExecuteSync(VoxelWorld world, WorldGenerator worldGenerator, WorldUpdateScheduler worldUpdateScheduler)
     {
-        world.QueueChunksForLightMappingUpdate(_affectedChunks);
+        foreach (var pos in _affectedChunks)
+            worldUpdateScheduler.AddChunkLightMappingUpdateJob(pos);
     }
 
     public override bool Equals(object rhs) =>

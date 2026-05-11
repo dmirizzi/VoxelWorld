@@ -10,10 +10,11 @@ class SunlightColumnJob : IWorldUpdateJob
     public Vector3Int ChunkPos { get; }
     public HashSet<Vector3Int> AffectedChunks { get; } = new HashSet<Vector3Int>();
 
-    public SunlightColumnJob(Chunk topChunk)
+    public SunlightColumnJob(Chunk topChunk, List<LightNode> sharedSpillover)
     {
         _topChunk = topChunk;
         ChunkPos = topChunk.ChunkPos;
+        _sharedSpillover = sharedSpillover;
     }
 
     public bool PreExecuteSync(VoxelWorld world, WorldGenerator worldGenerator)
@@ -40,8 +41,9 @@ class SunlightColumnJob : IWorldUpdateJob
 
     public void PostExecuteSync(VoxelWorld world, WorldGenerator worldGenerator, WorldUpdateScheduler worldUpdateScheduler)
     {
-        world.SunlightSpilloverBuffer.AddRange(_localSpillover);
-        world.QueueChunksForLightMappingUpdate(AffectedChunks);
+        _sharedSpillover.AddRange(_localSpillover);
+        foreach (var pos in AffectedChunks)
+            worldUpdateScheduler.AddChunkLightMappingUpdateJob(pos);
     }
 
     public override bool Equals(object rhs) =>
@@ -53,6 +55,7 @@ class SunlightColumnJob : IWorldUpdateJob
     public override string ToString() => $"SunlightColumnJob(TopChunk={_topChunk.ChunkPos})";
 
     private readonly Chunk _topChunk;
+    private readonly List<LightNode> _sharedSpillover;
     private LightMap _lightMap;
     private readonly List<LightNode> _localSpillover = new List<LightNode>();
 }

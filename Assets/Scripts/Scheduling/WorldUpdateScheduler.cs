@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using UnityEngine;
+using static LightMap;
 
 public class WorldUpdateScheduler : MonoBehaviour
 {
@@ -68,8 +69,9 @@ public class WorldUpdateScheduler : MonoBehaviour
 
     public void AddSunlightUpdateJob() => AddJob(new SunlightUpdateJob());
 
-    public void AddSunlightColumnJob(Chunk topChunk) => AddJob(new SunlightColumnJob(topChunk));
-    public void AddSunlightHorizontalSpillJob() => AddJob(new SunlightHorizontalSpillJob());
+    public void AddSunlightColumnJob(Chunk topChunk, List<LightNode> sharedSpillover) => AddJob(new SunlightColumnJob(topChunk, sharedSpillover));
+    
+    public void AddSunlightHorizontalSpillJob(List<LightNode> sharedSpillover) => AddJob(new SunlightHorizontalSpillJob(sharedSpillover));
 
     public void AddChunkLightFillUpdateJob(Vector3Int chunkPos)
     {
