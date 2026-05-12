@@ -72,12 +72,27 @@ public class WorldGenerator : MonoBehaviour
         _voxelWorld = FindObjectOfType<VoxelWorld>();
         _player = FindObjectOfType<PlayerController>();
 
-        _updateScheduler.BatchFinished += () => 
+        _savedVSyncCount = QualitySettings.vSyncCount;
+        _savedTargetFrameRate = Application.targetFrameRate;
+        _savedMaxJobs = _updateScheduler.MaxNumSimultaneousJobs;
+
+        _camera = Camera.main;
+        _camera.enabled = false;
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = -1;
+        _updateScheduler.MaxNumSimultaneousJobs = int.MaxValue;
+
+        _updateScheduler.BatchFinished += () =>
         {
             if(!WorldGenerated)
             {
+                _camera.enabled = true;
+                QualitySettings.vSyncCount = _savedVSyncCount;
+                Application.targetFrameRate = _savedTargetFrameRate;
+                _updateScheduler.MaxNumSimultaneousJobs = _savedMaxJobs;
+
                 //Profiler.WriteProfilingResultsToCSV();
-                PlacePlayer(Vector3Int.zero);            
+                PlacePlayer(Vector3Int.zero);
                 WorldGenerated = true;
             }
         };
@@ -98,20 +113,6 @@ public class WorldGenerator : MonoBehaviour
             
             _updateScheduler.FinishBatch();
         }
-
-        /*
-        // stress test!!
-        if(WorldGenerated && (DateTime.Now - lastDrop).TotalMilliseconds >= 50)
-        {
-            lastDrop = DateTime.Now;
-            var x = UnityEngine.Random.Range(-256, 256);
-            var z = UnityEngine.Random.Range(-256, 256);
-            
-            //var highestPoint = _voxelWorld.GetHighestVoxelPos(x, z);
-            var highestPoint = _voxelWorld.GetRandomSolidSurfaceVoxel();
-            _voxelWorld.SetVoxelSphere(highestPoint, 5, 0);
-        }
-        */
         
     }
 
@@ -348,4 +349,9 @@ public class WorldGenerator : MonoBehaviour
 
     // Holds queued voxel creation actions that are outside of the player radius and will be applied, once the chunks they are in are loaded/generated
     private Dictionary<Vector3Int, List<VoxelCreationAction>> _chunkCreationBacklog = new Dictionary<Vector3Int, List<VoxelCreationAction>>();
+
+    private Camera _camera;
+    private int _savedVSyncCount;
+    private int _savedTargetFrameRate;
+    private int _savedMaxJobs;
 }

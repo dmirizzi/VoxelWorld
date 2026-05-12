@@ -1,0 +1,9 @@
+{
+    "name": "VoxelWorldEditor",
+    "references": [
+        "VoxelWorld"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ]
+}

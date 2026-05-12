@@ -8,7 +8,7 @@ using static LightMap;
 
 public class WorldUpdateScheduler : MonoBehaviour
 {
-    public int MaxNumSimultaneousJobs = 8;
+    public int MaxNumSimultaneousJobs = 10;
 
     public event Action BatchFinished;
 
@@ -25,6 +25,9 @@ public class WorldUpdateScheduler : MonoBehaviour
         {
             ScheduleJobs();
             HandleActiveJobs();
+            
+            // Process any new jobs that were schduled by the post execute of finished jobs immediately, instead of waiting for the next frame update
+            ScheduleJobs();
         }
     }
 
@@ -121,8 +124,9 @@ public class WorldUpdateScheduler : MonoBehaviour
 
     private void ScheduleJobs()
     {
-        while(_activeJobs.Count < MaxNumSimultaneousJobs
-            && NextJobIsNotHigherStageThanActiveJobs()
+        while(
+            _activeJobs.Count < MaxNumSimultaneousJobs && 
+            NextJobIsNotHigherStageThanActiveJobs()
             && _jobQueue.DequeueNext(x => CanReserveChunks(x.AffectedChunks), out var job))
         {
             if (job.UpdateStage != _currentBatchStage)

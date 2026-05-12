@@ -362,7 +362,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5cd417d7e755b6941b36f649f92f334d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MaxNumSimultaneousJobs: 12
+  MaxNumSimultaneousJobs: 8
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -590,7 +590,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d579a22e09cf424db8b3da88262f13f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ChunkGenerationRadius: 12
+  ChunkGenerationRadius: 3
   WorldSeed: 123456789
 --- !u!1 &2138034062
 GameObject:
