@@ -4,9 +4,9 @@ using UnityEngine;
 public class ChunkGenerator
 {
     private const int SeaLevel = -30;
-    private const float TreeChance    = 0.01f;
-    private const float CrystalChance = 0.003f;
-    private const float TorchChance   = 0.005f;
+    private const float ForestTreeDensity = 0.35f;  // peak per-tile tree chance inside a dense forest cluster
+    private const float CrystalChance     = 0.003f;
+    private const float TorchChance       = 0.005f;
     private const int DirtLayerDepth = 4;
 
     public ChunkGenerator(int seed = 123456789)
@@ -71,7 +71,7 @@ public class ChunkGenerator
                     int localY = terrainHeight - chunkBasePos.y;
                     var surfacePos = new Vector3Int(x, localY, z);
 
-                    if (ShouldPlaceFeature(globalX, globalZ, TreeChance))
+                    if (ShouldPlaceFeature(globalX, globalZ, GetTreeChance(globalX, globalZ)))
                     {
                         var treeRng = new System.Random(HashPos(globalX, globalZ));
                         PlaceTree(builder, surfacePos, treeRng);
@@ -97,17 +97,43 @@ public class ChunkGenerator
         float nx = globalX + _noiseOffsetX;
         float nz = globalZ + _noiseOffsetZ;
 
-        // Four-octave FBM — large landmasses down to surface roughness
-        float h = 0f;
+        // Continental scale: very broad (~600 voxel) highland/lowland regions
+        float continental = Mathf.PerlinNoise(nx / 600f, nz / 600f);
+        float continentalBias = (continental * continental - 0.25f) * 55f;
+
+        // Regional roughness: plains vs rugged hills at medium scale
+        float roughness = Mathf.PerlinNoise(nx / 280f + 100f, nz / 280f + 100f);
+
+        float h = continentalBias;
         h += Mathf.PerlinNoise(nx / 250f, nz / 250f) * 60f;
-        h += Mathf.PerlinNoise(nx /  80f, nz /  80f) * 24f;
+        h += Mathf.PerlinNoise(nx /  80f, nz /  80f) * (12f + roughness * 24f);
         h += Mathf.PerlinNoise(nx /  30f, nz /  30f) *  8f;
         h += Mathf.PerlinNoise(nx /  10f, nz /  10f) *  2f;
 
-        // Bias so sea level (0) sits roughly in the lower-middle of the range
         h -= 50f;
-
         return Mathf.RoundToInt(h);
+    }
+
+    // Returns per-position tree spawn probability based on two-layer forest noise.
+    // The product of a large-region noise and a local-cluster noise only exceeds zero
+    // where both are simultaneously elevated, producing irregular organic cluster shapes.
+    private float GetTreeChance(int globalX, int globalZ)
+    {
+        // Offset to decorrelate forest placement from terrain shape
+        float nx = globalX + _noiseOffsetX + 4321f;
+        float nz = globalZ + _noiseOffsetZ + 8765f;
+
+        // Large-scale forest regions (~200 voxels): decides if we're in forest territory
+        float region  = Mathf.PerlinNoise(nx / 200f, nz / 200f);
+        // Medium-scale cluster variation (~65 voxels): shapes individual clusters
+        float cluster = Mathf.PerlinNoise(nx / 65f,  nz / 65f);
+
+        float regionFactor  = Mathf.Max(0f, region  - 0.44f) * (1f / 0.56f);
+        float clusterFactor = Mathf.Max(0f, cluster - 0.38f) * (1f / 0.62f);
+
+        // Background: rare scattered trees everywhere (~0.3%)
+        // Dense forest cores: up to ~48% chance per tile
+        return 0.003f + regionFactor * clusterFactor * ForestTreeDensity;
     }
 
     // Ellipsoid tree crown — more natural than a cube, still cheap to compute
