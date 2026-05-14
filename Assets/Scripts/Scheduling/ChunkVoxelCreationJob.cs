@@ -11,14 +11,15 @@ class ChunkVoxelCreationJob : IWorldUpdateJob
 
     public HashSet<Vector3Int> AffectedChunks { get; private set; }
 
-    public ChunkVoxelCreationJob(Vector3Int chunkPos, List<VoxelCreationAction> voxels)
+    public ChunkVoxelCreationJob(Vector3Int chunkPos, ushort[,,] voxelData, bool hasVoxelData)
     {
         ChunkPos = chunkPos;
         AffectedChunks = new HashSet<Vector3Int>
         {
             chunkPos
         };
-        _voxels = voxels;
+        _voxelData = voxelData;
+        _hasVoxelData = hasVoxelData;
     }
 
     public bool PreExecuteSync(VoxelWorld world, WorldGenerator worldGenerator) => true;
@@ -27,29 +28,35 @@ class ChunkVoxelCreationJob : IWorldUpdateJob
 
     public void PostExecuteSync(VoxelWorld world, WorldGenerator worldGenerator, WorldUpdateScheduler worldUpdateScheduler)
     {
-        foreach(var voxel in _voxels)
-        {
-            var globalVoxelPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(voxel.LocalVoxelPos, ChunkPos);
-            world.SetVoxel(globalVoxelPos, voxel.Type);
-        }
+        var backloggedVoxels = worldGenerator.PopBackloggedChunk(ChunkPos);
 
-        if(worldGenerator.TryPopBackloggedChunk(ChunkPos, out var backloggedVoxels))
+        if (_hasVoxelData || backloggedVoxels != null)
         {
-            foreach(var voxel in backloggedVoxels)
+            var chunk = world.GetOrCreateChunk(ChunkPos);
+
+            if (_hasVoxelData)
             {
-                var globalVoxelPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(voxel.LocalVoxelPos, ChunkPos);
-                world.SetVoxel(globalVoxelPos, voxel.Type);
+                chunk.PopulateFromBuffer(_voxelData);
             }
+
+            if (backloggedVoxels != null)
+            {
+                foreach (var voxel in backloggedVoxels)
+                {
+                    chunk.SetVoxel(voxel.LocalVoxelPos, voxel.Type);
+                }
+            }
+
+            worldUpdateScheduler.AddChunkMeshRebuildJob(ChunkPos);
         }
     }
 
     public override bool Equals(object rhs) => (rhs is ChunkVoxelCreationJob rhsJob) && (rhsJob.ChunkPos == ChunkPos);
 
-    public override int GetHashCode() => HashCode.Combine(typeof(ChunkGenerationJob), ChunkPos);    
+    public override int GetHashCode() => HashCode.Combine(typeof(ChunkGenerationJob), ChunkPos);
 
-    public override string ToString()
-     => $"ChunkVoxelCreationJob(ChunkPos={ChunkPos})";
+    public override string ToString() => $"ChunkVoxelCreationJob(ChunkPos={ChunkPos})";
 
-
-    private List<VoxelCreationAction> _voxels;
+    private readonly ushort[,,] _voxelData;
+    private readonly bool _hasVoxelData;
 }

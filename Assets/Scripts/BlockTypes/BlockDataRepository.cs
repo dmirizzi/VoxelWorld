@@ -12,11 +12,13 @@ public static class BlockDataRepository
         var blockTypesContent = Resources.Load<TextAsset>("BlockTypes").text;
         _blockDataList = JsonConvert.DeserializeObject<BlockDataList>(blockTypesContent);
 
-        for(ushort idx = 0; idx < _blockDataList.BlockData.Count; ++idx)
+        for (ushort idx = 0; idx < _blockDataList.BlockData.Length; ++idx)
         {
             var blockData = _blockDataList.BlockData[idx];
             _blockDataByName[blockData.Name] = blockData;
             _blockIds[blockData.Name] = idx;
+
+            blockData.FillCache();
 
             if(blockData.BlockTypeClass != null)
             {
@@ -26,12 +28,12 @@ public static class BlockDataRepository
                         blockData.BlockTypeClass,
                         idx,
                         blockData,
-                        blockData.CustomArgs);    
+                        blockData.CustomArgs);
                 }
                 catch(Exception e)
                 {
                     Debug.Log($"Failed to instantiate block type class {blockData.BlockTypeClass}\n\n{ExceptionHelper.GetFullExceptionDetails(e)}");
-                }            
+                }
             }
         }
     }
@@ -106,6 +108,6 @@ public static class BlockDataRepository
     [System.Serializable]
     private class BlockDataList
     {
-        public List<BlockData> BlockData;
+        public BlockData[] BlockData;
     }
 }

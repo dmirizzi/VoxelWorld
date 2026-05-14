@@ -3,6 +3,26 @@ using UnityEngine;
 
 public static class BlockFaceHelper
 {
+    private static Vector3[] _reverseMapping = new Vector3[]
+    {
+        Vector3.up,       // BlockFace.Top
+        Vector3.down,     // BlockFace.Bottom
+        Vector3.back,     // BlockFace.Front
+        Vector3.forward,  // BlockFace.Back
+        Vector3.left,     // BlockFace.Left
+        Vector3.right     // BlockFace.Right
+    };
+
+    private static Vector3Int[] _reverseMappingInt = new Vector3Int[]
+    {
+        Vector3Int.up,       // BlockFace.Top
+        Vector3Int.down,     // BlockFace.Bottom
+        Vector3Int.back,     // BlockFace.Front
+        Vector3Int.forward,  // BlockFace.Back
+        Vector3Int.left,     // BlockFace.Left
+        Vector3Int.right     // BlockFace.Right
+    };
+
     private static Dictionary<Vector3, BlockFace> _mapping = new Dictionary<Vector3, BlockFace>
     {
         { Vector3.up,       BlockFace.Top },
@@ -13,36 +33,6 @@ public static class BlockFaceHelper
         { Vector3.right,    BlockFace.Right }
     };
 
-    private static Dictionary<BlockFace, Vector3> _reverseMapping = new Dictionary<BlockFace, Vector3>
-    {
-        { BlockFace.Top,       Vector3.up },
-        { BlockFace.Bottom,    Vector3.down },
-        { BlockFace.Front,     Vector3.back },
-        { BlockFace.Back,      Vector3.forward },
-        { BlockFace.Left,      Vector3.left },
-        { BlockFace.Right,     Vector3.right }
-    };
-
-    private static Dictionary<Vector3Int, BlockFace> _mappingInt = new Dictionary<Vector3Int, BlockFace>
-    {
-        { Vector3Int.up,       BlockFace.Top },
-        { Vector3Int.down,     BlockFace.Bottom },
-        { Vector3Int.back,     BlockFace.Front },
-        { Vector3Int.forward,  BlockFace.Back },
-        { Vector3Int.left,     BlockFace.Left },
-        { Vector3Int.right,    BlockFace.Right }
-    };
-
-    private static Dictionary<BlockFace, Vector3Int> _reverseMappingInt = new Dictionary<BlockFace, Vector3Int>
-    {
-        { BlockFace.Top,       Vector3Int.up },
-        { BlockFace.Bottom,    Vector3Int.down },
-        { BlockFace.Front,     Vector3Int.back },
-        { BlockFace.Back,      Vector3Int.forward },
-        { BlockFace.Left,      Vector3Int.left },
-        { BlockFace.Right,     Vector3Int.right }
-    };
-
     private static Dictionary<BlockFace, int> _blockFaceTurnNo = new Dictionary<BlockFace, int>()
     {
         { BlockFace.Front, 0},
@@ -51,7 +41,7 @@ public static class BlockFaceHelper
         { BlockFace.Right, 3 },
     };
 
-    private static List<BlockFace> _yRotationClockwiseLookup = new List<BlockFace> 
+    private static List<BlockFace> _yRotationClockwiseLookup = new List<BlockFace>
     {
         BlockFace.Front,
         BlockFace.Left,
@@ -61,14 +51,14 @@ public static class BlockFaceHelper
 
     public static BlockFaceSelector ToBlockFaceSelector(BlockFace face)
     {
-        switch(face)
+        switch (face)
         {
-            case BlockFace.Top:     return BlockFaceSelector.Top;
-            case BlockFace.Bottom:  return BlockFaceSelector.Bottom;
-            case BlockFace.Front:   return BlockFaceSelector.Front;
-            case BlockFace.Back:    return BlockFaceSelector.Back;
-            case BlockFace.Left:    return BlockFaceSelector.Left;
-            case BlockFace.Right:   return BlockFaceSelector.Right;
+            case BlockFace.Top: return BlockFaceSelector.Top;
+            case BlockFace.Bottom: return BlockFaceSelector.Bottom;
+            case BlockFace.Front: return BlockFaceSelector.Front;
+            case BlockFace.Back: return BlockFaceSelector.Back;
+            case BlockFace.Left: return BlockFaceSelector.Left;
+            case BlockFace.Right: return BlockFaceSelector.Right;
 
             default: throw new System.ArgumentException($"Unknown block face {face}");
         }
@@ -87,12 +77,12 @@ public static class BlockFaceHelper
 
     public static BlockFace RotateFaceY(BlockFace face, int yAngleDeg)
     {
-        if(face == BlockFace.Top || face == BlockFace.Bottom)
+        if (face == BlockFace.Top || face == BlockFace.Bottom)
         {
             return face;
         }
 
-        if(yAngleDeg < 0)
+        if (yAngleDeg < 0)
         {
             yAngleDeg = 360 + yAngleDeg;
         }
@@ -104,19 +94,19 @@ public static class BlockFaceHelper
 
     public static int GetYAngleBetweenFaces(BlockFace from, BlockFace to)
     {
-        if(from == BlockFace.Top || from == BlockFace.Bottom || to == BlockFace.Top || to == BlockFace.Bottom )
+        if (from == BlockFace.Top || from == BlockFace.Bottom || to == BlockFace.Top || to == BlockFace.Bottom)
         {
             return 0;
         }
 
         var turns = _blockFaceTurnNo[to] - _blockFaceTurnNo[from];
 
-        if(System.Math.Abs(turns) > 2)
+        if (System.Math.Abs(turns) > 2)
         {
             // Wrap around for shortest rotation
             return -System.Math.Sign(turns) * 90;
         }
-        if(turns == -2)
+        if (turns == -2)
         {
             // Just to mimic Vector3.SignedAngle's behavior which was used in a previous implementation
             // of this method
@@ -126,12 +116,11 @@ public static class BlockFaceHelper
         return turns * 90;
     }
 
-
     public static BlockFace? GetBlockFaceFromVector(Vector3 vector)
     {
-        foreach(var vec in _mapping.Keys)
+        foreach (var vec in _mapping.Keys)
         {
-            if(Mathf.Approximately(Vector3.Dot(vector, vec), 1f))
+            if (Mathf.Approximately(Vector3.Dot(vector, vec), 1f))
             {
                 return _mapping[vec];
             }
@@ -141,18 +130,18 @@ public static class BlockFaceHelper
 
     public static Vector3 GetVectorFromBlockFace(BlockFace face)
     {
-        return _reverseMapping[face];
+        return _reverseMapping[(int)face];
     }
 
     public static Vector3Int GetVectorIntFromBlockFace(BlockFace face)
     {
-        return _reverseMappingInt[face];
+        return _reverseMappingInt[(int)face];
     }
 
     public static BlockFace GetOppositeFace(BlockFace face)
     {
         int faceInt = (int)face;
-        if(faceInt % 2 == 0)
+        if (faceInt % 2 == 0)
         {
             faceInt++;
         }

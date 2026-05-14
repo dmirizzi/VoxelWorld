@@ -35,9 +35,7 @@ class ChunkGenerationJob : IWorldUpdateJob
     {
         return Task.Run(() => 
         {
-            //var token = Profiler.StartProfiling($"{GetType()}-Async");
             _chunkUpdate = _chunkGenerator.GenerateChunk(ChunkPos);
-            //Profiler.StopProfiling(token);
         });
     }
 
@@ -48,7 +46,7 @@ class ChunkGenerationJob : IWorldUpdateJob
             worldGenerator.AddBackloggedVoxels(chunkBacklog.Key, chunkBacklog.Value);
         }
 
-        worldUpdateScheduler.AddChunkVoxelCreationJob(ChunkPos, _chunkUpdate.Voxels);
+        worldUpdateScheduler.AddChunkVoxelCreationJob(ChunkPos, _chunkUpdate.VoxelData, _chunkUpdate.HasVoxelData);
     }
 
     public override bool Equals(object rhs) =>

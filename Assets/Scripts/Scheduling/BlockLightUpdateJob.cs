@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 class BlockLightUpdateJob : IWorldUpdateJob
 {
-    public int UpdateStage => 4;
+    public int UpdateStage => 6;
 
     public Vector3Int ChunkPos { get; private set; }
 
@@ -50,7 +51,7 @@ class BlockLightUpdateJob : IWorldUpdateJob
     {
         return Task.Run(() => 
         {
-            //var token = Profiler.StartProfiling($"{GetType()}-Async");
+            UnityEngine.Profiling.Profiler.BeginThreadProfiling("WorldUpdateJobs", "BlockLightUpdateJobThread");
 
             var colorChannels = new byte[]{
                 (byte)(LightColor.r >> 4),
@@ -77,13 +78,14 @@ class BlockLightUpdateJob : IWorldUpdateJob
                 }
             }
 
-            //Profiler.StopProfiling(token);
+            UnityEngine.Profiling.Profiler.EndThreadProfiling();
         });
     }
 
     public void PostExecuteSync(VoxelWorld world, WorldGenerator worldGenerator, WorldUpdateScheduler worldUpdateScheduler)
     {
-        world.QueueChunksForLightMappingUpdate(_affectedChunks);
+        foreach (var pos in _affectedChunks)
+            worldUpdateScheduler.AddChunkLightMappingUpdateJob(pos);
     }
 
     public override bool Equals(object rhs) =>

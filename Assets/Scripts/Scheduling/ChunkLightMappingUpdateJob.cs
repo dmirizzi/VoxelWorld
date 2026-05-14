@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 class ChunkLightMappingUpdateJob : IWorldUpdateJob
 {
-    public int UpdateStage => 6;
+    public int UpdateStage => 7;
 
     public Vector3Int ChunkPos { get; private set; }
 
@@ -29,9 +30,9 @@ class ChunkLightMappingUpdateJob : IWorldUpdateJob
     {
         return Task.Run(() => 
         {
-            //var token = Profiler.StartProfiling($"{GetType()}-Async");
+            UnityEngine.Profiling.Profiler.BeginThreadProfiling("WorldUpdateJobs", "ChunkLightMappingUpdateJob");
             _lightColorMapping = _chunkBuilder.CreateChunkLightColorMapping();
-            //Profiler.StopProfiling(token);
+            UnityEngine.Profiling.Profiler.EndThreadProfiling();
         });
     }
 
@@ -61,7 +62,7 @@ class ChunkLightMappingUpdateJob : IWorldUpdateJob
     public override string ToString()
      => $"ChunkLightMappingUpdateJob(ChunkPos={ChunkPos})";
 
-    private ChunkBuilder.ChunkLightColorMapping _lightColorMapping;
+    private ChunkMeshBuilder.ChunkLightColorMapping _lightColorMapping;
 
-    private ChunkBuilder _chunkBuilder;
+    private ChunkMeshBuilder _chunkBuilder;
 }

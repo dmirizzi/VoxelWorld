@@ -116,6 +116,46 @@ public static class VoxelBuildHelper
         return !VoxelInfo.IsOpaque(neighbor, neighborFace, yRotation);
     }
 
+    public static bool IsVoxelSideVisible(
+        VoxelWorld world,
+        Chunk chunk,
+        ushort voxelType,
+        Vector3Int globalVoxelPos,
+        Vector3Int localVoxelPos,
+        BlockFace direction)
+    {
+        var dirVector = BlockFaceHelper.GetVectorIntFromBlockFace(direction);
+        var neighborLocalPos = localVoxelPos + dirVector;
+        var neighbor = chunk.GetVoxel(neighborLocalPos.x, neighborLocalPos.y, neighborLocalPos.z);
+
+        if (neighbor == 0)
+        {
+            // Neighbor voxel is air, so the face is definitely visible
+            return true;
+        }
+
+        var neighborBlockData = BlockDataRepository.GetBlockData(neighbor);
+
+        if (neighborBlockData.Transparent)
+        {
+            // Transparent neighboring voxels only hide their shared face if they are of the same type
+            return voxelType != neighbor;
+        }
+
+        var blockType = BlockDataRepository.GetBlockType(neighbor);
+        int yRotation = 0;
+        if (blockType != null)
+        {
+            yRotation = BlockFaceHelper.GetYAngleBetweenFaces(
+                blockType.GetForwardFace(world, globalVoxelPos + dirVector),
+                BlockFace.Back
+            );
+        }
+
+        var neighborFace = BlockFaceHelper.GetOppositeFace(direction);
+        return !neighborBlockData.IsFaceOpaque(neighborFace, yRotation);
+    }    
+
     public static void BuildVoxelUVCache()
     {
         _voxelUVCache = new Dictionary<(ushort, BlockFace), Vector2[]>();
@@ -123,11 +163,11 @@ public static class VoxelBuildHelper
         var faces = Enum.GetValues(typeof(BlockFace)).Cast<BlockFace>();
 
         var blockData = BlockDataRepository.GetAllBlockData();
-        for(ushort voxelType = 1; voxelType < blockData.Count; ++voxelType)
+        for (ushort voxelType = 1; voxelType < blockData.Count; ++voxelType)
         {
-            foreach(var face in faces)
+            foreach (var face in faces)
             {
-                if(TryCalcUVsForVoxel(voxelType, face, out var uvs))
+                if (TryCalcUVsForVoxel(voxelType, face, out var uvs))
                 {
                     _voxelUVCache[(voxelType, face)] = uvs;
                 }

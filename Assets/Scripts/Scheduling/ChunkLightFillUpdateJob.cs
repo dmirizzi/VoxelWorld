@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 class ChunkLightFillUpdateJob : IWorldUpdateJob
 {
-    public int UpdateStage => 4;
+    public int UpdateStage => 6;
 
     public Vector3Int ChunkPos { get; private set; }
 
@@ -37,15 +38,26 @@ class ChunkLightFillUpdateJob : IWorldUpdateJob
     {
         return Task.Run(() => 
         {
-            //var token = Profiler.StartProfiling($"{GetType()}-Async");
+            UnityEngine.Profiling.Profiler.BeginThreadProfiling("WorldUpdateJobs", "ChunkLightFillUpdateJob");
             _lightMap.PropagateSurroundingLightsOnNewChunk(ChunkPos);
-            //Profiler.StopProfiling(token);
+            UnityEngine.Profiling.Profiler.EndThreadProfiling();
         });
     }
 
     public void PostExecuteSync(VoxelWorld world, WorldGenerator worldGenerator, WorldUpdateScheduler worldUpdateScheduler)
     {
-        world.QueueChunkForLightMappingUpdate(ChunkPos);
+        worldUpdateScheduler.AddChunkLightMappingUpdateJob(ChunkPos);
+
+        // Re-run light mapping for face-adjacent neighbors: their boundary vertices sample
+        // light from this chunk via TryGetNeighboringChunkVoxel, but those samples were 0
+        // when this chunk didn't exist yet (during initial world gen), leaving stale dark
+        // vertices at the boundary.
+        worldUpdateScheduler.AddChunkLightMappingUpdateJob(ChunkPos + Vector3Int.left);
+        worldUpdateScheduler.AddChunkLightMappingUpdateJob(ChunkPos + Vector3Int.right);
+        worldUpdateScheduler.AddChunkLightMappingUpdateJob(ChunkPos + Vector3Int.up);
+        worldUpdateScheduler.AddChunkLightMappingUpdateJob(ChunkPos + Vector3Int.down);
+        worldUpdateScheduler.AddChunkLightMappingUpdateJob(ChunkPos + Vector3Int.forward);
+        worldUpdateScheduler.AddChunkLightMappingUpdateJob(ChunkPos + Vector3Int.back);
     }
 
     public override bool Equals(object rhs) =>

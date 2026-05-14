@@ -3,19 +3,21 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
-class ChunkRebuildJob : IWorldUpdateJob
+class ChunkMeshRebuildJob : IWorldUpdateJob
 {
-    public int UpdateStage => 3;
+    public int UpdateStage => 4;
 
     public Vector3Int ChunkPos { get; private set; }
 
     public HashSet<Vector3Int> AffectedChunks { get; private set; }
 
-    public ChunkRebuildJob(Vector3Int chunkPos)
+    public ChunkMeshRebuildJob(Vector3Int chunkPos)
     {
         ChunkPos = chunkPos;
-        AffectedChunks = new HashSet<Vector3Int>();
-        AffectedChunks.Add(chunkPos);
+        AffectedChunks = new HashSet<Vector3Int>
+        {
+            chunkPos
+        };
     }
 
     public bool PreExecuteSync(VoxelWorld world, WorldGenerator worldGenerator)
@@ -29,28 +31,28 @@ class ChunkRebuildJob : IWorldUpdateJob
     {
         return Task.Run(() => 
         {
-            var token = Profiler.StartProfiling($"{GetType()}-Async");
+            UnityEngine.Profiling.Profiler.BeginThreadProfiling("WorldUpdateJobs", "ChunkMeshRebuildJob");
             _chunkBuilder.Build();
-            Profiler.StopProfiling(token);
+            UnityEngine.Profiling.Profiler.EndThreadProfiling();
         });
     }
 
     public void PostExecuteSync(VoxelWorld world, WorldGenerator worldGenerator, WorldUpdateScheduler worldUpdateScheduler)
     {
-        world.QueueLightFillOnNewChunk(ChunkPos);
+        worldUpdateScheduler.AddChunkLightFillUpdateJob(ChunkPos);
     }
 
     public override bool Equals(object rhs) =>
-        (rhs is ChunkRebuildJob rhsJob)
+        (rhs is ChunkMeshRebuildJob rhsJob)
             && (ChunkPos == rhsJob.ChunkPos);
 
     public override int GetHashCode() => 
         HashCode.Combine(
-            typeof(ChunkRebuildJob), 
+            typeof(ChunkMeshRebuildJob), 
             ChunkPos);    
 
     public override string ToString()
-     => $"ChunkRebuildJob(ChunkPos={ChunkPos})";
+     => $"ChunkMeshRebuildJob(ChunkPos={ChunkPos})";
 
-    private ChunkBuilder _chunkBuilder;
+    private ChunkMeshBuilder _chunkBuilder;
 }

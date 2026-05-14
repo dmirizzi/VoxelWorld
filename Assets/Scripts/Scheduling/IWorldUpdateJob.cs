@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
-interface IWorldUpdateJob
+public interface IWorldUpdateJob
 {
     public int UpdateStage { get; }
 

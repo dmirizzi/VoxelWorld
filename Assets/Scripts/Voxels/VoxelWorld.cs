@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static LightMap;
 
 public class VoxelWorld : MonoBehaviour
 {
@@ -12,7 +13,7 @@ public class VoxelWorld : MonoBehaviour
     {
         _chunks = new Dictionary<Vector3Int, Chunk>();
         _topMostChunks = new Dictionary<Vector2Int, Chunk>();
-        _chunkBuilders = new Dictionary<Vector3Int, ChunkBuilder>();
+        _chunkBuilders = new Dictionary<Vector3Int, ChunkMeshBuilder>();
         _lightMap = new LightMap(this);
     }
 
@@ -26,9 +27,20 @@ public class VoxelWorld : MonoBehaviour
     {
     }
 
+    public IEnumerable<Vector3Int> GetAllChunkPositions() => _chunks.Keys;
+
     public LightMap GetLightMap() => _lightMap;
 
     public Chunk GetChunk(Vector3Int chunkPos) => _chunks[chunkPos];
+
+    public Chunk GetOrCreateChunk(Vector3Int chunkPos)
+    {
+        if(_chunks.TryGetValue(chunkPos, out var chunk))
+        {
+            return chunk;
+        }
+        return CreateChunk(chunkPos);
+    }
 
     public bool TryGetChunk(Vector3Int chunkPos, out Chunk chunk)
     {
@@ -44,13 +56,13 @@ public class VoxelWorld : MonoBehaviour
 
     public bool ChunkExists(Vector3Int chunkPos) => _chunks.ContainsKey(chunkPos);
 
-    public ChunkBuilder CreateNewChunkBuilder(Vector3Int chunkPos)
+    public ChunkMeshBuilder CreateNewChunkBuilder(Vector3Int chunkPos)
     {
-        _chunkBuilders[chunkPos] = new ChunkBuilder(this, chunkPos, _chunks[chunkPos], TextureAtlasMaterial, TextureAtlasTransparentMaterial);
+        _chunkBuilders[chunkPos] = new ChunkMeshBuilder(this, chunkPos, _chunks[chunkPos], TextureAtlasMaterial, TextureAtlasTransparentMaterial);
         return _chunkBuilders[chunkPos];
     }
 
-    public ChunkBuilder GetChunkBuilder(Vector3Int chunkPos) => _chunkBuilders[chunkPos];
+    public ChunkMeshBuilder GetChunkBuilder(Vector3Int chunkPos) => _chunkBuilders[chunkPos];
 
 
     public bool ChunkBuilderExists(Vector3Int chunkPos) => _chunkBuilders.ContainsKey(chunkPos);
@@ -71,6 +83,7 @@ public class VoxelWorld : MonoBehaviour
             return;
         }
 
+
         QueueAffectedChunksForRebuild(globalPos);
     }
 
@@ -84,7 +97,7 @@ public class VoxelWorld : MonoBehaviour
         var chunk = GetChunkFromVoxelPosition(globalVoxelPos, true);
         var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(globalVoxelPos);
 
-        var oldVoxelType = chunk.GetVoxel(chunkLocalPos);
+        var oldVoxelType = chunk.GetVoxelInsideChunk(chunkLocalPos);
 
         var chunksAffectedByLightUpdate = new HashSet<Vector3Int>();
 
@@ -125,11 +138,6 @@ public class VoxelWorld : MonoBehaviour
         );
     }
 
-    public void QueueLightFillOnNewChunk(Vector3Int chunkPos)
-    {
-        _updateScheduler.AddChunkLightFillUpdateJob(chunkPos);
-    }
-
     public void RemoveLight(Vector3Int globalLightPos, bool sunlight)
     {
         _updateScheduler.AddBlockLightUpdateJob(
@@ -143,10 +151,10 @@ public class VoxelWorld : MonoBehaviour
 
     public Color32 GetVoxelLightColor(Vector3Int globalVoxelPos)
     {
-        var chunk = GetChunkFromVoxelPosition(globalVoxelPos, false);
+        var chunk = GetChunkFromVoxelPosition(globalVoxelPos);
         if(chunk == null)
         {
-            return new Color32(0, 0, 0, 0);
+            return _zeroColor;
         }
         var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(globalVoxelPos);
         return new Color32
@@ -191,7 +199,7 @@ public class VoxelWorld : MonoBehaviour
             return 0;
         }
         var chunkLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(voxelPos);
-        return chunk.GetVoxel(chunkLocalPos);
+        return chunk.GetVoxelInsideChunk(chunkLocalPos);
     }
 
     public (Vector3Int, Vector3Int) GetWorldBoundaries()
@@ -255,7 +263,7 @@ public class VoxelWorld : MonoBehaviour
             var chunk = _chunks[chunkPos];
             for(int y = VoxelInfo.ChunkSize - 1; y >= 0; --y)
             {
-                if(chunk.GetVoxel(localVoxelPos.x, y, localVoxelPos.z) != 0)
+                if(chunk.GetVoxelInsideChunk(localVoxelPos.x, y, localVoxelPos.z) != 0)
                 {
                     return VoxelPosHelper.ChunkLocalVoxelPosToGlobal(
                         new Vector3Int(localVoxelPos.x, y, localVoxelPos.z),
@@ -271,10 +279,10 @@ public class VoxelWorld : MonoBehaviour
     {
         //TODO: JUST CONVERT THE VOXELPOS TO CHUNK POS DUMBASS!!
         var chunkPos = GetChunkFromVoxelPosition(globalVoxelPos, true).ChunkPos;
-        _updateScheduler.AddChunkRebuildJob(chunkPos);
+        _updateScheduler.AddChunkMeshRebuildJob(chunkPos);
     }
 
-    public void QueueChunksForLightMappingUpdate(IEnumerable<Vector3Int> chunkPositions)
+    private void QueueChunksForLightMappingUpdate(IEnumerable<Vector3Int> chunkPositions)
     {
         foreach(var chunkPos in chunkPositions)
         {
@@ -282,23 +290,28 @@ public class VoxelWorld : MonoBehaviour
         }
     }
 
-    public void QueueChunkForLightMappingUpdate(Vector3Int chunkPos)
-    {
-        _updateScheduler.AddChunkLightMappingUpdateJob(chunkPos);
-    }
-
     private void QueueAffectedChunksForRebuild(Vector3Int voxelPos)
     {        
         var localPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(voxelPos);
         var chunkPos = VoxelPosHelper.GlobalVoxelPosToChunkPos(voxelPos);
 
-        _updateScheduler.AddChunkRebuildJob(chunkPos);
-        if(localPos.x == 0)                         _updateScheduler.AddChunkRebuildJob(chunkPos + Vector3Int.left);
-        if(localPos.x == VoxelInfo.ChunkSize - 1)   _updateScheduler.AddChunkRebuildJob(chunkPos + Vector3Int.right);
-        if(localPos.y == 0)                         _updateScheduler.AddChunkRebuildJob(chunkPos + Vector3Int.down);
-        if(localPos.y == VoxelInfo.ChunkSize - 1)   _updateScheduler.AddChunkRebuildJob(chunkPos + Vector3Int.up);
-        if(localPos.z == 0)                         _updateScheduler.AddChunkRebuildJob(chunkPos + Vector3Int.back);
-        if(localPos.z == VoxelInfo.ChunkSize - 1)   _updateScheduler.AddChunkRebuildJob(chunkPos + Vector3Int.forward);
+        _updateScheduler.AddChunkMeshRebuildJob(chunkPos);
+        if(localPos.x == 0)                         _updateScheduler.AddChunkMeshRebuildJob(chunkPos + Vector3Int.left);
+        if(localPos.x == VoxelInfo.ChunkSize - 1)   _updateScheduler.AddChunkMeshRebuildJob(chunkPos + Vector3Int.right);
+        if(localPos.y == 0)                         _updateScheduler.AddChunkMeshRebuildJob(chunkPos + Vector3Int.down);
+        if(localPos.y == VoxelInfo.ChunkSize - 1)   _updateScheduler.AddChunkMeshRebuildJob(chunkPos + Vector3Int.up);
+        if(localPos.z == 0)                         _updateScheduler.AddChunkMeshRebuildJob(chunkPos + Vector3Int.back);
+        if(localPos.z == VoxelInfo.ChunkSize - 1)   _updateScheduler.AddChunkMeshRebuildJob(chunkPos + Vector3Int.forward);
+    }
+
+    public Chunk GetChunkFromVoxelPosition(Vector3Int globalVoxelPos)
+    {
+        var chunkPos = VoxelPosHelper.GlobalVoxelPosToChunkPos(globalVoxelPos);
+        if(_chunks.TryGetValue(chunkPos, out var chunk))
+        {
+            return chunk;
+        }
+        return null;
     }
 
     public Chunk GetChunkFromVoxelPosition(Vector3Int globalVoxelPos, bool create)
@@ -309,14 +322,7 @@ public class VoxelWorld : MonoBehaviour
         {
             if(create)
             {
-                var chunk = new Chunk(this, chunkPos);
-                _chunks.Add(chunkPos, chunk);
-
-                var chunkXZPos = new Vector2Int(globalVoxelPos.x, globalVoxelPos.z);
-                if(!_topMostChunks.ContainsKey(chunkXZPos) || globalVoxelPos.y > _topMostChunks[chunkXZPos].ChunkPos.y)
-                {
-                    _topMostChunks[chunkXZPos] = chunk;
-                }
+                return CreateChunk(chunkPos);
             }
             else
             {
@@ -326,11 +332,47 @@ public class VoxelWorld : MonoBehaviour
         return _chunks[chunkPos];
     }
 
+    private Chunk CreateChunk(Vector3Int chunkPos)
+    {
+        var chunk = new Chunk(this, chunkPos);
+        _chunks.Add(chunkPos, chunk);
+
+        ConnectChunkNeighbors(chunk);
+
+        var chunkXZPos = new Vector2Int(chunkPos.x, chunkPos.z);
+        if(!_topMostChunks.ContainsKey(chunkXZPos) || chunkPos.y > _topMostChunks[chunkXZPos].ChunkPos.y)
+        {
+            _topMostChunks[chunkXZPos] = chunk;
+        }        
+
+        return chunk;
+    }
+
+    private void ConnectChunkNeighbors(Chunk chunk)
+    {
+        for(int z = -1; z <= 1; ++z)
+        {
+            for(int y = -1; y <= 1; ++y)
+            {
+                for(int x = -1; x <= 1; ++x)
+                {
+                    var neighborChunkPos = chunk.ChunkPos + new Vector3Int(x, y, z);
+                    if(TryGetChunk(neighborChunkPos, out var neighborChunk))
+                    {
+                        chunk.ConnectNeighbor(neighborChunk, true);
+                    }
+                }
+            }
+        }
+    }
+
+    private Color32 _zeroColor = new Color32(0, 0, 0, 0);
+
     private Dictionary<Vector3Int, Chunk> _chunks;
 
     private Dictionary<Vector2Int, Chunk> _topMostChunks;
 
-    private Dictionary<Vector3Int, ChunkBuilder> _chunkBuilders;
+    private Dictionary<Vector3Int, ChunkMeshBuilder> _chunkBuilders;
 
     public LightMap _lightMap;
 

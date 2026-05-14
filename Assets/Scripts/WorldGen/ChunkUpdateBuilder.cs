@@ -4,9 +4,8 @@ using UnityEngine;
 public struct ChunkUpdate
 {
     public Vector3Int ChunkPos;
-
-    public List<VoxelCreationAction> Voxels;
-
+    public ushort[,,] VoxelData;
+    public bool HasVoxelData;
     public Dictionary<Vector3Int, List<VoxelCreationAction>> Backlog;
 }
 
@@ -17,34 +16,46 @@ public class ChunkUpdateBuilder
         _chunkUpdate = new ChunkUpdate
         {
             ChunkPos = chunkPos,
-            Voxels = new List<VoxelCreationAction>(VoxelInfo.NumVoxelsPerChunk),
+            VoxelData = new ushort[VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize],
+            HasVoxelData = false,
             Backlog = new Dictionary<Vector3Int, List<VoxelCreationAction>>()
         };
     }
 
+    // Use when the position is guaranteed to be within chunk bounds (0–15 per axis).
+    public void QueueVoxelInChunk(int x, int y, int z, ushort type)
+    {
+        _chunkUpdate.VoxelData[x, y, z] = type;
+        _chunkUpdate.HasVoxelData = true;
+    }
+
+    // Use when the position may fall outside the chunk (e.g. structures spanning chunk boundaries).
     public void QueueVoxel(Vector3Int localVoxelPos, ushort type)
     {
-        bool voxelInsideChunk = localVoxelPos.x >= 0 && localVoxelPos.x < VoxelInfo.ChunkSize &&
-                                localVoxelPos.y >= 0 && localVoxelPos.y < VoxelInfo.ChunkSize &&
-                                localVoxelPos.z >= 0 && localVoxelPos.z < VoxelInfo.ChunkSize;
+        // Fast check if local voxel position is inside the chunk using bitwise operations. 
+        // This is equivalent to checking if any of the local voxel position's components are greater than or equal 
+        // to the chunk size, but without branching.
+        const int mask = ~(VoxelInfo.ChunkSize - 1);
+        bool voxelInsideChunk = ((localVoxelPos.x | localVoxelPos.y | localVoxelPos.z) & mask) == 0;
 
-        if(voxelInsideChunk)
+        if (voxelInsideChunk)
         {
-            _chunkUpdate.Voxels.Add(new VoxelCreationAction{
-                LocalVoxelPos = localVoxelPos,
-                Type = type
-            });
+            _chunkUpdate.VoxelData[localVoxelPos.x, localVoxelPos.y, localVoxelPos.z] = type;
+            _chunkUpdate.HasVoxelData = true;
         }
-
-        // Generated voxel is outside player chunk radius, put into backlog (e.g. a tree being generated across chunk boundaries)
         else
         {
-            if(!_chunkUpdate.Backlog.ContainsKey(_chunkUpdate.ChunkPos))
+            var globalPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(localVoxelPos, _chunkUpdate.ChunkPos);
+            var destChunkPos = VoxelPosHelper.GlobalVoxelPosToChunkPos(globalPos);
+            var destLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(globalPos);
+
+            if (!_chunkUpdate.Backlog.ContainsKey(destChunkPos))
             {
-                _chunkUpdate.Backlog[_chunkUpdate.ChunkPos] = new List<VoxelCreationAction>();
+                _chunkUpdate.Backlog[destChunkPos] = new List<VoxelCreationAction>();
             }
-            _chunkUpdate.Backlog[_chunkUpdate.ChunkPos].Add(new VoxelCreationAction{
-                LocalVoxelPos = localVoxelPos,
+            _chunkUpdate.Backlog[destChunkPos].Add(new VoxelCreationAction
+            {
+                LocalVoxelPos = destLocalPos,
                 Type = type
             });
         }

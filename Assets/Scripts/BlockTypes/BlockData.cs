@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -67,30 +68,64 @@ public class BlockData
     // Y-Offset of the top block face (> 0 will lower the top face)
     public float HeightOffset { get; set; }
 
+    private bool[] _isFaceOpaqueCache = new bool[24];
+
+    private bool _isFaceOpaqueCacheFilled = false;
+
+    private static int GetFaceOpaqueCacheIndex(BlockFace face, int yRotation)
+    {
+        const int RotationsPerFace = 4;
+        var normalized = ((yRotation % 360) + 360) % 360;
+        int rotIndex = normalized / 90;
+        return ((int)face) * RotationsPerFace + rotIndex;
+    }
+
+    public void FillCache()
+    {
+        foreach (var face in Enum.GetValues(typeof(BlockFace)))
+        {
+            for (int yRot = 0; yRot < 360; yRot += 90)
+            {
+                bool isOpaque = false;
+                var blockFace = (BlockFace)face;
+
+                if (yRot != 0)
+                {
+                    var newFace = BlockFaceHelper.RotateFaceY(blockFace, yRot);
+                    blockFace = newFace;
+                }
+
+                var selector = BlockFaceHelper.ToBlockFaceSelector(blockFace);
+
+                if(OpaqueFaces.Contains(selector))
+                {
+                    isOpaque = true;
+                }
+                if(OpaqueFaces.Contains(BlockFaceSelector.All))
+                {
+                    isOpaque = true;
+                }
+
+                _isFaceOpaqueCache[GetFaceOpaqueCacheIndex((BlockFace)face, yRot)] = isOpaque;
+            }
+        }
+
+        _isFaceOpaqueCacheFilled = true;
+    }
+
     public bool IsFaceOpaque(BlockFace face, int yRotation)
     {
-        if(yRotation != 0)
+        if(!_isFaceOpaqueCacheFilled)
         {
-            var newFace = BlockFaceHelper.RotateFaceY(face, yRotation);
-            face = newFace;
-        }
+            UnityEngine.Debug.LogWarning($"BlockData cache not filled for block type {Name}. Call FillCache() after loading all block data.");
+        }   
 
-        var selector = BlockFaceHelper.ToBlockFaceSelector(face);
-
-        if(OpaqueFaces.Contains(selector))
-        {
-            return true;
-        }
-        if(OpaqueFaces.Contains(BlockFaceSelector.All))
-        {
-            return true;
-        }
-        return false;
+        return _isFaceOpaqueCache[GetFaceOpaqueCacheIndex(face, yRotation)];
     }
 
     public bool TryGetFaceTextureTileCoords(BlockFace face, out int[] tileCoords)
     {
-        if(FaceTextureTileCoords == null)
+        if (FaceTextureTileCoords == null)
         {
             tileCoords = null;
             return false;
@@ -98,27 +133,27 @@ public class BlockData
 
         var blockFaceSelector = BlockFaceHelper.ToBlockFaceSelector(face);
         int[] coords = null;
-        if(FaceTextureTileCoords.ContainsKey(blockFaceSelector))
+        if (FaceTextureTileCoords.ContainsKey(blockFaceSelector))
         {
             coords = FaceTextureTileCoords[blockFaceSelector];
         }
-        else if(FaceTextureTileCoords.ContainsKey(BlockFaceSelector.All))
+        else if (FaceTextureTileCoords.ContainsKey(BlockFaceSelector.All))
         {
             coords = FaceTextureTileCoords[BlockFaceSelector.All];
         }
-        else if(FaceTextureTileCoords.ContainsKey(BlockFaceSelector.Default))
+        else if (FaceTextureTileCoords.ContainsKey(BlockFaceSelector.Default))
         {
             coords = FaceTextureTileCoords[BlockFaceSelector.Default];
         }
 
-        if(coords == null)
+        if (coords == null)
         {
             UnityEngine.Debug.LogWarning($"Invalid FaceTextureTileCoords for block type {Name}. Must either contain a set of tile coords for specific faces (and optionally a default) or one specifier for all faces");
             tileCoords = null;
             return false;
         }
 
-        if(coords.Length != 2)
+        if (coords.Length != 2)
         {
             UnityEngine.Debug.LogWarning($"Invalid FaceTextureTileCoords for block type {Name}. Tile coordinates must have exactly two values - x and y.");
             tileCoords = null;

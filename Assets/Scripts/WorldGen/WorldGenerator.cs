@@ -1,6 +1,8 @@
 using System;
+using System.Text;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class WorldGenerator : MonoBehaviour
 {
@@ -48,17 +50,16 @@ public class WorldGenerator : MonoBehaviour
         return chunks;
     }
 
-    public bool TryPopBackloggedChunk(Vector3Int chunkPos, out List<VoxelCreationAction> voxels)
+    public List<VoxelCreationAction> PopBackloggedChunk(Vector3Int chunkPos)
     {
         if(!_chunkCreationBacklog.ContainsKey(chunkPos))
         {
-            voxels = null;
-            return false;
+            return null;
         }
 
-        voxels = _chunkCreationBacklog[chunkPos];
+        var voxels = _chunkCreationBacklog[chunkPos];
         _chunkCreationBacklog.Remove(chunkPos);
-        return true;
+        return voxels;
     }
 
     void Awake()
@@ -71,12 +72,27 @@ public class WorldGenerator : MonoBehaviour
         _voxelWorld = FindObjectOfType<VoxelWorld>();
         _player = FindObjectOfType<PlayerController>();
 
-        _updateScheduler.BatchFinished += () => 
+        _savedVSyncCount = QualitySettings.vSyncCount;
+        _savedTargetFrameRate = Application.targetFrameRate;
+        _savedMaxJobs = _updateScheduler.MaxNumSimultaneousJobs;
+
+        _camera = Camera.main;
+        _camera.enabled = false;
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = -1;
+        _updateScheduler.MaxNumSimultaneousJobs = int.MaxValue;
+
+        _updateScheduler.BatchFinished += () =>
         {
             if(!WorldGenerated)
             {
-                Profiler.WriteProfilingResultsToCSV();
-                PlacePlayer(Vector3Int.zero);            
+                _camera.enabled = true;
+                QualitySettings.vSyncCount = _savedVSyncCount;
+                Application.targetFrameRate = _savedTargetFrameRate;
+                _updateScheduler.MaxNumSimultaneousJobs = _savedMaxJobs;
+
+                //Profiler.WriteProfilingResultsToCSV();
+                PlacePlayer(Vector3Int.zero);
                 WorldGenerated = true;
             }
         };
@@ -97,34 +113,20 @@ public class WorldGenerator : MonoBehaviour
             
             _updateScheduler.FinishBatch();
         }
-
-        /*
-        // stress test!!
-        if(WorldGenerated && (DateTime.Now - lastDrop).TotalMilliseconds >= 50)
-        {
-            lastDrop = DateTime.Now;
-            var x = UnityEngine.Random.Range(-256, 256);
-            var z = UnityEngine.Random.Range(-256, 256);
-            
-            //var highestPoint = _voxelWorld.GetHighestVoxelPos(x, z);
-            var highestPoint = _voxelWorld.GetRandomSolidSurfaceVoxel();
-            _voxelWorld.SetVoxelSphere(highestPoint, 5, 0);
-        }
-        */
         
     }
 
     void OnGUI()
     {
-        /*
-        var profiling = Profiler.GetProfilingResults().OrderByDescending(x => x.Value);
+        if (!WorldGenerated) return;
+
+        var profiling = Profiler.GetProfilingResults().OrderByDescending(x => x.Subject);
         int i = 0;
         foreach(var prof in profiling)
         {
-            GUI.Label(new Rect(10, 400 + 20 * i, 600, 30), $"{prof.Key}: {prof.Value}ms");
+            GUI.Label(new Rect(10, 400 + 20 * i, 600, 30), $"{prof.Subject}: {prof.TotalElapsedMs}ms");
             i++;
         }
-        */
     }
     
     private void GenerateChunksAroundCenter(Vector3Int centerChunkPos)
@@ -347,4 +349,9 @@ public class WorldGenerator : MonoBehaviour
 
     // Holds queued voxel creation actions that are outside of the player radius and will be applied, once the chunks they are in are loaded/generated
     private Dictionary<Vector3Int, List<VoxelCreationAction>> _chunkCreationBacklog = new Dictionary<Vector3Int, List<VoxelCreationAction>>();
+
+    private Camera _camera;
+    private int _savedVSyncCount;
+    private int _savedTargetFrameRate;
+    private int _savedMaxJobs;
 }

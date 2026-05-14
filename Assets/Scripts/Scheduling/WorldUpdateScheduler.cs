@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using static LightMap;
 
-class WorldUpdateScheduler : MonoBehaviour
+public class WorldUpdateScheduler : MonoBehaviour
 {
-    public int MaxNumSimultaneousJobs = 8;
+    public int MaxNumSimultaneousJobs = 10;
 
     public event Action BatchFinished;
 
@@ -23,6 +25,9 @@ class WorldUpdateScheduler : MonoBehaviour
         {
             ScheduleJobs();
             HandleActiveJobs();
+            
+            // Process any new jobs that were schduled by the post execute of finished jobs immediately, instead of waiting for the next frame update
+            ScheduleJobs();
         }
     }
 
@@ -53,20 +58,27 @@ class WorldUpdateScheduler : MonoBehaviour
     }
 
     public void StartBatch()
-    { 
+    {
         _batching = true;
         _batchTimer.Restart();
+        _currentBatchStage = -1;
+        _stageTimings.Clear();
+        _stageJobNames.Clear();
     }
 
     public void FinishBatch() => _batching = false;
 
-    public void AddChunkRebuildJob(Vector3Int chunkPos)
+    public void AddChunkMeshRebuildJob(Vector3Int chunkPos)
     {
         if(!_world.ChunkExists(chunkPos)) return;
-        AddJob(new ChunkRebuildJob(chunkPos));
+        AddJob(new ChunkMeshRebuildJob(chunkPos));
     }
 
     public void AddSunlightUpdateJob() => AddJob(new SunlightUpdateJob());
+
+    public void AddSunlightColumnJob(Chunk topChunk, List<LightNode> sharedSpillover) => AddJob(new SunlightColumnJob(topChunk, sharedSpillover));
+    
+    public void AddSunlightHorizontalSpillJob(List<LightNode> sharedSpillover) => AddJob(new SunlightHorizontalSpillJob(sharedSpillover));
 
     public void AddChunkLightFillUpdateJob(Vector3Int chunkPos)
     {
@@ -91,9 +103,9 @@ class WorldUpdateScheduler : MonoBehaviour
         AddJob(new ChunkGenerationJob(chunkPos));
     }
 
-    public void AddChunkVoxelCreationJob(Vector3Int chunkPos, List<VoxelCreationAction> voxels)
+    public void AddChunkVoxelCreationJob(Vector3Int chunkPos, ushort[,,] voxelData, bool hasVoxelData)
     {
-        AddJob(new ChunkVoxelCreationJob(chunkPos, voxels));
+        AddJob(new ChunkVoxelCreationJob(chunkPos, voxelData, hasVoxelData));
     }
 
     public void AddBackloggedVoxelCreationJob() => AddJob(new BackloggedVoxelCreationJob());
@@ -112,13 +124,28 @@ class WorldUpdateScheduler : MonoBehaviour
 
     private void ScheduleJobs()
     {
-        while(_activeJobs.Count < MaxNumSimultaneousJobs
-            && NextJobIsNotHigherStageThanActiveJobs()
+        while(
+            _activeJobs.Count < MaxNumSimultaneousJobs && 
+            NextJobIsNotHigherStageThanActiveJobs()
             && _jobQueue.DequeueNext(x => CanReserveChunks(x.AffectedChunks), out var job))
         {
-            //var token = Profiler.StartProfiling($"{job.GetType()}-PreExecute");
+            if (job.UpdateStage != _currentBatchStage)
+            {
+                var now = _batchTimer.Elapsed.TotalMilliseconds;
+                if (_currentBatchStage >= 0)
+                    _stageTimings[_currentBatchStage] = (_stageTimings[_currentBatchStage].start, now);
+                _currentBatchStage = job.UpdateStage;
+                _stageTimings[_currentBatchStage] = (now, -1);
+            }
+
+            if (!_stageJobNames.TryGetValue(job.UpdateStage, out var names))
+                _stageJobNames[job.UpdateStage] = names = new HashSet<string>();
+            names.Add(job.GetType().Name);
+
+            var token = Profiler.StartProfiling($"Jobs/{job.GetType()}/PreExecute");
             var preExecute = job.PreExecuteSync(_world, _worldGenerator);
-            //Profiler.StopProfiling(token);
+            Profiler.StopProfiling(token);
+
             if(!preExecute)
             {
                 // Pre execution failed -> job is not executable -> skip
@@ -130,8 +157,23 @@ class WorldUpdateScheduler : MonoBehaviour
             _activeJobs.AddLast(new ActiveJob
             {
                 Job = job,
-                JobTask = job.ExecuteAsync()
+                JobTask = ProfileAsync(job.ExecuteAsync(), job.GetType())
             });
+        }
+    }
+
+    private async Task ProfileAsync(Task asyncJobTask, Type jobType)
+    {
+
+        var token = Profiler.StartProfiling($"Jobs/{jobType}/ExecuteAsync");
+
+        try
+        {
+            await asyncJobTask;
+        }
+        finally
+        {
+            Profiler.StopProfiling(token);
         }
     }
 
@@ -148,9 +190,9 @@ class WorldUpdateScheduler : MonoBehaviour
                     UnityEngine.Debug.LogException(jobNode.Value.JobTask.Exception);
                 }
 
-                //var token = Profiler.StartProfiling($"{jobNode.Value.Job.GetType()}-PostExecute");
+                var token = Profiler.StartProfiling($"Jobs/{jobNode.Value.Job.GetType()}/PostExecuteSync");
                 jobNode.Value.Job.PostExecuteSync(_world, _worldGenerator, this);
-                //Profiler.StopProfiling(token);
+                Profiler.StopProfiling(token);
 
                 _activeJobs.Remove(jobNode);
 
@@ -158,16 +200,31 @@ class WorldUpdateScheduler : MonoBehaviour
 
                 if(_activeJobs.Count == 0 && _jobQueue.Count == 0)
                 {
-                    // Batch finished
-                    BatchFinished?.Invoke();
-                    
                     _batchTimer.Stop();
-                    UnityEngine.Debug.Log($"Processed batch in {_batchTimer.Elapsed.TotalMilliseconds}ms");
+
+                    if (_currentBatchStage >= 0)
+                        _stageTimings[_currentBatchStage] = (_stageTimings[_currentBatchStage].start, _batchTimer.Elapsed.TotalMilliseconds);
+
+                    LogBatchUpdateTimings();
+                    Profiler.LogProfilingResults();
+
+                    BatchFinished?.Invoke();
                 }
             }
             jobNode = next;
         }
     }    
+
+    private void LogBatchUpdateTimings()
+    {
+        var sb = new StringBuilder($"Batch finished in {_batchTimer.Elapsed.TotalMilliseconds:F1}ms");
+        foreach (var kvp in _stageTimings)
+        {
+            var jobNames = _stageJobNames.TryGetValue(kvp.Key, out var names) ? string.Join(", ", names) : "";
+            sb.Append($"\n  Stage {kvp.Key} ({(kvp.Value.end - kvp.Value.start):F1}ms): {jobNames}");
+        }
+        UnityEngine.Debug.Log(sb.ToString());
+    }
 
     private bool NextJobIsNotHigherStageThanActiveJobs()
     {
@@ -203,7 +260,11 @@ class WorldUpdateScheduler : MonoBehaviour
         _reservedChunks.ExceptWith(chunks);
     }
 
-    private int? _currentUpdateStage;
+    private int _currentBatchStage = -1;
+
+    private SortedDictionary<int, (double start, double end)> _stageTimings = new SortedDictionary<int, (double start, double end)>();
+
+    private SortedDictionary<int, HashSet<string>> _stageJobNames = new SortedDictionary<int, HashSet<string>>();
 
     private bool _batching;
 

@@ -19,33 +19,36 @@ public class ChunkGenerator
 
         for(int z = 0; z < VoxelInfo.ChunkSize; ++z)
         {
-            for(int y = 0; y < VoxelInfo.ChunkSize; ++y)
+            for(int x = 0; x < VoxelInfo.ChunkSize; ++x)
             {
-                for(int x = 0; x < VoxelInfo.ChunkSize; ++x)
-                {
-                    var localVoxelPos = new Vector3Int(x, y, z);
-                    var globalVoxelPos = chunkBasePos + localVoxelPos;
-                    var terrainHeight = GetTerrainHeight(globalVoxelPos);
+                int globalX = chunkBasePos.x + x;
+                int globalZ = chunkBasePos.z + z;
+                int terrainHeight = GetTerrainHeight(globalX, globalZ);
 
-                    if(globalVoxelPos.y < terrainHeight)
+                for(int y = 0; y < VoxelInfo.ChunkSize; ++y)
+                {
+                    int globalY = chunkBasePos.y + y;
+
+                    if(globalY < terrainHeight)
                     {
-                        builder.QueueVoxel(localVoxelPos, _dirtType);
+                        builder.QueueVoxelInChunk(x, y, z, _dirtType);
                     }
-                    else if(globalVoxelPos.y == terrainHeight)
+                    else if(globalY == terrainHeight)
                     {
-                        builder.QueueVoxel(localVoxelPos, _grassType);
-/*
-                        if(TreeShouldBePlaced(localVoxelPos) && (x % 15 == 0 || y % 15 == 0 || z % 15 == 0))
+                        builder.QueueVoxelInChunk(x, y, z, _grassType);
+
+                        /*
+                        if(TreeShouldBePlaced(new Vector3Int(x, y, z)) && (x % 15 == 0 || y % 15 == 0 || z % 15 == 0))
                         {
-                            PlaceTree(builder, localVoxelPos, 4, 3);
+                            PlaceTree(builder, new Vector3Int(x, y, z), 4, 3);
                         }
                         */
                     }
-                    else if(globalVoxelPos.y == terrainHeight + 1)
+                    else if(globalY == terrainHeight + 1)
                     {
-                        if((globalVoxelPos.x % 30) == 0 && (globalVoxelPos.z % 30) == 0)
+                        if((globalX % 30) == 0 && (globalZ % 30) == 0)
                         {
-                            builder.QueueVoxel(localVoxelPos, _torchType);
+                            builder.QueueVoxelInChunk(x, y, z, _torchType);
                         }
                     }
                 }
@@ -54,15 +57,15 @@ public class ChunkGenerator
 
         return builder.GetChunkUpdate();
     }
-    private int GetTerrainHeight(Vector3Int globalVoxelPos)
+    private int GetTerrainHeight(int globalX, int globalZ)
     {
         var height = 0;
-        
+
         // Local terrain variations
-        height += (int)(Mathf.PerlinNoise((float)globalVoxelPos.x / 40.0f, (float)globalVoxelPos.z / 40.0f) * 32) - 5;
+        height += (int)(Mathf.PerlinNoise(globalX / 40.0f, globalZ / 40.0f) * 32) - 5;
 
         // Macro terrain
-        height += (int)(Mathf.PerlinNoise((float)globalVoxelPos.x / 400.0f, (float)globalVoxelPos.z / 400.0f) * 512) - 256;
+        height += (int)(Mathf.PerlinNoise(globalX / 400.0f, globalZ / 400.0f) * 512) - 256;
 
         return height;
     }
