@@ -461,7 +461,7 @@ public class LightMap
     private bool IsNeighborFaceOpaque(BlockFace neighborFace, Chunk neighborChunk, Vector3Int neighborLocalPos, Vector3Int neighborGlobalPos)
     {
         var neighborVoxelType = neighborChunk.GetVoxelInsideChunk(neighborLocalPos);
-        var blockType = BlockTypeRegistry.GetBlockType(neighborVoxelType);
+        var blockType = BlockDataRepository.GetBlockType(neighborVoxelType);
         
         int yRotation = 0;        
         if (blockType != null)

@@ -80,8 +80,8 @@ public class Chunk
         bool useExistingAuxData = false)
     {
         var oldVoxelType = _chunkData[localPos.x, localPos.y, localPos.z];
-        var oldBlockType = BlockTypeRegistry.GetBlockType(oldVoxelType);
-        var newBlockType = BlockTypeRegistry.GetBlockType(type);
+        var oldBlockType = BlockDataRepository.GetBlockType(oldVoxelType);
+        var newBlockType = BlockDataRepository.GetBlockType(type);
 
         _chunkData[localPos.x, localPos.y, localPos.z] = type;
 
@@ -110,8 +110,8 @@ public class Chunk
                 _voxelColliderGameObjects.Remove(localPos);
             }
 
-            // Execute remove logic on old block if available 
-            if (!oldBlockType.OnRemove(_voxelWorld, this, globalPos, localPos))
+            // Execute remove logic on old block if available
+            if (!oldBlockType.OnRemove(_voxelWorld, globalPos))
             {
                 // Block cannot be removed
                 return false;
@@ -125,12 +125,12 @@ public class Chunk
             _blockAuxiliaryData.Remove(localPos);
         }
 
-        // Execute place logic on old block if available
+        // Execute place logic on new block if available
         if (newBlockType != null)
         {
             var globalPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(localPos, ChunkPos);
 
-            if (!newBlockType.OnPlace(_voxelWorld, this, globalPos, localPos, placementFace, lookDir))
+            if (!newBlockType.OnPlace(_voxelWorld, globalPos, placementFace, lookDir))
             {
                 // Block cannot be placed
                 return false;
@@ -205,7 +205,7 @@ public class Chunk
                     var type = voxelData[x, y, z];
                     if (type == 0) continue;
 
-                    if (BlockTypeRegistry.GetBlockType(type) != null)
+                    if (BlockDataRepository.GetBlockType(type) != null)
                     {
                         SetVoxel(new Vector3Int(x, y, z), type);
                     }
@@ -226,7 +226,7 @@ public class Chunk
             {
                 for(int x = 0; x < VoxelInfo.ChunkSize; ++x)
                 {
-                    var blockType = BlockTypeRegistry.GetBlockType(_chunkData[x, y, z]);
+                    var blockType = BlockDataRepository.GetBlockType(_chunkData[x, y, z]);
                     if(blockType != null)
                     {
                         var localPos = new Vector3Int(x, y, z);

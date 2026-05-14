@@ -3,8 +3,10 @@ using UnityEngine;
 
 public class LadderBlockType : BlockTypeBase
 {
-    public LadderBlockType()
-        : base(new PlacementFaceProperty())
+    public LadderBlockType(ushort voxelType, BlockData blockData)
+        : base( voxelType,
+                blockData,
+                new PlacementFaceProperty())
     {
         var meshObj = Resources.Load<GameObject>("Models/Ladder");
         _mesh = new VoxelMesh(meshObj.GetComponentInChildren<MeshFilter>().sharedMesh);
@@ -35,9 +37,7 @@ public class LadderBlockType : BlockTypeBase
 
     public override bool OnPlace(
         VoxelWorld world, 
-        Chunk chunk, 
         Vector3Int globalPosition, 
-        Vector3Int localPosition, 
         BlockFace? placementFace, 
         BlockFace? lookDir)
     {

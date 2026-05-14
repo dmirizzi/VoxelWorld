@@ -5,24 +5,25 @@ using UnityEngine;
 
 public abstract class BlockTypeBase
 {
-    public BlockTypeBase(params IBlockProperty[] blockProperties)
+    public BlockTypeBase(ushort voxelType, BlockData blockData, params object[] blockProperties)
     {
-        _blockProperties = new List<IBlockProperty>();
+        VoxelType = voxelType;
+        BlockData = blockData;
+
         _propertyTypeOffset = new Dictionary<Type, int>();
 
         int offset = 0;
         foreach(var prop in blockProperties)
         {
-            _blockProperties.Add(prop);
             _propertyTypeOffset[prop.GetType()] = offset;
-            offset += prop.SerializedLengthInBits;
+            offset += PropertySerializer.GetTotalBitsForType(prop.GetType());
         }
     }
 
     // Is called when the player attempts to place a block of this type. This will always be called before the build methods,
     // so that voxel auxiliary data can be set for building.
     // Returns true if it can be placed, false otherwise
-    public virtual bool OnPlace(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition, BlockFace? placementFace, BlockFace? lookDir) { return true; }
+    public virtual bool OnPlace(VoxelWorld world, Vector3Int globalPosition, BlockFace? placementFace, BlockFace? lookDir) { return true; }
 
     // Called when a chunk mesh is being built. Custom meshes can be added here that will use
     // the global voxel material (ie texture atlas).
@@ -33,7 +34,7 @@ public abstract class BlockTypeBase
 
     // Is called when the player attempts to remove/replace a block of this type.
     // Returns true if it can be removed, false otherwise
-    public virtual bool OnRemove(VoxelWorld world, Chunk chunk, Vector3Int globalPosition, Vector3Int localPosition) { return true; }
+    public virtual bool OnRemove(VoxelWorld world, Vector3Int globalPosition) { return true; }
 
     // Is called when the player looks at and uses a specific block of this type
     public virtual bool OnUse(VoxelWorld world, Vector3Int globalPosition, BlockFace lookDir) { return true; }
@@ -49,28 +50,30 @@ public abstract class BlockTypeBase
     // This is important for hidden face removal during chunk mesh building.
     public abstract BlockFace GetForwardFace(VoxelWorld world, Vector3Int globalPosition);
 
-    protected T GetProperty<T>(VoxelWorld world, Vector3Int globalPos) where T : IBlockProperty
+    protected T GetProperty<T>(VoxelWorld world, Vector3Int globalPos) where T : new()
     {
         var auxData = world.GetVoxelAuxiliaryData(globalPos);
         return auxData != null 
-                ? _blockProperties.Single(x => x is T).GetSerializer<T>().Deserialize(auxData.Value, _propertyTypeOffset[typeof(T)]) 
+                ? PropertySerializer.Deserialize<T>(auxData.Value, _propertyTypeOffset[typeof(T)])
                 : default(T);
     }
 
-    protected void SetProperty<T>(VoxelWorld world, Vector3Int globalPos, T property) where T : IBlockProperty
+    protected void SetProperty<T>(VoxelWorld world, Vector3Int globalPos, T property) where T : new()
     {
         var oldAuxData = world.GetVoxelAuxiliaryData(globalPos) ?? 0;
-        var newAuxData = property.GetSerializer<T>().Serialize(property, oldAuxData, _propertyTypeOffset[typeof(T)]);
+        var newAuxData = PropertySerializer.Serialize<T>(property, oldAuxData, _propertyTypeOffset[typeof(T)]);
         world.SetVoxelAuxiliaryData(globalPos, newAuxData);
     }
 
-    protected void UpdateProperty<T>(VoxelWorld world, Vector3Int globalPos, Func<T, T> updateFunc) where T : IBlockProperty
+    protected void UpdateProperty<T>(VoxelWorld world, Vector3Int globalPos, Func<T, T> updateFunc) where T : new()
     {
         var newAuxData = updateFunc(GetProperty<T>(world, globalPos));
         SetProperty(world, globalPos, newAuxData);
     }
 
-    private List<IBlockProperty> _blockProperties;
+    protected BlockData BlockData { get; private set; }
+
+    protected ushort VoxelType { get; private set; }
 
     private Dictionary<Type, int> _propertyTypeOffset;
 }

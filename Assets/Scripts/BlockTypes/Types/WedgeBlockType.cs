@@ -2,8 +2,11 @@ using UnityEngine;
 
 class WedgeBlockType : BlockTypeBase
 {
-    public WedgeBlockType(ushort voxelType, ushort voxelTypeTexture)
-        : base( new PlacementFaceProperty() )
+    public WedgeBlockType(ushort voxelType, BlockData blockData, ushort voxelTypeTexture)
+        : base( 
+            voxelType,
+            blockData,
+            new PlacementFaceProperty() )
     {
         // Specific type of this voxel (e.g. CobblestoneWedge)
         _voxelType = voxelType;
@@ -88,9 +91,7 @@ class WedgeBlockType : BlockTypeBase
 
     public override bool OnPlace(
         VoxelWorld world, 
-        Chunk chunk, 
         Vector3Int globalPosition, 
-        Vector3Int localPosition, 
         BlockFace? placementFace,
         BlockFace? lookDir)
     {

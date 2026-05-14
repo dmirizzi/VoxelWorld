@@ -47,17 +47,23 @@
         },
         {
             "Name": "Torch",
+            "BlockTypeClass": "TorchBlockType",
             "RenderType": "GameObject",
             "OpaqueFaces": ["None"],
             "LightColor": "FFB077"
         },
         {
             "Name": "CobblestoneWedge",
+            "BlockTypeClass": "WedgeBlockType",
+            "CustomArgs": {
+                "voxelTypeTexture": "4"
+            },
             "RenderType": "CustomMesh",
             "OpaqueFaces": ["Back", "Bottom"]
         },
         {
             "Name": "Door",
+            "BlockTypeClass": "DoorBlockType",
             "RenderType": "CustomMesh",
             "OpaqueFaces": ["None"],
             "FaceTextureTileCoords": {
@@ -67,6 +73,7 @@
         },
         {
             "Name": "Ladder",
+            "BlockTypeClass": "LadderBlockType",
             "RenderType": "CustomMesh",
             "OpaqueFaces": ["None"],
             "FaceTextureTileCoords": {
@@ -90,6 +97,36 @@
             "FaceTextureTileCoords": {
                 "All": [9, 0]
             }            
-        }
+        },
+        {
+            "Name": "YellowLightblock",
+            "BlockTypeClass": "LightBlockType",
+            "RenderType": "CustomMesh",
+            "OpaqueFaces": ["All"],
+            "FaceTextureTileCoords": {
+                "Default": [10, 0]
+            },
+            "LightColor": "FFFF00"
+        },
+        {
+            "Name": "RedLightblock",
+            "BlockTypeClass": "LightBlockType",
+            "RenderType": "CustomMesh",
+            "OpaqueFaces": ["All"],
+            "FaceTextureTileCoords": {
+                "Default": [11, 0]
+            },
+            "LightColor": "FF0000"
+        },
+        {
+            "Name": "BlueLightblock",
+            "BlockTypeClass": "LightBlockType",
+            "RenderType": "CustomMesh",
+            "OpaqueFaces": ["All"],
+            "FaceTextureTileCoords": {
+                "Default": [12, 0]
+            },
+            "LightColor": "0000FF"
+        }                     
     ]
 }
