@@ -47,6 +47,17 @@ class ChunkLightFillUpdateJob : IWorldUpdateJob
     public void PostExecuteSync(VoxelWorld world, WorldGenerator worldGenerator, WorldUpdateScheduler worldUpdateScheduler)
     {
         worldUpdateScheduler.AddChunkLightMappingUpdateJob(ChunkPos);
+
+        // Re-run light mapping for face-adjacent neighbors: their boundary vertices sample
+        // light from this chunk via TryGetNeighboringChunkVoxel, but those samples were 0
+        // when this chunk didn't exist yet (during initial world gen), leaving stale dark
+        // vertices at the boundary.
+        worldUpdateScheduler.AddChunkLightMappingUpdateJob(ChunkPos + Vector3Int.left);
+        worldUpdateScheduler.AddChunkLightMappingUpdateJob(ChunkPos + Vector3Int.right);
+        worldUpdateScheduler.AddChunkLightMappingUpdateJob(ChunkPos + Vector3Int.up);
+        worldUpdateScheduler.AddChunkLightMappingUpdateJob(ChunkPos + Vector3Int.down);
+        worldUpdateScheduler.AddChunkLightMappingUpdateJob(ChunkPos + Vector3Int.forward);
+        worldUpdateScheduler.AddChunkLightMappingUpdateJob(ChunkPos + Vector3Int.back);
     }
 
     public override bool Equals(object rhs) =>

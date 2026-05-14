@@ -169,14 +169,14 @@ public class LightMap
 
         void EnqueueLightNode(Chunk chunk, Vector3Int chunkPos, Vector3Int localVoxelPos)
         {
-            if(chunk.HasAnyBlockLight(localVoxelPos))
+            if(chunk.HasAnyLight(localVoxelPos))
             {
                 lightNodes.Enqueue(new LightNode{
                     LocalPos = localVoxelPos,
                     Chunk = chunk,
                     GlobalPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(localVoxelPos, chunkPos)
                 });
-            } 
+            }
         }
 
         var topChunkPos = chunkPos + Vector3Int.up;
@@ -267,6 +267,19 @@ public class LightMap
                 false
             );
         }
+
+        // Sunlight must be propagated separately because it requires isSunlight=true so that
+        // downward propagation at level 15 doesn't decrement (open-sky sunlight behaviour).
+        // The column/spill jobs only propagate sunlight top-down in new columns; horizontal
+        // sunlight from existing neighbours (hillside shadows, terrain height mismatches) must
+        // be filled in here.
+        PropagateLightNodes(
+            new Queue<LightNode>(lightNodes),
+            Chunk.SunlightChannel,
+            new HashSet<Vector3Int>(),
+            new HashSet<Vector3Int>(),
+            true
+        );
     }
 
     public void UpdateSunlightColumnVertical(Chunk topChunk, List<LightNode> spilloverOut)

@@ -24,6 +24,7 @@ public class WorldGenTests
     public IEnumerator GeneratedWorld_AfterPlayerMove_NewSurfaceVoxels_HaveMaxSunlightAbove()
     {
         const int generationRadius = 4;
+        const int numAdditionalGenerationSteps = 2; 
 
         SetUpScene(generationRadius, out var playerGo, out var worldGo, out var generator);
 
@@ -40,28 +41,31 @@ public class WorldGenTests
 
         var world = worldGo.GetComponent<VoxelWorld>();
 
-        // 6 chunks (96 voxels) in X: far enough to produce new chunks on the leading edge of
-        // the second generation sphere, while still being inside the initial radius-10 sphere
-        // so we can resolve the surface height before moving.
-        const int newGlobalX = generationRadius * VoxelInfo.ChunkSize;
-        const int newGlobalZ = 0;
+        for(int i = 0; i < numAdditionalGenerationSteps; i++)
+        {
+            // Far enough to produce new chunks on the leading edge of
+            // the second generation sphere, while still being inside the initial radius-10 sphere
+            // so we can resolve the surface height before moving.
+            int newGlobalX = (int)(playerGo.transform.position.x + generationRadius * VoxelInfo.ChunkSize);
+            int newGlobalZ = (int)playerGo.transform.position.z;
 
-        int? newSurfaceY = world.GetHighestVoxelPos(newGlobalX, newGlobalZ);
-        Assert.IsTrue(newSurfaceY.HasValue,
-            $"Could not resolve surface at ({newGlobalX},{newGlobalZ}) — " +
-            "position may be outside the initial generation sphere");
+            int? newSurfaceY = world.GetHighestVoxelPos(newGlobalX, newGlobalZ);
+            Assert.IsTrue(newSurfaceY.HasValue,
+                $"Could not resolve surface at ({newGlobalX},{newGlobalZ}) — " +
+                "position may be outside the initial generation sphere");
 
-        // Place the player just above the surface so WorldGenerator sees a chunk-position change
-        // of 6 (> 1 threshold) and fires the secondary batch. The 1.5-unit offset keeps the
-        // CharacterController out of the surface voxel itself.
-        playerGo.transform.position = new Vector3(
-            newGlobalX + 0.5f,
-            newSurfaceY.Value + 1.5f,
-            newGlobalZ + 0.5f);
+            // Place the player just above the surface so WorldGenerator sees a chunk-position change
+            // of 6 (> 1 threshold) and fires the secondary batch. The 1.5-unit offset keeps the
+            // CharacterController out of the surface voxel itself.
+            playerGo.transform.position = new Vector3(
+                newGlobalX + 0.5f,
+                newSurfaceY.Value + 1.5f,
+                newGlobalZ + 0.5f);
 
-        var scheduler = worldGo.GetComponent<WorldUpdateScheduler>();
-        yield return WaitForBatch(scheduler, timeoutSeconds: 120f);
-
+            var scheduler = worldGo.GetComponent<WorldUpdateScheduler>();
+            yield return WaitForBatch(scheduler, timeoutSeconds: 120f);
+        }
+        
         AssertSurfaceSunlight(world);
     }
 

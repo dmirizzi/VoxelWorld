@@ -340,6 +340,11 @@ public class Chunk
         return (_lightMap[pos.x, pos.y, pos.z] & 0xFFF) > 0;
     }
 
+    public bool HasAnyLight(Vector3Int pos)
+    {
+        return _lightMap[pos.x, pos.y, pos.z] > 0;
+    }
+
     // SSSS.RRRR.GGGG.BBBB
     // Where S = Sunlight level
     private ushort[,,] _lightMap;
