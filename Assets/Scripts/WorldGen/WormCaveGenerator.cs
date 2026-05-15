@@ -72,8 +72,13 @@ public class WormCaveGenerator
                 (float)(rng.NextDouble() * 2.0 - 1.0),
                 (float)(rng.NextDouble() * 2.0 - 1.0),
                 (float)(rng.NextDouble() * 2.0 - 1.0)
-            ) * _p.NudgeScale;
-            w.Direction = Vector3.Normalize(w.Direction * _p.DirectionInertia + nudge);
+            ) * w.NudgeScale;
+            var awayFromBirth = w.Position - w.BirthPosition;
+            float birthDist   = awayFromBirth.magnitude;
+            var repulsion     = birthDist > 0.01f
+                ? (awayFromBirth / birthDist) * _p.OriginRepulsionScale
+                : Vector3.zero;
+            w.Direction = Vector3.Normalize(w.Direction * w.DirectionInertia + nudge + repulsion);
             w.Direction = Vector3.Normalize(w.Direction + Vector3.down * _p.DownwardBias);
 
             float  deathChance = Mathf.Lerp(_p.DeathChanceAtBirth, _p.DeathChanceAtDeath, 1f - lifeFrac);
@@ -127,17 +132,21 @@ public class WormCaveGenerator
             isLarge     = true;
         }
 
+        var startPos = new Vector3(globalX, terrainHeight, globalZ);
         return new CaveWorm
         {
-            Position      = new Vector3(globalX, terrainHeight, globalZ),
-            Direction     = RandomDownwardDirection(rng),
-            Radius        = radius,
-            MaxRadius     = radius,
-            Lifespan      = life,
-            MaxLifespan   = life,
-            SplitChance   = splitChance,
-            FixedStepSize = 0f,
-            IsLarge       = isLarge,
+            Position         = startPos,
+            BirthPosition    = startPos,
+            Direction        = RandomDownwardDirection(rng),
+            Radius           = radius,
+            MaxRadius        = radius,
+            Lifespan         = life,
+            MaxLifespan      = life,
+            SplitChance      = splitChance,
+            FixedStepSize    = 0f,
+            IsLarge          = isLarge,
+            DirectionInertia = _p.DirectionInertia,
+            NudgeScale       = _p.NudgeScale,
         };
     }
 
@@ -184,7 +193,7 @@ public class WormCaveGenerator
                 else
                 {
                     radius      = Mathf.Max(1.5f, parent.Radius * (_p.LargeChildRadiusMin + (float)rng.NextDouble() * _p.LargeChildRadiusRange));
-                    life        = (int)(parent.Lifespan * (_p.LargeChildLifeMin + rng.NextDouble() * _p.LargeChildLifeRange));
+                    life        = (int)(parent.MaxLifespan * (_p.LargeChildLifeMin + rng.NextDouble() * _p.LargeChildLifeRange));
                     splitChance = _p.LargeChildSplitChance;
                     fixedStep   = 0f;
                     isLarge     = true;
@@ -193,7 +202,7 @@ public class WormCaveGenerator
             else if (parent.SplitChance >= _p.MediumSplitChance)
             {
                 radius      = Mathf.Max(1.0f, parent.Radius * (_p.MedChildRadiusMin + (float)rng.NextDouble() * _p.MedChildRadiusRange));
-                life        = (int)(parent.Lifespan * (_p.MedChildLifeMin + rng.NextDouble() * _p.MedChildLifeRange));
+                life        = (int)(parent.MaxLifespan * (_p.MedChildLifeMin + rng.NextDouble() * _p.MedChildLifeRange));
                 splitChance = _p.MedChildSplitChance;
                 fixedStep   = 0f;
                 isLarge     = false;
@@ -201,23 +210,27 @@ public class WormCaveGenerator
             else
             {
                 radius      = Mathf.Max(1.0f, parent.Radius * (_p.SmallChildRadiusMin + (float)rng.NextDouble() * _p.SmallChildRadiusRange));
-                life        = (int)(parent.Lifespan * (_p.SmallChildLifeMin + rng.NextDouble() * _p.SmallChildLifeRange));
+                life        = (int)(parent.MaxLifespan * (_p.SmallChildLifeMin + rng.NextDouble() * _p.SmallChildLifeRange));
                 splitChance = _p.SmallChildSplitChance;
                 fixedStep   = 0f;
                 isLarge     = false;
             }
 
+            var childPos = parent.Position + childDir * (parent.Radius * _p.ChildPositionSpreadRadii);
             worms.Enqueue(new CaveWorm
             {
-                Position      = parent.Position,
-                Direction     = childDir,
-                Radius        = radius,
-                MaxRadius     = radius,
-                Lifespan      = Mathf.Max(_p.MinChildLife, life),
-                MaxLifespan   = Mathf.Max(_p.MinChildLife, life),
-                SplitChance   = splitChance,
-                FixedStepSize = fixedStep,
-                IsLarge       = isLarge,
+                Position         = childPos,
+                BirthPosition    = childPos,
+                Direction        = childDir,
+                Radius           = radius,
+                MaxRadius        = radius,
+                Lifespan         = Mathf.Max(_p.MinChildLife, life),
+                MaxLifespan      = Mathf.Max(_p.MinChildLife, life),
+                SplitChance      = splitChance,
+                FixedStepSize    = fixedStep,
+                IsLarge          = isLarge,
+                DirectionInertia = _p.BranchDirectionInertia,
+                NudgeScale       = _p.BranchNudgeScale,
             });
         }
     }
@@ -291,6 +304,7 @@ public class WormCaveGenerator
     private struct CaveWorm
     {
         public Vector3 Position;
+        public Vector3 BirthPosition;
         public Vector3 Direction;
         public float   Radius;
         public float   MaxRadius;
@@ -299,6 +313,8 @@ public class WormCaveGenerator
         public float   SplitChance;
         public float   FixedStepSize;
         public bool    IsLarge;
+        public float   DirectionInertia;
+        public float   NudgeScale;
     }
 
     private readonly int          _seed;

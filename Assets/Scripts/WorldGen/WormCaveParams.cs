@@ -70,6 +70,12 @@ public struct WormCaveParams
     public int   RoomTribLifeRange;
     public float RoomTribSplitChance;
 
+    [Header("Repulsion & Branch Divergence")]
+    public float OriginRepulsionScale;
+    public float BranchDirectionInertia;
+    public float BranchNudgeScale;
+    public float ChildPositionSpreadRadii;
+
     [Header("Worm Movement & Direction")]
     public float DirectionInertia;
     public float NudgeScale;
@@ -114,8 +120,8 @@ public struct WormCaveParams
 
         LargeRadiusMin      = 4.0f,
         LargeRadiusRange    = 15.0f,
-        LargeLifeMin        = 10000,
-        LargeLifeRange      = 50000,
+        LargeLifeMin        = 60,
+        LargeLifeRange      = 100,
         LargeSplitChance    = 0.2f,
 
         RoomBranchChance    = 0.10f,
@@ -129,8 +135,8 @@ public struct WormCaveParams
 
         LargeChildRadiusMin   = 0.45f,
         LargeChildRadiusRange = 0.35f,
-        LargeChildLifeMin     = 0.20f,
-        LargeChildLifeRange   = 0.15f,
+        LargeChildLifeMin     = 0.8f,
+        LargeChildLifeRange   = 1.2f,
         LargeChildSplitChance = 0.05f,
 
         MedChildRadiusMin     = 0.50f,
@@ -150,6 +156,11 @@ public struct WormCaveParams
         RoomTribLifeMin     = 30,
         RoomTribLifeRange   = 41,
         RoomTribSplitChance = 0.02f,
+
+        OriginRepulsionScale    = 0.5f,
+        BranchDirectionInertia  = 1.0f,
+        BranchNudgeScale        = 2.5f,
+        ChildPositionSpreadRadii = 1.5f,
 
         DirectionInertia     = 2.0f,
         NudgeScale           = 1.5f,
