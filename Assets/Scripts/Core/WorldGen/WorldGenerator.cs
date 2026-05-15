@@ -13,6 +13,10 @@ public class WorldGenerator : MonoBehaviour
 
     public ChunkGenerator ChunkGenerator { get; private set; }
 
+    public event Action OnWorldReady;
+
+    public void RegisterTrackedObject(Transform trackedObject) => _trackedObject = trackedObject;
+
     public void AddBackloggedVoxels(Vector3Int chunkPos, List<VoxelCreationAction> voxels)
     {
         if(_chunkCreationBacklog.ContainsKey(chunkPos))
@@ -34,7 +38,7 @@ public class WorldGenerator : MonoBehaviour
         foreach(var chunkBacklog in _chunkCreationBacklog)
         {
             var chunkPos = chunkBacklog.Key;
-            var sqrDistToPlayer = VoxelPosHelper.GetChunkSqrDistanceToWorldPos(_player.transform.position, chunkPos);
+            var sqrDistToPlayer = VoxelPosHelper.GetChunkSqrDistanceToWorldPos(_trackedObject.position, chunkPos);
             if(sqrDistToPlayer <= _chunkGenerationRadiusSqr)
             {
                 chunks.Add((chunkPos, chunkBacklog.Value));
@@ -69,8 +73,6 @@ public class WorldGenerator : MonoBehaviour
         _chunkGenerationRadiusSqr = ChunkGenerationRadius * ChunkGenerationRadius;
         _updateScheduler = FindObjectOfType<WorldUpdateScheduler>();
         _voxelWorld = FindObjectOfType<VoxelWorld>();
-        _player = FindObjectOfType<PlayerController>();
-
         _savedVSyncCount = QualitySettings.vSyncCount;
         _savedTargetFrameRate = Application.targetFrameRate;
         _savedMaxJobs = _updateScheduler.MaxNumSimultaneousJobs;
@@ -91,15 +93,15 @@ public class WorldGenerator : MonoBehaviour
                 _updateScheduler.MaxNumSimultaneousJobs = _savedMaxJobs;
 
                 //Profiler.WriteProfilingResultsToCSV();
-                PlacePlayer(Vector3Int.zero);
                 WorldGenerated = true;
+                OnWorldReady?.Invoke();
             }
         };
     }
 
     void Update()
     {       
-        var currentPlayerChunkPos = VoxelPosHelper.WorldPosToChunkPos(_player.transform.position);
+        var currentPlayerChunkPos = VoxelPosHelper.WorldPosToChunkPos(_trackedObject.position);
         if(!_initialChunkBatchGenerated || (currentPlayerChunkPos - _lastChunkGenerationCenter).magnitude > 1)
         {
             _initialChunkBatchGenerated = true;
@@ -142,7 +144,7 @@ public class WorldGenerator : MonoBehaviour
                     var chunkPos = centerChunkPos + new Vector3Int(x, y, z);
                     if(_currentlyLoadedChunks.Contains(chunkPos)) continue;
 
-                    var sqrDistToPlayer = VoxelPosHelper.GetChunkSqrDistanceToWorldPos(_player.transform.position, chunkPos);
+                    var sqrDistToPlayer = VoxelPosHelper.GetChunkSqrDistanceToWorldPos(_trackedObject.position, chunkPos);
                     if(sqrDistToPlayer <= _chunkGenerationRadiusSqr)
                     {
                         //_chunkGenerationQueue.Enqueue(chunkPos, sqrDistToPlayer);
@@ -155,31 +157,6 @@ public class WorldGenerator : MonoBehaviour
         }
     }   
 
-    private void PlacePlayer(Vector3Int? startPos = null)
-    {
-        var pos = startPos.HasValue 
-            ? new Vector3Int(startPos.Value.x, _voxelWorld.GetHighestVoxelPos(startPos.Value.x, startPos.Value.z).Value, startPos.Value.z) 
-            : _voxelWorld.GetRandomSolidSurfaceVoxel();
-        var worldPos = VoxelPosHelper.GetVoxelTopCenterSurfaceWorldPos(pos) + Vector3.up;
-
-        var player = GameObject.Find("Player");
-
-        var characterController = player.GetComponent<CharacterController>();
-        characterController.enabled = false;
-        characterController.transform.position = worldPos + Vector3.up;
-        characterController.enabled = true;
-
-        var playerController = player.GetComponent<PlayerController>();
-        playerController.SetGravityActive(true);
-/*
-        var playerController = GameObject.Find("Player").GetComponent<PlayerController>();
-        var torch = Instantiate(TorchPrefab, worldPos, Quaternion.identity);
-        var playerHoldingController = GameObject.Find("Player").GetComponent<PlayerHoldingController>();
-        playerHoldingController.HoldObject(torch);        
-*/
-        UnityEngine.Debug.Log($"Placing player @ {GameObject.Find("Player").transform.position}");
-    }
-
     bool _initialChunkBatchGenerated = false;
 
     private int _chunkGenerationRadiusSqr;
@@ -188,7 +165,7 @@ public class WorldGenerator : MonoBehaviour
 
     private VoxelWorld _voxelWorld;
 
-    private PlayerController _player;
+    private Transform _trackedObject;
 
     private Vector3Int _lastChunkGenerationCenter;
 
