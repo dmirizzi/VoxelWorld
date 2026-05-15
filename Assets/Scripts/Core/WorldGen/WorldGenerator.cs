@@ -72,7 +72,6 @@ public class WorldGenerator : MonoBehaviour
         ChunkGenerator = new ChunkGenerator(WorldSeed);
         _chunkGenerationRadiusSqr = ChunkGenerationRadius * ChunkGenerationRadius;
         _updateScheduler = FindObjectOfType<WorldUpdateScheduler>();
-        _voxelWorld = FindObjectOfType<VoxelWorld>();
         _savedVSyncCount = QualitySettings.vSyncCount;
         _savedTargetFrameRate = Application.targetFrameRate;
         _savedMaxJobs = _updateScheduler.MaxNumSimultaneousJobs;
@@ -162,8 +161,6 @@ public class WorldGenerator : MonoBehaviour
     private int _chunkGenerationRadiusSqr;
 
     private WorldUpdateScheduler _updateScheduler;
-
-    private VoxelWorld _voxelWorld;
 
     private Transform _trackedObject;
 
