@@ -9,8 +9,8 @@ public class WormCaveGenerator
     private const int   MinChildLife  = 10;      // floor on child lifespan
 
     // ── Size-class selection (cumulative roll thresholds) ─────────────────────
-    private const float SmallCaveThreshold  = 0.10f;  // 0 – 0.70  → small
-    private const float MediumCaveThreshold = 0.20f;  // 0.70 – 0.95 → medium; rest → large
+    private const float SmallCaveThreshold  = 0.40f;  // 0 – 0.4  → small
+    private const float MediumCaveThreshold = 0.80f;  // 0.4 - 0.8 → medium; rest → large
 
     // ── Small caves ───────────────────────────────────────────────────────────
     private const float SmallRadiusMin   = 1.5f;
@@ -29,15 +29,15 @@ public class WormCaveGenerator
     // ── Large caves ───────────────────────────────────────────────────────────
     private const float LargeRadiusMin   = 4.0f;
     private const float LargeRadiusRange = 3.0f;  // [4, 7]
-    private const int   LargeLifeMin     = 300;
-    private const int   LargeLifeRange   = 301;   // [300, 600]
+    private const int   LargeLifeMin     = 500;
+    private const int   LargeLifeRange   = 501;   // [500, 1000]
     private const float LargeSplitChance = 0.06f;
 
     // ── Room branches (large caves only) ──────────────────────────────────────
     private const float RoomBranchChance    = 0.10f;  // chance first child of large split becomes a room
     private const float RoomRadiusMultMin   = 1.5f;   // room radius = parent.MaxRadius × mult
-    private const float RoomRadiusMultRange = 0.5f;   // mult drawn from [min, min+range]
-    private const float RoomRadiusMax       = 10.0f;  // hard cap on room radius
+    private const float RoomRadiusMultRange = 3f;   // mult drawn from [min, min+range]
+    private const float RoomRadiusMax       = 50.0f;  // hard cap on room radius
     private const int   RoomLifeMin         = 35;
     private const int   RoomLifeRange       = 26;     // [35, 60] slow steps → compact chamber
     private const float RoomSplitChance     = 0.60f;  // splits quickly to emit tributary exits

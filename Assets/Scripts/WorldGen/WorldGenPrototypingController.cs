@@ -1,4 +1,7 @@
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
 
 // Drop onto an empty GameObject in the WorldGenPrototyping scene.
@@ -35,14 +38,15 @@ public class WorldGenPrototypingController : MonoBehaviour
     private Material      _material;
     private Mesh          _cubeMesh;
 
-    void Start()
+    // OnEnable fires on first start AND after every domain reload (script recompile in Play mode),
+    // making it the right place to rebuild native GPU resources.
+    void OnEnable()
     {
-        var chunks = GenerateAllChunks();
-        DispatchCuller(chunks, out Vector3Int gridSize, out Vector3Int gridMin);
-        SetupRendering();
-
-        Debug.Log($"[WorldGenPrototyping] Ready. Seed={WorldSeed}  Radius={ChunkGenerationRadius}  Grid={gridSize}");
+        if (Application.isPlaying)
+            Regenerate();
     }
+
+    void OnDisable() => ReleaseBuffers();
 
     void Update()
     {
@@ -51,33 +55,60 @@ public class WorldGenPrototypingController : MonoBehaviour
                 _cubeMesh, 0, _material,
                 new Bounds(Vector3.zero, Vector3.one * 100000f),
                 _argsBuffer);
+
+        if (Input.GetKeyDown(KeyCode.R))
+            Regenerate();
     }
 
-    void OnDestroy()
+    [ContextMenu("Regenerate")]
+    public void Regenerate()
     {
-        _gridBuffer?.Release();
-        _surfaceBuffer?.Release();
-        _argsBuffer?.Release();
+        ReleaseBuffers();
+        var chunks = GenerateAllChunks();
+        DispatchCuller(chunks, out Vector3Int gridSize, out _);
+        SetupRendering();
+        Debug.Log($"[WorldGenPrototyping] Ready. Seed={WorldSeed}  Radius={ChunkGenerationRadius}  Grid={gridSize}");
+    }
+
+    private void ReleaseBuffers()
+    {
+        _gridBuffer?.Release();    _gridBuffer    = null;
+        _surfaceBuffer?.Release(); _surfaceBuffer = null;
+        _argsBuffer?.Release();    _argsBuffer    = null;
+        if (_material != null) { Destroy(_material); _material = null; }
+        _cubeMesh = null;
     }
 
     // -------------------------------------------------------------------------
 
-    private Dictionary<Vector3Int, ushort[,,]> GenerateAllChunks()
+    private IDictionary<Vector3Int, ushort[,,]> GenerateAllChunks()
     {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+
         var generator = new ChunkGenerator(WorldSeed);
-        var chunkData = new Dictionary<Vector3Int, ushort[,,]>();
-        var allUpdates = new List<ChunkUpdate>();
+        var chunkData = new ConcurrentDictionary<Vector3Int, ushort[,,]>();
+        var allUpdates = new ConcurrentBag<ChunkUpdate>();
 
         int r = ChunkGenerationRadius;
-        for (int y = -r; y <= r; ++y)
+
+        var columnTasks = new List<Task>();
+
         for (int z = -r; z <= r; ++z)
         for (int x = -r; x <= r; ++x)
         {
-            var pos    = new Vector3Int(x, y, z);
-            var update = generator.GenerateChunk(pos);
-            chunkData[pos] = update.VoxelData;
-            allUpdates.Add(update);
+            int lx = x, lz = z; // avoid modified closure in lambda
+            columnTasks.Add(Task.Run(() =>
+            {
+                for (int y = -r; y <= r; ++y)
+                {
+                    var pos    = new Vector3Int(lx, y, lz);
+                    var update = generator.GenerateChunk(pos);
+                    chunkData[pos] = update.VoxelData;
+                    allUpdates.Add(update);
+                }
+            }));
         }
+        Task.WaitAll(columnTasks.ToArray());
 
         // Apply cross-chunk backlog (tree tops, etc.)
         foreach (var update in allUpdates)
@@ -94,11 +125,14 @@ public class WorldGenPrototypingController : MonoBehaviour
             }
         }
 
+        sw.Stop();
+        Debug.Log($"[WorldGenPrototyping] Generated {chunkData.Count} chunks in {sw.Elapsed.TotalSeconds:F2} seconds");
+
         return chunkData;
     }
 
     private void DispatchCuller(
-        Dictionary<Vector3Int, ushort[,,]> chunkData,
+        IDictionary<Vector3Int, ushort[,,]> chunkData,
         out Vector3Int gridSize,
         out Vector3Int gridMin)
     {

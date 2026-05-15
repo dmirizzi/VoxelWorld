@@ -7,7 +7,7 @@ public class ChunkGenerator
     private const float ForestTreeDensity = 0.35f;  // peak per-tile tree chance inside a dense forest cluster
     private const float TorchChance   = 0.005f;
     private const float CaveChance    = 0.003f;
-    private const int DirtLayerDepth  = 4;
+    private const int DirtLayerDepth  = 24;
 
     public ChunkGenerator(int seed = 123456789)
     {
@@ -80,7 +80,7 @@ public class ChunkGenerator
 
                     if (ShouldPlaceFeature(globalX ^ 0xC0DE, globalZ ^ 0xC0DE, CaveChance))
                     {
-                        var caveRng = new System.Random(HashPos(globalX ^ 0xC0DE, globalZ ^ 0xC0DE));
+                        var caveRng = new System.Random(HashPos(globalX ^ 0xBEEF, globalZ ^ 0xDEAD));
                         _caveGenerator.GenerateCave(builder, chunkBasePos, globalX, globalZ, terrainHeight, caveRng);
                     }
                 }
