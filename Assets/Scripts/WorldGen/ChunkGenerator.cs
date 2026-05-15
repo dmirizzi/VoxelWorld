@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class ChunkGenerator
 {
-    private const int SeaLevel       = -30;
+    private const int SeaLevel  = -30;
     private const int DirtLayerDepth = 24;
 
     public ChunkGenerator(int seed = 123456789)
