@@ -35,7 +35,8 @@ public class WormCaveGenerator
     private void RunCave(int globalX, int globalZ, int terrainHeight, System.Random rng,
                          Action<Vector3Int, ushort> onVoxel)
     {
-        var worms = new Queue<CaveWorm>();
+        var worms     = new Queue<CaveWorm>();
+        var crystalRng = new System.Random(_seed ^ 0x9e3779b);
         worms.Enqueue(MakeStartWorm(globalX, terrainHeight, globalZ, rng));
 
         int totalSteps = 0;
@@ -55,11 +56,11 @@ public class WormCaveGenerator
             int cz = Mathf.RoundToInt(w.Position.z);
             CarveNoisy(onVoxel, cx, cy, cz, w.Radius, w.Direction);
 
-            if (rng.NextDouble() < _p.CrystalChancePerStep)
+            if (crystalRng.NextDouble() < _p.CrystalChancePerStep)
             {
                 int floorY      = cy - Mathf.RoundToInt(w.Radius) - 1;
                 var globalFloor = new Vector3Int(cx, floorY, cz);
-                PlaceCrystalCluster(onVoxel, globalFloor, rng);
+                PlaceCrystalCluster(onVoxel, globalFloor, crystalRng);
             }
 
             float stepSize = w.FixedStepSize > 0f
@@ -82,7 +83,8 @@ public class WormCaveGenerator
             w.Direction = Vector3.Normalize(w.Direction + Vector3.down * _p.DownwardBias);
 
             float  deathChance = Mathf.Lerp(_p.DeathChanceAtBirth, _p.DeathChanceAtDeath, 1f - lifeFrac);
-            bool   canSplit    = lifeFrac < _p.SplitLockFraction && w.Radius > _p.MinSplitRadius;
+            bool   canSplit    = lifeFrac < _p.SplitLockFraction && w.Radius > _p.MinSplitRadius
+                                 && w.Generation < _p.MaxBranchGenerations;
             double roll        = rng.NextDouble();
 
             if (canSplit && roll < w.SplitChance)
@@ -90,9 +92,9 @@ public class WormCaveGenerator
                 SpawnChildren(worms, w, rng);
                 // parent dies on split
             }
-            else if (roll < w.SplitChance + deathChance)
+            else if (roll < (canSplit ? w.SplitChance : 0f) + deathChance)
             {
-                // early death
+                // early death — split chance only counts when splits are actually available
             }
             else
             {
@@ -109,7 +111,6 @@ public class WormCaveGenerator
         int   life;
         bool  isLarge;
 
-        Debug.Log($"Rng={sizeRoll}. Cave Size: {(sizeRoll < _p.SmallCaveThreshold ? "Small" : sizeRoll < _p.MediumCaveThreshold ? "Medium" : "Large")}");
         if (sizeRoll < _p.SmallCaveThreshold)
         {
             radius      = _p.SmallRadiusMin + (float)rng.NextDouble() * _p.SmallRadiusRange;
@@ -147,6 +148,7 @@ public class WormCaveGenerator
             IsLarge          = isLarge,
             DirectionInertia = _p.DirectionInertia,
             NudgeScale       = _p.NudgeScale,
+            Generation       = 0,
         };
     }
 
@@ -231,6 +233,7 @@ public class WormCaveGenerator
                 IsLarge          = isLarge,
                 DirectionInertia = _p.BranchDirectionInertia,
                 NudgeScale       = _p.BranchNudgeScale,
+                Generation       = parent.Generation + 1,
             });
         }
     }
@@ -315,6 +318,7 @@ public class WormCaveGenerator
         public bool    IsLarge;
         public float   DirectionInertia;
         public float   NudgeScale;
+        public int     Generation;
     }
 
     private readonly int          _seed;
