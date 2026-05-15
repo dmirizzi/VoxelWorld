@@ -104,6 +104,7 @@ public class WormCaveGenerator
         int   life;
         bool  isLarge;
 
+        Debug.Log($"Rng={sizeRoll}. Cave Size: {(sizeRoll < _p.SmallCaveThreshold ? "Small" : sizeRoll < _p.MediumCaveThreshold ? "Medium" : "Large")}");
         if (sizeRoll < _p.SmallCaveThreshold)
         {
             radius      = _p.SmallRadiusMin + (float)rng.NextDouble() * _p.SmallRadiusRange;

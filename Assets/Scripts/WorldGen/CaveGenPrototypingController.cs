@@ -37,6 +37,9 @@ public class CaveGenPrototypingController : MonoBehaviour
     private Material      _material;
     private Mesh          _cubeMesh;
 
+    private float _regenCountdown = -1f;
+    private const float RegenDelay = 0.4f; // seconds after last change before regenerating
+
     void OnEnable()
     {
         if (Application.isPlaying)
@@ -44,6 +47,13 @@ public class CaveGenPrototypingController : MonoBehaviour
     }
 
     void OnDisable() => ReleaseBuffers();
+
+    // Called by Unity whenever any serialized field is changed in the Inspector.
+    void OnValidate()
+    {
+        if (!Application.isPlaying) return;
+        _regenCountdown = RegenDelay;
+    }
 
     void Update()
     {
@@ -55,6 +65,13 @@ public class CaveGenPrototypingController : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.R))
             Regenerate();
+
+        if (_regenCountdown >= 0f)
+        {
+            _regenCountdown -= Time.deltaTime;
+            if (_regenCountdown < 0f)
+                Regenerate();
+        }
     }
 
     [ContextMenu("Regenerate")]
@@ -102,10 +119,16 @@ public class CaveGenPrototypingController : MonoBehaviour
         var cam = Camera.main;
         if (cam == null) return;
 
-        float size     = caveBounds.size.magnitude;
-        float distance = size * 0.75f;
-        cam.transform.position = caveBounds.center + new Vector3(0f, size * 0.15f, -distance);
-        cam.transform.LookAt(caveBounds.center);
+        float distance = caveBounds.size.magnitude * 0.75f;
+
+        var orbit = cam.GetComponent<OrbitCamera>();
+        if (orbit != null)
+            orbit.Frame(caveBounds.center, distance);
+        else
+        {
+            cam.transform.position = caveBounds.center + new Vector3(0f, caveBounds.size.y * 0.15f, -distance);
+            cam.transform.LookAt(caveBounds.center);
+        }
     }
 
     // ── Grid building & GPU ───────────────────────────────────────────────────

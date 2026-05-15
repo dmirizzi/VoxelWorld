@@ -1,6 +1,6 @@
 ﻿<Solution>
   <Project Path="VoxelWorld.csproj" />
+  <Project Path="VoxelWorldEditor.csproj" />
   <Project Path="PlayModeTests.csproj" />
   <Project Path="Tests.csproj" />
-  <Project Path="VoxelWorldEditor.csproj" />
 </Solution>

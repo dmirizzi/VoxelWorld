@@ -119,6 +119,117 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &692324297
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 692324299}
+  - component: {fileID: 692324298}
+  m_Layer: 0
+  m_Name: CaveGenPrototyping
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &692324298
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 692324297}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 973150496ac054842b38e9a76782c962, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: VoxelWorld::CaveGenPrototypingController
+  Seed: 42
+  TerrainHeight: 30
+  MaxGridHalfSize: 128
+  Params:
+    MaxTotalSteps: 200000
+    MinChildLife: 10
+    SmallCaveThreshold: 0.1
+    MediumCaveThreshold: 0.2
+    SmallRadiusMin: 1.5
+    SmallRadiusRange: 1
+    SmallLifeMin: 40
+    SmallLifeRange: 21
+    SmallSplitChance: 0.02
+    MediumRadiusMin: 2
+    MediumRadiusRange: 2
+    MediumLifeMin: 80
+    MediumLifeRange: 41
+    MediumSplitChance: 0.05
+    LargeRadiusMin: 4
+    LargeRadiusRange: 15
+    LargeLifeMin: 10000
+    LargeLifeRange: 50000
+    LargeSplitChance: 0.2
+    RoomBranchChance: 0.1
+    RoomRadiusMultMin: 1.5
+    RoomRadiusMultRange: 3
+    RoomRadiusMax: 50
+    RoomLifeMin: 35
+    RoomLifeRange: 26
+    RoomSplitChance: 0.6
+    RoomFixedStepSize: 0.5
+    LargeChildRadiusMin: 0.45
+    LargeChildRadiusRange: 0.35
+    LargeChildLifeMin: 0.2
+    LargeChildLifeRange: 0.15
+    LargeChildSplitChance: 0.05
+    MedChildRadiusMin: 0.5
+    MedChildRadiusRange: 0.4
+    MedChildLifeMin: 0.4
+    MedChildLifeRange: 0.1
+    MedChildSplitChance: 0.03
+    SmallChildRadiusMin: 0.4
+    SmallChildRadiusRange: 0.3
+    SmallChildLifeMin: 0.25
+    SmallChildLifeRange: 0.1
+    SmallChildSplitChance: 0.01
+    RoomTribRadiusMin: 0.2
+    RoomTribRadiusRange: 0.2
+    RoomTribLifeMin: 30
+    RoomTribLifeRange: 41
+    RoomTribSplitChance: 0.02
+    DirectionInertia: 2
+    NudgeScale: 1.5
+    DownwardBias: 0.03
+    NormalStepMultiplier: 0.6
+    SplitLockFraction: 0.8
+    MinSplitRadius: 1.5
+    ChildSpreadScale: 2
+    StartDirDownMin: 0.2
+    StartDirDownRange: 0.6
+    DeathChanceAtBirth: 0.01
+    DeathChanceAtDeath: 0.1
+    CarveStretchAlong: 1.4
+    CarveBoundaryNoise: 0.2
+    CrystalChancePerStep: 0.03
+  VoxelCullerShader: {fileID: 7200000, guid: 6becaf888d3da4b0887ac13efbd10ae4, type: 3}
+  VoxelInstancedShader: {fileID: 4800000, guid: fef7c353795c14a5cb36dacd2e35d5cf, type: 3}
+--- !u!4 &692324299
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 692324297}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 85.78088, y: -12.22433, z: 186.8378}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1604142258
 GameObject:
   m_ObjectHideFlags: 0
@@ -130,6 +241,8 @@ GameObject:
   - component: {fileID: 1604142261}
   - component: {fileID: 1604142260}
   - component: {fileID: 1604142259}
+  - component: {fileID: 1604142262}
+  - component: {fileID: 1604142263}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -211,6 +324,69 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1604142262
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1604142258}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
+  m_Version: 2
+--- !u!114 &1604142263
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1604142258}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8c8329ec12a942bb9eb3c421675e31d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: VoxelWorld::OrbitCamera
+  OrbitSensitivity: 3
+  PanSensitivity: 0.02
+  ZoomSensitivity: 1.5
+  MinDistance: 1
+  MaxDistance: 5000
+  MinPitch: -80
+  MaxPitch: 80
 --- !u!1 &1898503540
 GameObject:
   m_ObjectHideFlags: 0
@@ -314,3 +490,4 @@ SceneRoots:
   m_Roots:
   - {fileID: 1604142261}
   - {fileID: 1898503542}
+  - {fileID: 692324299}
