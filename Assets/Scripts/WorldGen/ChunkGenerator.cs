@@ -6,7 +6,7 @@ public class ChunkGenerator
     private const int SeaLevel = -30;
     private const float ForestTreeDensity = 0.35f;  // peak per-tile tree chance inside a dense forest cluster
     private const float TorchChance   = 0.005f;
-    private const float CaveChance    = 0.003f;
+    private const float CaveChance    = 0.0003f;
     private const int DirtLayerDepth  = 24;
 
     public ChunkGenerator(int seed = 123456789)
@@ -23,7 +23,7 @@ public class ChunkGenerator
         var rng = new System.Random(seed);
         _noiseOffsetX  = (float)(rng.NextDouble() * 10000.0);
         _noiseOffsetZ  = (float)(rng.NextDouble() * 10000.0);
-        _caveGenerator = new WormCaveGenerator(seed);
+        _caveGenerator = new WormCaveGenerator(seed, WormCaveParams.Default);
     }
 
     public ChunkUpdate GenerateChunk(Vector3Int chunkPos)

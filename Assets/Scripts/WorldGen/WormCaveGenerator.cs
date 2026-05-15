@@ -4,112 +4,43 @@ using UnityEngine;
 
 public class WormCaveGenerator
 {
-    // ── Simulation budget ──────────────────────────────────────────────────────
-    private const int   MaxTotalSteps = 3000;
-    private const int   MinChildLife  = 10;      // floor on child lifespan
-
-    // ── Size-class selection (cumulative roll thresholds) ─────────────────────
-    private const float SmallCaveThreshold  = 0.40f;  // 0 – 0.4  → small
-    private const float MediumCaveThreshold = 0.80f;  // 0.4 - 0.8 → medium; rest → large
-
-    // ── Small caves ───────────────────────────────────────────────────────────
-    private const float SmallRadiusMin   = 1.5f;
-    private const float SmallRadiusRange = 1.0f;   // radius drawn from [min, min+range]
-    private const int   SmallLifeMin     = 40;
-    private const int   SmallLifeRange   = 21;     // [40, 60]
-    private const float SmallSplitChance = 0.02f;
-
-    // ── Medium caves ──────────────────────────────────────────────────────────
-    private const float MediumRadiusMin   = 2.0f;
-    private const float MediumRadiusRange = 2.0f;  // [2, 4]
-    private const int   MediumLifeMin     = 80;
-    private const int   MediumLifeRange   = 41;    // [80, 120]
-    private const float MediumSplitChance = 0.05f;
-
-    // ── Large caves ───────────────────────────────────────────────────────────
-    private const float LargeRadiusMin   = 4.0f;
-    private const float LargeRadiusRange = 3.0f;  // [4, 7]
-    private const int   LargeLifeMin     = 500;
-    private const int   LargeLifeRange   = 501;   // [500, 1000]
-    private const float LargeSplitChance = 0.06f;
-
-    // ── Room branches (large caves only) ──────────────────────────────────────
-    private const float RoomBranchChance    = 0.10f;  // chance first child of large split becomes a room
-    private const float RoomRadiusMultMin   = 1.5f;   // room radius = parent.MaxRadius × mult
-    private const float RoomRadiusMultRange = 3f;   // mult drawn from [min, min+range]
-    private const float RoomRadiusMax       = 50.0f;  // hard cap on room radius
-    private const int   RoomLifeMin         = 35;
-    private const int   RoomLifeRange       = 26;     // [35, 60] slow steps → compact chamber
-    private const float RoomSplitChance     = 0.60f;  // splits quickly to emit tributary exits
-    private const float RoomFixedStepSize   = 0.5f;   // tiny step → overlapping carves → round room
-
-    // ── Children of large-cave worms ──────────────────────────────────────────
-    private const float LargeChildRadiusMin   = 0.45f;  // fraction of parent.Radius
-    private const float LargeChildRadiusRange = 0.35f;
-    private const float LargeChildLifeMin     = 0.20f;  // fraction of parent.Lifespan
-    private const float LargeChildLifeRange   = 0.15f;
-    private const float LargeChildSplitChance = 0.05f;
-
-    // ── Children of medium-cave worms ─────────────────────────────────────────
-    private const float MedChildRadiusMin   = 0.50f;
-    private const float MedChildRadiusRange = 0.40f;
-    private const float MedChildLifeMin     = 0.40f;
-    private const float MedChildLifeRange   = 0.10f;
-    private const float MedChildSplitChance = 0.03f;
-
-    // ── Children of small-cave worms ──────────────────────────────────────────
-    private const float SmallChildRadiusMin   = 0.40f;
-    private const float SmallChildRadiusRange = 0.30f;
-    private const float SmallChildLifeMin     = 0.25f;
-    private const float SmallChildLifeRange   = 0.10f;
-    private const float SmallChildSplitChance = 0.01f;
-
-    // ── Tributaries from room worms ───────────────────────────────────────────
-    private const float RoomTribRadiusMin   = 0.20f;  // fraction of room.MaxRadius
-    private const float RoomTribRadiusRange = 0.20f;
-    private const int   RoomTribLifeMin     = 30;
-    private const int   RoomTribLifeRange   = 41;     // [30, 70]
-    private const float RoomTribSplitChance = 0.02f;
-
-    // ── Worm movement & direction ─────────────────────────────────────────────
-    private const float DirectionInertia    = 2.0f;   // current-heading weight vs nudge
-    private const float NudgeScale          = 1.5f;   // random nudge magnitude each step
-    private const float DownwardBias        = 0.03f;  // gentle persistent downward pull
-    private const float NormalStepMultiplier = 0.6f;  // normal stepSize = Max(1, radius × this)
-    private const float SplitLockFraction   = 0.8f;   // no splits while lifeFrac > this (first 20%)
-    private const float MinSplitRadius      = 1.5f;   // minimum radius to be eligible for a split
-    private const float ChildSpreadScale    = 2.0f;   // how widely children diverge from parent heading
-    private const float StartDirDownMin     = 0.2f;   // starting Y component in [−min, −(min+range)]
-    private const float StartDirDownRange   = 0.6f;
-
-    // ── Death probability (lerped over lifespan) ──────────────────────────────
-    private const float DeathChanceAtBirth = 0.01f;
-    private const float DeathChanceAtDeath = 0.10f;
-
-    // ── Carving ───────────────────────────────────────────────────────────────
-    private const float CarveStretchAlong  = 1.4f;   // ellipsoid stretch factor along travel direction
-    private const float CarveBoundaryNoise = 0.2f;   // max fractional boundary shift from BlockNoise
-
-    // ── Crystal decoration ────────────────────────────────────────────────────
-    private const float CrystalChancePerStep = 0.03f;
-
-    public WormCaveGenerator(int seed)
+    public WormCaveGenerator(int seed, WormCaveParams p)
     {
         _seed            = seed;
+        _p               = p;
         _yellowLightType = BlockDataRepository.GetBlockTypeId("YellowLightblock");
         _redLightType    = BlockDataRepository.GetBlockTypeId("RedLightblock");
         _blueLightType   = BlockDataRepository.GetBlockTypeId("BlueLightblock");
     }
 
+    // Original entry point used by ChunkGenerator; positions passed to builder are chunk-local.
     public void GenerateCave(ChunkUpdateBuilder builder, Vector3Int chunkBasePos,
                              int globalX, int globalZ, int terrainHeight, System.Random rng)
+    {
+        RunCave(globalX, globalZ, terrainHeight, rng, (globalPos, type) =>
+        {
+            builder.QueueVoxel(globalPos - chunkBasePos, type);
+        });
+    }
+
+    // Prototyping entry point — callback receives global voxel positions directly.
+    public void GenerateCaveRaw(int globalX, int globalZ, int terrainHeight, System.Random rng,
+                                Action<Vector3Int, ushort> onGlobalVoxel)
+    {
+        RunCave(globalX, globalZ, terrainHeight, rng, onGlobalVoxel);
+    }
+
+    // ── Shared simulation ─────────────────────────────────────────────────────
+
+    private void RunCave(int globalX, int globalZ, int terrainHeight, System.Random rng,
+                         Action<Vector3Int, ushort> onVoxel)
     {
         var worms = new Queue<CaveWorm>();
         worms.Enqueue(MakeStartWorm(globalX, terrainHeight, globalZ, rng));
 
         int totalSteps = 0;
 
-        while (worms.Count > 0 && totalSteps < MaxTotalSteps)
+        while (worms.Count > 0 && totalSteps < _p.MaxTotalSteps)
         {
             var w = worms.Dequeue();
             if (w.Lifespan <= 0) continue;
@@ -122,19 +53,18 @@ public class WormCaveGenerator
             int cx = Mathf.RoundToInt(w.Position.x);
             int cy = Mathf.RoundToInt(w.Position.y);
             int cz = Mathf.RoundToInt(w.Position.z);
-            CarveNoisy(builder, chunkBasePos, cx, cy, cz, w.Radius, w.Direction);
+            CarveNoisy(onVoxel, cx, cy, cz, w.Radius, w.Direction);
 
-            if (rng.NextDouble() < CrystalChancePerStep)
+            if (rng.NextDouble() < _p.CrystalChancePerStep)
             {
-                int floorY   = cy - Mathf.RoundToInt(w.Radius) - 1;
-                var floorPos = new Vector3Int(cx - chunkBasePos.x, floorY - chunkBasePos.y, cz - chunkBasePos.z);
-                PlaceCrystalCluster(builder, floorPos, rng);
+                int floorY      = cy - Mathf.RoundToInt(w.Radius) - 1;
+                var globalFloor = new Vector3Int(cx, floorY, cz);
+                PlaceCrystalCluster(onVoxel, globalFloor, rng);
             }
 
-            // Room worms use a fixed slow step so overlapping carves accumulate into a round chamber
             float stepSize = w.FixedStepSize > 0f
                 ? w.FixedStepSize
-                : Mathf.Max(1f, w.Radius * NormalStepMultiplier);
+                : Mathf.Max(1f, w.Radius * _p.NormalStepMultiplier);
             w.Position += w.Direction * stepSize;
             w.Lifespan--;
 
@@ -142,12 +72,12 @@ public class WormCaveGenerator
                 (float)(rng.NextDouble() * 2.0 - 1.0),
                 (float)(rng.NextDouble() * 2.0 - 1.0),
                 (float)(rng.NextDouble() * 2.0 - 1.0)
-            ) * NudgeScale;
-            w.Direction = Vector3.Normalize(w.Direction * DirectionInertia + nudge);
-            w.Direction = Vector3.Normalize(w.Direction + Vector3.down * DownwardBias);
+            ) * _p.NudgeScale;
+            w.Direction = Vector3.Normalize(w.Direction * _p.DirectionInertia + nudge);
+            w.Direction = Vector3.Normalize(w.Direction + Vector3.down * _p.DownwardBias);
 
-            float  deathChance = Mathf.Lerp(DeathChanceAtBirth, DeathChanceAtDeath, 1f - lifeFrac);
-            bool   canSplit    = lifeFrac < SplitLockFraction && w.Radius > MinSplitRadius;
+            float  deathChance = Mathf.Lerp(_p.DeathChanceAtBirth, _p.DeathChanceAtDeath, 1f - lifeFrac);
+            bool   canSplit    = lifeFrac < _p.SplitLockFraction && w.Radius > _p.MinSplitRadius;
             double roll        = rng.NextDouble();
 
             if (canSplit && roll < w.SplitChance)
@@ -174,25 +104,25 @@ public class WormCaveGenerator
         int   life;
         bool  isLarge;
 
-        if (sizeRoll < SmallCaveThreshold)
+        if (sizeRoll < _p.SmallCaveThreshold)
         {
-            radius      = SmallRadiusMin + (float)rng.NextDouble() * SmallRadiusRange;
-            life        = SmallLifeMin + rng.Next(SmallLifeRange);
-            splitChance = SmallSplitChance;
+            radius      = _p.SmallRadiusMin + (float)rng.NextDouble() * _p.SmallRadiusRange;
+            life        = _p.SmallLifeMin + rng.Next(_p.SmallLifeRange);
+            splitChance = _p.SmallSplitChance;
             isLarge     = false;
         }
-        else if (sizeRoll < MediumCaveThreshold)
+        else if (sizeRoll < _p.MediumCaveThreshold)
         {
-            radius      = MediumRadiusMin + (float)rng.NextDouble() * MediumRadiusRange;
-            life        = MediumLifeMin + rng.Next(MediumLifeRange);
-            splitChance = MediumSplitChance;
+            radius      = _p.MediumRadiusMin + (float)rng.NextDouble() * _p.MediumRadiusRange;
+            life        = _p.MediumLifeMin + rng.Next(_p.MediumLifeRange);
+            splitChance = _p.MediumSplitChance;
             isLarge     = false;
         }
         else
         {
-            radius      = LargeRadiusMin + (float)rng.NextDouble() * LargeRadiusRange;
-            life        = LargeLifeMin + rng.Next(LargeLifeRange);
-            splitChance = LargeSplitChance;
+            radius      = _p.LargeRadiusMin + (float)rng.NextDouble() * _p.LargeRadiusRange;
+            life        = _p.LargeLifeMin + rng.Next(_p.LargeLifeRange);
+            splitChance = _p.LargeSplitChance;
             isLarge     = true;
         }
 
@@ -221,8 +151,8 @@ public class WormCaveGenerator
                 (float)(rng.NextDouble() * 2.0 - 1.0),
                 (float)(rng.NextDouble() * 2.0 - 1.0)
             );
-            var childDir = Vector3.Normalize(parent.Direction + spread * ChildSpreadScale);
-            childDir = Vector3.Normalize(childDir + Vector3.down * DownwardBias);
+            var childDir = Vector3.Normalize(parent.Direction + spread * _p.ChildSpreadScale);
+            childDir = Vector3.Normalize(childDir + Vector3.down * _p.DownwardBias);
 
             float radius, splitChance, fixedStep;
             int   life;
@@ -232,48 +162,46 @@ public class WormCaveGenerator
 
             if (parentIsRoom)
             {
-                // Narrow tributary passage branching off the chamber
-                radius      = Mathf.Max(1.0f, parent.MaxRadius * (RoomTribRadiusMin + (float)rng.NextDouble() * RoomTribRadiusRange));
-                life        = RoomTribLifeMin + rng.Next(RoomTribLifeRange);
-                splitChance = RoomTribSplitChance;
+                radius      = Mathf.Max(1.0f, parent.MaxRadius * (_p.RoomTribRadiusMin + (float)rng.NextDouble() * _p.RoomTribRadiusRange));
+                life        = _p.RoomTribLifeMin + rng.Next(_p.RoomTribLifeRange);
+                splitChance = _p.RoomTribSplitChance;
                 fixedStep   = 0f;
                 isLarge     = false;
             }
             else if (parent.IsLarge)
             {
-                // First child has a chance to become a room worm
-                bool makeRoom = (i == 0) && rng.NextDouble() < RoomBranchChance;
+                bool makeRoom = (i == 0) && rng.NextDouble() < _p.RoomBranchChance;
 
                 if (makeRoom)
                 {
-                    radius      = Mathf.Min(RoomRadiusMax, parent.MaxRadius * (RoomRadiusMultMin + (float)rng.NextDouble() * RoomRadiusMultRange));
-                    life        = RoomLifeMin + rng.Next(RoomLifeRange);
-                    splitChance = RoomSplitChance;
-                    fixedStep   = RoomFixedStepSize;
+                    radius      = Mathf.Min(_p.RoomRadiusMax, parent.MaxRadius * (_p.RoomRadiusMultMin + (float)rng.NextDouble() * _p.RoomRadiusMultRange));
+                    life        = _p.RoomLifeMin + rng.Next(_p.RoomLifeRange);
+                    splitChance = _p.RoomSplitChance;
+                    fixedStep   = _p.RoomFixedStepSize;
                     isLarge     = false;
                 }
                 else
                 {
-                    radius      = Mathf.Max(1.5f, parent.Radius * (LargeChildRadiusMin + (float)rng.NextDouble() * LargeChildRadiusRange));
-                    life        = (int)(parent.Lifespan * (LargeChildLifeMin + rng.NextDouble() * LargeChildLifeRange));
-                    splitChance = LargeChildSplitChance;
+                    radius      = Mathf.Max(1.5f, parent.Radius * (_p.LargeChildRadiusMin + (float)rng.NextDouble() * _p.LargeChildRadiusRange));
+                    life        = (int)(parent.Lifespan * (_p.LargeChildLifeMin + rng.NextDouble() * _p.LargeChildLifeRange));
+                    splitChance = _p.LargeChildSplitChance;
                     fixedStep   = 0f;
                     isLarge     = true;
                 }
             }
-            else if (parent.SplitChance >= MediumSplitChance)
+            else if (parent.SplitChance >= _p.MediumSplitChance)
             {
-                radius      = Mathf.Max(1.0f, parent.Radius * (MedChildRadiusMin + (float)rng.NextDouble() * MedChildRadiusRange));
-                life        = (int)(parent.Lifespan * (MedChildLifeMin + rng.NextDouble() * MedChildLifeRange));
-                splitChance = MedChildSplitChance;
+                radius      = Mathf.Max(1.0f, parent.Radius * (_p.MedChildRadiusMin + (float)rng.NextDouble() * _p.MedChildRadiusRange));
+                life        = (int)(parent.Lifespan * (_p.MedChildLifeMin + rng.NextDouble() * _p.MedChildLifeRange));
+                splitChance = _p.MedChildSplitChance;
                 fixedStep   = 0f;
                 isLarge     = false;
             }
             else
             {
-                radius      = Mathf.Max(1.0f, parent.Radius * (SmallChildRadiusMin + (float)rng.NextDouble() * SmallChildRadiusRange));
-                life        = (int)(parent.Lifespan * (SmallChildLifeMin + rng.NextDouble() * SmallChildLifeRange));
-                splitChance = SmallChildSplitChance;
+                radius      = Mathf.Max(1.0f, parent.Radius * (_p.SmallChildRadiusMin + (float)rng.NextDouble() * _p.SmallChildRadiusRange));
+                life        = (int)(parent.Lifespan * (_p.SmallChildLifeMin + rng.NextDouble() * _p.SmallChildLifeRange));
+                splitChance = _p.SmallChildSplitChance;
                 fixedStep   = 0f;
                 isLarge     = false;
             }
@@ -284,8 +212,8 @@ public class WormCaveGenerator
                 Direction     = childDir,
                 Radius        = radius,
                 MaxRadius     = radius,
-                Lifespan      = Mathf.Max(MinChildLife, life),
-                MaxLifespan   = Mathf.Max(MinChildLife, life),
+                Lifespan      = Mathf.Max(_p.MinChildLife, life),
+                MaxLifespan   = Mathf.Max(_p.MinChildLife, life),
                 SplitChance   = splitChance,
                 FixedStepSize = fixedStep,
                 IsLarge       = isLarge,
@@ -293,12 +221,12 @@ public class WormCaveGenerator
         }
     }
 
-    private void CarveNoisy(ChunkUpdateBuilder builder, Vector3Int chunkBasePos,
+    private void CarveNoisy(Action<Vector3Int, ushort> onVoxel,
                             int cx, int cy, int cz, float radius, Vector3 dir)
     {
         int r = Mathf.CeilToInt(radius + 1.5f);
 
-        float rLong = radius * CarveStretchAlong;
+        float rLong = radius * _p.CarveStretchAlong;
         float rPerp = radius;
 
         for (int dx = -r; dx <= r; dx++)
@@ -309,40 +237,35 @@ public class WormCaveGenerator
             float along    = Vector3.Dot(offset, dir);
             float perpSqr  = (offset - dir * along).sqrMagnitude;
             float distNorm = (along * along) / (rLong * rLong) + perpSqr / (rPerp * rPerp);
-            float noise    = BlockNoise(cx + dx, cy + dy, cz + dz) * CarveBoundaryNoise;
+            float noise    = BlockNoise(cx + dx, cy + dy, cz + dz) * _p.CarveBoundaryNoise;
 
             if (distNorm <= 1f + noise)
-            {
-                var localPos = new Vector3Int(cx + dx - chunkBasePos.x,
-                                             cy + dy - chunkBasePos.y,
-                                             cz + dz - chunkBasePos.z);
-                builder.QueueVoxel(localPos, 0);
-            }
+                onVoxel(new Vector3Int(cx + dx, cy + dy, cz + dz), 0);
         }
     }
 
-    private void PlaceCrystalCluster(ChunkUpdateBuilder builder, Vector3Int localRootPos, System.Random rng)
+    private void PlaceCrystalCluster(Action<Vector3Int, ushort> onVoxel,
+                                     Vector3Int globalRootPos, System.Random rng)
     {
-        ushort[] palette  = { _yellowLightType, _redLightType, _blueLightType };
+        ushort[] palette   = { _yellowLightType, _redLightType, _blueLightType };
         ushort   mainColor = palette[rng.Next(palette.Length)];
 
         int mainHeight = rng.Next(2, 5);
         for (int ty = 1; ty <= mainHeight; ++ty)
-            builder.QueueVoxel(localRootPos + Vector3Int.up * ty, mainColor);
+            onVoxel(globalRootPos + Vector3Int.up * ty, mainColor);
 
         int satellites = rng.Next(1, 3);
         for (int s = 0; s < satellites; ++s)
         {
-            int    ox       = rng.Next(-2, 3);
-            int    oz       = rng.Next(-2, 3);
-            ushort satColor = palette[rng.Next(palette.Length)];
+            int    ox        = rng.Next(-2, 3);
+            int    oz        = rng.Next(-2, 3);
+            ushort satColor  = palette[rng.Next(palette.Length)];
             int    satHeight = rng.Next(1, mainHeight);
             for (int ty = 1; ty <= satHeight; ++ty)
-                builder.QueueVoxel(localRootPos + new Vector3Int(ox, ty, oz), satColor);
+                onVoxel(globalRootPos + new Vector3Int(ox, ty, oz), satColor);
         }
     }
 
-    // Deterministic per-block noise in [−0.5, 0.5] using the world seed
     private float BlockNoise(int x, int y, int z)
     {
         unchecked
@@ -359,7 +282,7 @@ public class WormCaveGenerator
     {
         return Vector3.Normalize(new Vector3(
             (float)(rng.NextDouble() * 2.0 - 1.0),
-            -(StartDirDownMin + (float)(rng.NextDouble() * StartDirDownRange)),
+            -(_p.StartDirDownMin + (float)(rng.NextDouble() * _p.StartDirDownRange)),
             (float)(rng.NextDouble() * 2.0 - 1.0)
         ));
     }
@@ -373,12 +296,13 @@ public class WormCaveGenerator
         public int     Lifespan;
         public int     MaxLifespan;
         public float   SplitChance;
-        public float   FixedStepSize; // 0 = default formula; >0 = fixed (room worms)
-        public bool    IsLarge;       // enables room-branch logic when spawning children
+        public float   FixedStepSize;
+        public bool    IsLarge;
     }
 
-    private readonly int   _seed;
-    private readonly ushort _yellowLightType;
-    private readonly ushort _redLightType;
-    private readonly ushort _blueLightType;
+    private readonly int          _seed;
+    private readonly WormCaveParams _p;
+    private readonly ushort       _yellowLightType;
+    private readonly ushort       _redLightType;
+    private readonly ushort       _blueLightType;
 }
