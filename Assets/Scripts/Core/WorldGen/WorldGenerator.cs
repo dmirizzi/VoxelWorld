@@ -6,6 +6,11 @@ using System.Linq;
 public class WorldGenerator : MonoBehaviour
 {
     public int ChunkGenerationRadius = 4;
+    public int MinVerticalRadius = 3;
+    public int VerticalMovementWindowSize = 10;
+    public float GenerationCooldown = 1.5f;
+    public int ChunkGeneratioUpRadius = 4;
+    public int ChunkGenerationDownRadius = 4;
 
     public int WorldSeed = 123456789;
 
@@ -21,14 +26,12 @@ public class WorldGenerator : MonoBehaviour
     {
         if(_chunkCreationBacklog.ContainsKey(chunkPos))
         {
-            // Merge new chunk update backlog into existing backlog
             _chunkCreationBacklog[chunkPos].AddRange(voxels);
         }
         else
         {
-            // If no backlog exists for this chunk yet, take over the one from the chunk update
             _chunkCreationBacklog[chunkPos] = voxels;
-        }    
+        }
     }
 
     public List<(Vector3Int ChunkPos, List<VoxelCreationAction> Voxels)> PopAllBackloggedChunksWithinGenerationRadius()
@@ -99,21 +102,32 @@ public class WorldGenerator : MonoBehaviour
     }
 
     void Update()
-    {       
+    {
         var currentPlayerChunkPos = VoxelPosHelper.WorldPosToChunkPos(_trackedObject.position);
-        if(!_initialChunkBatchGenerated || (currentPlayerChunkPos - _lastChunkGenerationCenter).magnitude > 1)
+
+        if(_verticalMovementBuffer.Count == 0 || currentPlayerChunkPos.y != _lastTrackedChunkY)
         {
-            _initialChunkBatchGenerated = true;
-
-            _updateScheduler.StartBatch();
-
-            GenerateChunksAroundCenter(currentPlayerChunkPos);
-            _updateScheduler.AddBackloggedVoxelCreationJob();
-            _updateScheduler.AddSunlightUpdateJob();
-            
-            _updateScheduler.FinishBatch();
+            _verticalMovementBuffer.Enqueue(currentPlayerChunkPos.y);
+            if(_verticalMovementBuffer.Count > VerticalMovementWindowSize)
+                _verticalMovementBuffer.Dequeue();
+            _lastTrackedChunkY = currentPlayerChunkPos.y;
         }
-        
+
+        bool cooldownElapsed = !_initialBatchScheduled || (Time.time - _lastGenerationTime >= GenerationCooldown);
+        if(!cooldownElapsed) return;
+
+        ComputeVerticalRadii(currentPlayerChunkPos.y);
+
+        if(!HasNewChunksToGenerate(currentPlayerChunkPos, ChunkGenerationDownRadius, ChunkGeneratioUpRadius)) return;
+
+        _lastGenerationTime = Time.time;
+        _initialBatchScheduled = true;
+
+        _updateScheduler.StartBatch();
+        GenerateChunksAroundCenter(currentPlayerChunkPos, ChunkGenerationDownRadius, ChunkGeneratioUpRadius);
+        _updateScheduler.AddBackloggedVoxelCreationJob();
+        _updateScheduler.AddSunlightUpdateJob();
+        _updateScheduler.FinishBatch();
     }
 
     void OnGUI()
@@ -128,47 +142,70 @@ public class WorldGenerator : MonoBehaviour
             i++;
         }
     }
-    
-    private void GenerateChunksAroundCenter(Vector3Int centerChunkPos)
-    {
-        _lastChunkGenerationCenter = centerChunkPos;
 
+    private bool IsChunkLoaded(Vector3Int chunkPos) => _currentlyLoadedChunks.Contains(chunkPos);
+
+    private void ComputeVerticalRadii(int currentChunkY)
+    {
+        var bufferMin = int.MaxValue;
+        var bufferMax = int.MinValue;
+        foreach(var y in _verticalMovementBuffer)
+        {
+            if(y < bufferMin) bufferMin = y;
+            if(y > bufferMax) bufferMax = y;
+        }
+
+        ChunkGenerationDownRadius = Mathf.Clamp(currentChunkY - bufferMin, MinVerticalRadius, ChunkGenerationRadius);
+        ChunkGeneratioUpRadius = Mathf.Clamp(bufferMax - currentChunkY, MinVerticalRadius, ChunkGenerationRadius);
+    }
+
+    private bool HasNewChunksToGenerate(Vector3Int centerChunkPos, int downRadius, int upRadius)
+    {
+        var radiusSqr = ChunkGenerationRadius * ChunkGenerationRadius;
         for(int z = -ChunkGenerationRadius; z <= ChunkGenerationRadius; ++z)
         {
-            for(int y = -ChunkGenerationRadius; y <= ChunkGenerationRadius; ++y)
-            //for(int y = 0; y <= 0; ++y)
+            for(int y = -downRadius; y <= upRadius; ++y)
             {
                 for(int x = -ChunkGenerationRadius; x <= ChunkGenerationRadius; ++x)
                 {
-                    var chunkPos = centerChunkPos + new Vector3Int(x, y, z);
-                    if(_currentlyLoadedChunks.Contains(chunkPos)) continue;
-
-                    var sqrDistToPlayer = VoxelPosHelper.GetChunkSqrDistanceToWorldPos(_trackedObject.position, chunkPos);
-                    if(sqrDistToPlayer <= _chunkGenerationRadiusSqr)
-                    {
-                        //_chunkGenerationQueue.Enqueue(chunkPos, sqrDistToPlayer);
-                        _updateScheduler.AddChunkGenerationJob(chunkPos);
-
-                        _currentlyLoadedChunks.Add(chunkPos);
-                    }
-                }                
+                    if(x * x + z * z > radiusSqr) continue;
+                    if(!IsChunkLoaded(centerChunkPos + new Vector3Int(x, y, z))) return true;
+                }
             }
         }
-    }   
+        return false;
+    }
 
-    bool _initialChunkBatchGenerated = false;
+    private void GenerateChunksAroundCenter(Vector3Int centerChunkPos, int downRadius, int upRadius)
+    {
+        var radiusSqr = ChunkGenerationRadius * ChunkGenerationRadius;
+        for(int z = -ChunkGenerationRadius; z <= ChunkGenerationRadius; ++z)
+        {
+            for(int y = -downRadius; y <= upRadius; ++y)
+            {
+                for(int x = -ChunkGenerationRadius; x <= ChunkGenerationRadius; ++x)
+                {
+                    if(x * x + z * z > radiusSqr) continue;
 
+                    var chunkPos = centerChunkPos + new Vector3Int(x, y, z);
+                    if(IsChunkLoaded(chunkPos)) continue;
+
+                    _updateScheduler.AddChunkGenerationJob(chunkPos);
+                    _currentlyLoadedChunks.Add(chunkPos);
+                }
+            }
+        }
+    }
+
+    private bool _initialBatchScheduled;
+    private float _lastGenerationTime;
     private int _chunkGenerationRadiusSqr;
+    private Queue<int> _verticalMovementBuffer = new Queue<int>();
+    private int _lastTrackedChunkY;
 
     private WorldUpdateScheduler _updateScheduler;
-
     private Transform _trackedObject;
-
-    private Vector3Int _lastChunkGenerationCenter;
-
     private HashSet<Vector3Int> _currentlyLoadedChunks = new HashSet<Vector3Int>();
-
-    // Holds queued voxel creation actions that are outside of the player radius and will be applied, once the chunks they are in are loaded/generated
     private Dictionary<Vector3Int, List<VoxelCreationAction>> _chunkCreationBacklog = new Dictionary<Vector3Int, List<VoxelCreationAction>>();
 
     private Camera _camera;

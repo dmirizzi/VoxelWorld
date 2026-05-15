@@ -591,6 +591,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ChunkGenerationRadius: 16
+  MinVerticalRadius: 3
+  VerticalMovementWindowSize: 10
+  GenerationCooldown: 10
+  ChunkGeneratioUpRadius: 3
+  ChunkGenerationDownRadius: 3
   WorldSeed: 843546521
 --- !u!1 &2138034062
 GameObject:
