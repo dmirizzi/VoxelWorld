@@ -27,6 +27,10 @@ public class PlayerController : MonoBehaviour
         CameraTransform = GameObject.Find("Main Camera").transform;
         _voxelWorld = GameObject.FindObjectsOfType<VoxelWorld>()[0];
         _actionBar = GetComponent<PlayerActionBarController>();
+
+        var worldGenerator = FindObjectOfType<WorldGenerator>();
+        worldGenerator.RegisterTrackedObject(transform);
+        worldGenerator.OnWorldReady += PlaceInWorld;
     }
 
     // Update is called once per frame
@@ -102,6 +106,18 @@ public class PlayerController : MonoBehaviour
     }
 
     public void SetGravityActive(bool gravityActive) => _gravityActive = gravityActive;
+
+    private void PlaceInWorld()
+    {
+        var highestY = _voxelWorld.GetHighestVoxelPos(0, 0).Value;
+        var spawnVoxelPos = new Vector3Int(0, highestY, 0);
+        var worldPos = VoxelPosHelper.GetVoxelTopCenterSurfaceWorldPos(spawnVoxelPos) + Vector3.up * 2;
+        _controller.enabled = false;
+        transform.position = worldPos;
+        _controller.enabled = true;
+        SetGravityActive(true);
+        UnityEngine.Debug.Log($"Placing player @ {transform.position}");
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Voxel-player interactions
