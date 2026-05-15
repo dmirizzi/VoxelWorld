@@ -13,13 +13,11 @@ public class WormCaveGenerator
         _blueLightType   = BlockDataRepository.GetBlockTypeId("BlueLightblock");
     }
 
-    // Original entry point used by ChunkGenerator; positions passed to builder are chunk-local.
-    public void GenerateCave(ChunkUpdateBuilder builder, Vector3Int chunkBasePos,
-                             int globalX, int globalZ, int terrainHeight, System.Random rng)
+    public void GenerateCave(ChunkUpdateBuilder builder, Vector3Int localStartPos, System.Random rng)
     {
-        RunCave(globalX, globalZ, terrainHeight, rng, (globalPos, type) =>
+        RunCave(localStartPos.x, localStartPos.y, localStartPos.z, rng, (localPos, type) =>
         {
-            builder.QueueVoxel(globalPos - chunkBasePos, type);
+            builder.QueueVoxel(localPos, type);
         });
     }
 

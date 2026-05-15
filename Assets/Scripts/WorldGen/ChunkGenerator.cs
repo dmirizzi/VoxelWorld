@@ -1,29 +1,44 @@
-using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class ChunkGenerator
 {
-    private const int SeaLevel = -30;
-    private const float ForestTreeDensity = 0.35f;  // peak per-tile tree chance inside a dense forest cluster
-    private const float TorchChance   = 0.005f;
-    private const float CaveChance    = 0.0003f;
-    private const int DirtLayerDepth  = 24;
+    private const int SeaLevel       = -30;
+    private const int DirtLayerDepth = 24;
 
     public ChunkGenerator(int seed = 123456789)
     {
+        _seed        = seed;
         _dirtType        = BlockDataRepository.GetBlockTypeId("Dirt");
         _grassType       = BlockDataRepository.GetBlockTypeId("Grass");
-        _logType         = BlockDataRepository.GetBlockTypeId("Log");
-        _leavesType      = BlockDataRepository.GetBlockTypeId("Leaves");
         _waterType       = BlockDataRepository.GetBlockTypeId("Water");
         _cobblestoneType = BlockDataRepository.GetBlockTypeId("Cobblestone");
-        _torchType       = BlockDataRepository.GetBlockTypeId("Torch");
 
-        _seed = seed;
         var rng = new System.Random(seed);
-        _noiseOffsetX  = (float)(rng.NextDouble() * 10000.0);
-        _noiseOffsetZ  = (float)(rng.NextDouble() * 10000.0);
-        _caveGenerator = new WormCaveGenerator(seed, WormCaveParams.Default);
+        _noiseOffsetX = (float)(rng.NextDouble() * 10000.0);
+        _noiseOffsetZ = (float)(rng.NextDouble() * 10000.0);
+
+        var features = new List<IWorldGenFeatureGenerator>
+        {
+            new TreeFeatureGenerator(seed),
+            new TorchFeatureGenerator(seed),
+            new CaveFeatureGenerator(seed, WormCaveParams.Default),
+        };
+
+        _featureRngSalts = new Dictionary<IWorldGenFeatureGenerator, int>(features.Count);
+        for (int i = 0; i < features.Count; i++)
+            _featureRngSalts[features[i]] = i * 0x9e3779b;
+
+        _exclusiveSurfaceGroups = features
+            .Where(f => f.ExclusionGroup.HasValue && IsSurfaceContext(f.Context))
+            .GroupBy(f => f.ExclusionGroup!.Value)
+            .Select(g => g.OrderBy(f => f.Priority).ToList())
+            .ToList();
+
+        _independentSurfaceFeatures = features
+            .Where(f => !f.ExclusionGroup.HasValue && IsSurfaceContext(f.Context))
+            .ToList();
     }
 
     public ChunkUpdate GenerateChunk(Vector3Int chunkPos)
@@ -60,28 +75,27 @@ public class ChunkGenerator
                     }
                 }
 
-                // Surface features — emit only from the chunk that contains terrainHeight
                 bool surfaceInThisChunk = terrainHeight >= chunkBasePos.y &&
                                           terrainHeight <  chunkBasePos.y + VoxelInfo.ChunkSize;
                 if (!underwater && surfaceInThisChunk)
                 {
-                    int localY      = terrainHeight - chunkBasePos.y;
-                    var surfacePos  = new Vector3Int(x, localY, z);
+                    int localY     = terrainHeight - chunkBasePos.y;
+                    var surfacePos = new Vector3Int(x, localY, z);
 
-                    if (ShouldPlaceFeature(globalX, globalZ, GetTreeChance(globalX, globalZ)))
+                    foreach (var group in _exclusiveSurfaceGroups)
                     {
-                        var treeRng = new System.Random(HashPos(globalX, globalZ));
-                        PlaceTree(builder, surfacePos, treeRng);
-                    }
-                    else if (ShouldPlaceFeature(globalX ^ 0xCAFE, globalZ ^ 0xF00D, TorchChance))
-                    {
-                        builder.QueueVoxel(surfacePos + Vector3Int.up, _torchType);
+                        foreach (var feature in group)
+                        {
+                            if (!feature.ShouldPlace(globalX, globalZ, terrainHeight)) continue;
+                            feature.Place(MakePlacementCtx(builder, surfacePos, globalX, globalZ, feature));
+                            break;
+                        }
                     }
 
-                    if (ShouldPlaceFeature(globalX ^ 0xC0DE, globalZ ^ 0xC0DE, CaveChance))
+                    foreach (var feature in _independentSurfaceFeatures)
                     {
-                        var caveRng = new System.Random(HashPos(globalX ^ 0xBEEF, globalZ ^ 0xDEAD));
-                        _caveGenerator.GenerateCave(builder, chunkBasePos, globalX, globalZ, terrainHeight, caveRng);
+                        if (feature.ShouldPlace(globalX, globalZ, terrainHeight))
+                            feature.Place(MakePlacementCtx(builder, surfacePos, globalX, globalZ, feature));
                     }
                 }
             }
@@ -108,77 +122,30 @@ public class ChunkGenerator
         return Mathf.RoundToInt(h);
     }
 
-    // Returns per-position tree spawn probability based on two-layer forest noise.
-    // The product of a large-region noise and a local-cluster noise only exceeds zero
-    // where both are simultaneously elevated, producing irregular organic cluster shapes.
-    private float GetTreeChance(int globalX, int globalZ)
+    private FeaturePlacementContext MakePlacementCtx(ChunkUpdateBuilder builder, Vector3Int localPos,
+        int globalX, int globalZ, IWorldGenFeatureGenerator feature)
     {
-        float nx = globalX + _noiseOffsetX + 4321f;
-        float nz = globalZ + _noiseOffsetZ + 8765f;
-
-        float region  = Mathf.PerlinNoise(nx / 200f, nz / 200f);
-        float cluster = Mathf.PerlinNoise(nx /  65f, nz /  65f);
-
-        float regionFactor  = Mathf.Max(0f, region  - 0.44f) * (1f / 0.56f);
-        float clusterFactor = Mathf.Max(0f, cluster - 0.38f) * (1f / 0.62f);
-
-        return 0.003f + regionFactor * clusterFactor * ForestTreeDensity;
-    }
-
-    // Ellipsoid tree crown — more natural than a cube, still cheap to compute
-    private void PlaceTree(ChunkUpdateBuilder builder, Vector3Int localRootPos, System.Random rng)
-    {
-        int trunkHeight = rng.Next(4, 8);
-        int crownR      = rng.Next(2, 4);
-
-        for (int ty = 1; ty <= trunkHeight; ++ty)
-            builder.QueueVoxel(localRootPos + Vector3Int.up * ty, _logType);
-
-        Vector3Int crownCenter = localRootPos + Vector3Int.up * (trunkHeight + crownR - 1);
-        int rx = crownR;
-        int ry = Mathf.Max(1, crownR - 1);
-        int rz = crownR;
-
-        for (int ty = -ry; ty <= ry; ++ty)
-        for (int tz = -rz; tz <= rz; ++tz)
-        for (int tx = -rx; tx <= rx; ++tx)
+        return new FeaturePlacementContext
         {
-            float ex = (float)tx / rx;
-            float ey = (float)ty / ry;
-            float ez = (float)tz / rz;
-            if (ex * ex + ey * ey + ez * ez <= 1.0f)
-                builder.QueueVoxel(crownCenter + new Vector3Int(tx, ty, tz), _leavesType);
-        }
+            Builder  = builder,
+            LocalPlacementVoxelPos = localPos,
+            Rng = new System.Random(WorldGenHash.Pos(_seed, globalX, globalZ) ^ _featureRngSalts[feature]),
+        };
     }
 
-    private bool ShouldPlaceFeature(int x, int z, float chance)
-    {
-        return new System.Random(HashPos(x, z)).NextDouble() < chance;
-    }
-
-    private int HashPos(int x, int z)
-    {
-        unchecked
-        {
-            uint h = (uint)_seed;
-            h ^= (uint)x; h *= 0x9e3779b9u; h ^= h >> 16;
-            h ^= (uint)z; h *= 0x85ebca6bu; h ^= h >> 13;
-                           h *= 0xc2b2ae35u; h ^= h >> 16;
-            return (int)h;
-        }
-    }
+    private static bool IsSurfaceContext(FeatureContext ctx) =>
+        ctx == FeatureContext.OnSurface || ctx == FeatureContext.Anywhere;
 
     private readonly int   _seed;
     private readonly float _noiseOffsetX;
     private readonly float _noiseOffsetZ;
 
-    private readonly WormCaveGenerator _caveGenerator;
-
-    private readonly ushort _torchType;
     private readonly ushort _dirtType;
     private readonly ushort _grassType;
-    private readonly ushort _logType;
-    private readonly ushort _leavesType;
     private readonly ushort _waterType;
     private readonly ushort _cobblestoneType;
+
+    private readonly List<List<IWorldGenFeatureGenerator>>  _exclusiveSurfaceGroups;
+    private readonly List<IWorldGenFeatureGenerator> _independentSurfaceFeatures;
+    private readonly Dictionary<IWorldGenFeatureGenerator, int>  _featureRngSalts;
 }
