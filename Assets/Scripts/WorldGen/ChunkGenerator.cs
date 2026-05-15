@@ -1,55 +1,91 @@
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class ChunkGenerator
 {
-    public ChunkGenerator()
+    private const int SeaLevel = -30;
+    private const int DirtLayerDepth = 24;
+
+    public ChunkGenerator(int seed = 123456789)
     {
-        _dirtType = BlockDataRepository.GetBlockTypeId("Dirt");
+        _dirtType  = BlockDataRepository.GetBlockTypeId("Dirt");
         _grassType = BlockDataRepository.GetBlockTypeId("Grass");
-        _torchType = BlockDataRepository.GetBlockTypeId("Torch");
-        _logType = BlockDataRepository.GetBlockTypeId("Log");
-        _leavesType = BlockDataRepository.GetBlockTypeId("Leaves");
+        _waterType = BlockDataRepository.GetBlockTypeId("Water");
+        _cobblestoneType = BlockDataRepository.GetBlockTypeId("Cobblestone");
+
+        var rng = new System.Random(seed);
+        _noiseOffsetX = (float)(rng.NextDouble() * 10000.0);
+        _noiseOffsetZ = (float)(rng.NextDouble() * 10000.0);
+
+        var features = WorldFeatureGeneratorRegistry.Load(seed);
+
+        _exclusiveSurfaceGroups = features
+            .Where(f => f.ExclusionGroup.HasValue && IsSurfaceContext(f.Context))
+            .GroupBy(f => f.ExclusionGroup!.Value)
+            .Select(g => g.OrderBy(f => f.Priority).ToList())
+            .ToList();
+
+        _independentSurfaceFeatures = features
+            .Where(f => !f.ExclusionGroup.HasValue && IsSurfaceContext(f.Context))
+            .ToList();
     }
 
     public ChunkUpdate GenerateChunk(Vector3Int chunkPos)
     {
         var builder = new ChunkUpdateBuilder(chunkPos);
-
         var chunkBasePos = VoxelPosHelper.ChunkPosToGlobalChunkBaseVoxelPos(chunkPos);
 
-        for(int z = 0; z < VoxelInfo.ChunkSize; ++z)
+        for (int z = 0; z < VoxelInfo.ChunkSize; ++z)
         {
-            for(int x = 0; x < VoxelInfo.ChunkSize; ++x)
+            for (int x = 0; x < VoxelInfo.ChunkSize; ++x)
             {
                 int globalX = chunkBasePos.x + x;
                 int globalZ = chunkBasePos.z + z;
                 int terrainHeight = GetTerrainHeight(globalX, globalZ);
+                bool underwater = terrainHeight < SeaLevel;
 
-                for(int y = 0; y < VoxelInfo.ChunkSize; ++y)
+                for (int y = 0; y < VoxelInfo.ChunkSize; ++y)
                 {
                     int globalY = chunkBasePos.y + y;
 
-                    if(globalY < terrainHeight)
+                    if (globalY < terrainHeight)
                     {
-                        builder.QueueVoxelInChunk(x, y, z, _dirtType);
+                        int depth = terrainHeight - globalY;
+                        builder.QueueVoxelInChunk(x, y, z,
+                            depth <= DirtLayerDepth ? _dirtType : _cobblestoneType);
                     }
-                    else if(globalY == terrainHeight)
+                    else if (globalY == terrainHeight)
                     {
-                        builder.QueueVoxelInChunk(x, y, z, _grassType);
+                        builder.QueueVoxelInChunk(x, y, z, underwater ? _dirtType : _grassType);
+                    }
+                    else if (globalY > terrainHeight && globalY <= SeaLevel)
+                    {
+                        builder.QueueVoxelInChunk(x, y, z, _waterType);
+                    }
+                }
 
-                        /*
-                        if(TreeShouldBePlaced(new Vector3Int(x, y, z)) && (x % 15 == 0 || y % 15 == 0 || z % 15 == 0))
-                        {
-                            PlaceTree(builder, new Vector3Int(x, y, z), 4, 3);
-                        }
-                        */
-                    }
-                    else if(globalY == terrainHeight + 1)
+                bool surfaceInThisChunk = terrainHeight >= chunkBasePos.y &&
+                                          terrainHeight <  chunkBasePos.y + VoxelInfo.ChunkSize;
+                if (!underwater && surfaceInThisChunk)
+                {
+                    int localY     = terrainHeight - chunkBasePos.y;
+                    var surfacePos = new Vector3Int(x, localY, z);
+
+                    foreach (var group in _exclusiveSurfaceGroups)
                     {
-                        if((globalX % 30) == 0 && (globalZ % 30) == 0)
+                        foreach (var feature in group)
                         {
-                            builder.QueueVoxelInChunk(x, y, z, _torchType);
+                            if (!feature.ShouldPlace(globalX, globalZ, terrainHeight)) continue;
+                            feature.Place(MakePlacementCtx(builder, surfacePos, globalX, globalZ, feature));
+                            break;
                         }
+                    }
+
+                    foreach (var feature in _independentSurfaceFeatures)
+                    {
+                        if (feature.ShouldPlace(globalX, globalZ, terrainHeight))
+                            feature.Place(MakePlacementCtx(builder, surfacePos, globalX, globalZ, feature));
                     }
                 }
             }
@@ -57,57 +93,47 @@ public class ChunkGenerator
 
         return builder.GetChunkUpdate();
     }
+
     private int GetTerrainHeight(int globalX, int globalZ)
     {
-        var height = 0;
+        float nx = globalX + _noiseOffsetX;
+        float nz = globalZ + _noiseOffsetZ;
 
-        // Local terrain variations
-        height += (int)(Mathf.PerlinNoise(globalX / 40.0f, globalZ / 40.0f) * 32) - 5;
+        float continental     = Mathf.PerlinNoise(nx / 600f, nz / 600f);
+        float continentalBias = (continental * continental - 0.25f) * 55f;
+        float roughness       = Mathf.PerlinNoise(nx / 280f + 100f, nz / 280f + 100f);
 
-        // Macro terrain
-        height += (int)(Mathf.PerlinNoise(globalX / 400.0f, globalZ / 400.0f) * 512) - 256;
-
-        return height;
+        float h = continentalBias;
+        h += Mathf.PerlinNoise(nx / 250f, nz / 250f) * 60f;
+        h += Mathf.PerlinNoise(nx /  80f, nz /  80f) * (12f + roughness * 24f);
+        h += Mathf.PerlinNoise(nx /  30f, nz /  30f) *  8f;
+        h += Mathf.PerlinNoise(nx /  10f, nz /  10f) *  2f;
+        h -= 50f;
+        return Mathf.RoundToInt(h);
     }
 
-    private void PlaceTree(
-        ChunkUpdateBuilder builder, 
-        Vector3Int localRootPos, 
-        int trunkHeight, 
-        int crownRadius)
+    private static FeaturePlacementContext MakePlacementCtx(ChunkUpdateBuilder builder, Vector3Int localPos,
+        int globalX, int globalZ, IWorldFeatureGenerator feature)
     {
-        for(int ty = 1; ty <= trunkHeight; ++ty)
+        return new FeaturePlacementContext
         {
-            builder.QueueVoxel(localRootPos + Vector3Int.up * ty, _logType);
-        }
-
-        for(int tz = -crownRadius; tz <= crownRadius; ++tz)
-        {
-            for(int ty = -crownRadius; ty <= crownRadius; ++ty)
-            {
-                for(int tx = -crownRadius; tx <= crownRadius; ++tx)
-                {
-                    builder.QueueVoxel(localRootPos + Vector3Int.up * trunkHeight + new Vector3Int(tx, ty + trunkHeight, tz), _leavesType);
-                }
-            }
-        }
+            Builder = builder,
+            LocalPlacementVoxelPos = localPos,
+            Rng = feature.GetPlacementRng(globalX, globalZ),
+        };
     }
 
-    private bool TreeShouldBePlaced(Vector3Int globalVoxelPos)
-    {
-        //var rand = new System.Random(globalVoxelPos.x + 1000 * globalVoxelPos.y + 1000000 + globalVoxelPos.z);
-        var rand = new System.Random();
-        return rand.NextDouble() <= 0.001f;
-    }
+    private static bool IsSurfaceContext(FeatureContext ctx) =>
+        ctx == FeatureContext.OnSurface || ctx == FeatureContext.Anywhere;
 
-    private ushort _dirtType;
+    private readonly float _noiseOffsetX;
+    private readonly float _noiseOffsetZ;
 
-    private ushort _grassType;
+    private readonly ushort _dirtType;
+    private readonly ushort _grassType;
+    private readonly ushort _waterType;
+    private readonly ushort _cobblestoneType;
 
-    private ushort _torchType;
-
-    private ushort _logType;
-    
-    private ushort _leavesType;    
+    private readonly List<List<IWorldFeatureGenerator>> _exclusiveSurfaceGroups;
+    private readonly List<IWorldFeatureGenerator> _independentSurfaceFeatures;
 }
- 

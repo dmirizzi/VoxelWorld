@@ -1,0 +1,52 @@
+#pragma kernel CullSurface
+
+struct VoxelInstance
+{
+    int3 pos;
+    uint blockType;
+};
+
+StructuredBuffer<uint>               VoxelGrid;
+AppendStructuredBuffer<VoxelInstance> SurfaceVoxels;
+
+int3 GridSize;
+int3 GridOffset;
+
+int FlatIndex(int3 p)
+{
+    return p.x + p.z * GridSize.x + p.y * GridSize.x * GridSize.z;
+}
+
+[numthreads(8, 8, 8)]
+void CullSurface(uint3 id : SV_DispatchThreadID)
+{
+    if (any(id >= (uint3)GridSize))
+        return;
+
+    int3 lp = (int3)id;
+    uint blockType = VoxelGrid[FlatIndex(lp)];
+
+    if (blockType == 0)
+        return;
+
+    // Expose voxels with at least one air or out-of-bounds neighbor.
+    const int3 dirs[6] = {
+        { 1, 0, 0}, {-1, 0, 0},
+        { 0, 1, 0}, { 0,-1, 0},
+        { 0, 0, 1}, { 0, 0,-1}
+    };
+
+    for (int i = 0; i < 6; ++i)
+    {
+        int3 n = lp + dirs[i];
+        bool outOfBounds = any(n < 0) || any(n >= GridSize);
+        if (outOfBounds || VoxelGrid[FlatIndex(n)] == 0)
+        {
+            VoxelInstance v;
+            v.pos      = lp + GridOffset;
+            v.blockType = blockType;
+            SurfaceVoxels.Append(v);
+            return;
+        }
+    }
+}

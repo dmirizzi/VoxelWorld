@@ -194,6 +194,9 @@ World Gen
                from the topmost chunks since the last update, even if the topmost is below ground
     [ ] Prioritized scheduling for player induced world updates
         -> Placing/removing blocks while world is being generated
+    [ ] Dont generate new checks everytime player crosses over world gen radius,
+        only when player gets closer to the edge (maybe <30% of world gen radius or so)
+    [ ] Only generate chunks in radius on XZ, less for Y, maybe 1/2 or 1/3 of radius 
     [ ] ChunkLightMappingUpdate 
         -> Only recreate GameObject if chunk was actually rebuilt, not if only the lighting changed
     [ ] Unload chunks player is moving away from when generating new chunks in front
@@ -206,10 +209,13 @@ World Gen
         [ ] To optimize RLE, order chunk in vertical slices (as voxels tend to be of same type on the same horizontal slice)
     [ ] When loading new chunks, check if they are already generated in save game and if so deserialize
         and load into world
+    [ ] Only serialize chunks that have been modified, i.e. are not equal to generated version,
+        introduce some sort of dirty flag?
 
 [ ] Generation
     [ ] World Seed -> Deterministic world gen based on seed + position
-    [x] Simple cave generator based on cellular automata
+    [x] Simple cave generator base
+    d on cellular automata
     [ ] Dungeon generator
         [ ] Simple rooms connected by corridors
     [ ] Tree Generator

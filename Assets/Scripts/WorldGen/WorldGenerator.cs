@@ -1,5 +1,4 @@
 using System;
-using System.Text;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
@@ -66,7 +65,7 @@ public class WorldGenerator : MonoBehaviour
     {
         VoxelBuildHelper.BuildVoxelUVCache();
 
-        ChunkGenerator = new ChunkGenerator();
+        ChunkGenerator = new ChunkGenerator(WorldSeed);
         _chunkGenerationRadiusSqr = ChunkGenerationRadius * ChunkGenerationRadius;
         _updateScheduler = FindObjectOfType<WorldUpdateScheduler>();
         _voxelWorld = FindObjectOfType<VoxelWorld>();
@@ -156,150 +155,6 @@ public class WorldGenerator : MonoBehaviour
         }
     }   
 
-    private void GenerateCave(Vector3Int position, Vector3Int size, int iterations, int birthNeighbors, int deathNeighbors, float emptyChance)
-    {
-        if(size.x == 0 || size.y == 0 || size.z == 0)
-        {
-            return;
-        }
-
-        bool[,,] cells = new bool[size.x, size.y, size.z];
-
-        Func<bool[,,], int, int, int, int> getNeighbors = (cells, x, y, z) => 
-        {
-            int neighbors = 0;
-            for(int dx = x - 1; dx <= x + 1; ++dx)
-            {
-                for(int dy = y - 1; dy <= y + 1; ++dy)
-                {
-                    for(int dz = z - 1; dz <= z + 1; ++dz)
-                    {
-                        if(dx >= 0 && dx < size.x && dy >= 0 && dy < size.y && dz >= 0 && dz < size.z)
-                        {
-                            if(dx != x || dy != y || dz != z)
-                            {
-                                if(cells[dx, dy, dz])
-                                {
-                                    neighbors++;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            return neighbors;
-        };
-
-        // Randomize cave area
-        for(int x = 0; x < size.x; ++x)
-        {
-            for(int y = 0; y < size.y; ++y)
-            {
-                for(int z = 0; z < size.z; ++z)
-                {
-                    if(UnityEngine.Random.Range(0f, 1f) <= emptyChance)
-                    {
-                        cells[x, y, z] = false;
-                    }
-                    else
-                    {
-                        cells[x, y, z] = true;
-                    }
-                }                
-            }
-        }
-
-        // Run cellular automata
-        var oldCells = new bool[size.x, size.y, size.z];
-        for(int i = 0; i < iterations; ++i)
-        {
-            Buffer.BlockCopy(cells, 0, oldCells, 0, size.x * size.y * size.z * sizeof(bool));
-
-            for(int x = 0; x < size.x; ++x)
-            {
-                for(int y = 0; y < size.y; ++y)
-                {
-                    for(int z = 0; z < size.z; ++z)
-                    {
-                        var neighbors = getNeighbors(oldCells, x, y, z);
-
-                        if(!cells[x, y, z])
-                        {
-                            if(neighbors >= birthNeighbors)
-                            {
-                                cells[x, y, z] = true; 
-                            }
-                        }
-                        else
-                        {
-                            if(neighbors <= deathNeighbors)
-                            {
-                                cells[x, y, z] = false;
-                            }
-                        }
-                    }                
-                }
-            }
-        }
-
-        for(int x = 0; x < size.x; ++x)
-        {
-            for(int y = 0; y < size.y; ++y)
-            {
-                for(int z = 0; z < size.z; ++z)
-                {
-                    if(cells[x, y, z])
-                    {
-                        _voxelWorld.SetVoxel(new Vector3Int(
-                            position.x + x - size.x / 2, 
-                            position.y - y, 
-                            position.z + z - size.z / 2 ),
-                            0 );
-                    }
-                }                
-            }
-        }
-    }
-
-    private (int, bool[,,]) FloodFill(bool[,,] cells, Vector3Int size, Vector3Int point)
-    {
-        bool[,,] output = new bool[size.x, size.y, size.z];
-
-        var stack = new Stack<Vector3Int>();
-        stack.Push(point);
-
-        int numCells = 0;
-
-        while(stack.Count > 0)
-        {
-            var currentPoint = stack.Pop();
-            if(!cells[currentPoint.x, currentPoint.y, currentPoint.z] && !output[currentPoint.x, currentPoint.y, currentPoint.z])
-            {
-                output[currentPoint.x, currentPoint.y, currentPoint.z] = true;
-                numCells++;
-
-                for(int x = currentPoint.x - 1; x < currentPoint.x + 1; ++x)
-                {
-                    for(int y = currentPoint.y - 1; y < currentPoint.y + 1; ++y)
-                    {
-                        for(int z = currentPoint.z - 1; z < currentPoint.z + 1; ++z)
-                        {
-                            if(x >= 0 && x < size.x && y >= 0 && y < size.y && z >= 0 && z < size.z)
-                            {
-                                if(x != currentPoint.x || y != currentPoint.y || z != currentPoint.z)
-                                {
-                                    stack.Push(new Vector3Int(x, y, z));
-                                }
-                            }    
-                        }            
-                    }
-                }
-            }
-        }
-
-        return (numCells, output);
-    }
-
     private void PlacePlayer(Vector3Int? startPos = null)
     {
         var pos = startPos.HasValue 
@@ -324,14 +179,6 @@ public class WorldGenerator : MonoBehaviour
 */
         UnityEngine.Debug.Log($"Placing player @ {GameObject.Find("Player").transform.position}");
     }
-
-    private DateTime lastDrop = DateTime.Now;
-
-    private int _birthNeighbors = 13;
-    private int _deathNeighbors = 12;
-    private int _iterations = 30;
-    private float _emptyChance = .54f;
-
 
     bool _initialChunkBatchGenerated = false;
 
