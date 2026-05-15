@@ -10,93 +10,9 @@ VoxelWorld is a Unity 6 (6000.2.6f2) voxel engine built with URP 17.2.0. It impl
 
 Open in Unity Hub with Unity 6000.2.6f2. There are no CLI build scripts — all building and testing is done through the Unity Editor. The single scene is `Assets/Scenes/SampleScene.unity`.
 
-There are no automated tests; validation is done by running the scene in Play mode.
-
 ## File Structure
 
-```
-Assets/
-├── Resources/
-│   ├── BlockTypes.json              # Block metadata for all 11 block types
-│   ├── ItemData.json                # Item pickup/inventory data
-│   ├── Models/
-│   │   ├── Door_Bottom.obj          # Door mesh (lower half)
-│   │   ├── Door_Top.obj             # Door mesh (upper half)
-│   │   └── Ladder.obj               # Ladder mesh
-│   └── Prefabs/
-│       ├── Torch.prefab             # Torch GameObject (light source)
-│       └── Blob.prefab
-├── Scenes/
-│   └── SampleScene.unity
-└── Scripts/
-    ├── BlockTypes/
-    │   ├── BlockData.cs             # Serializable block render config
-    │   ├── BlockDataRepository.cs   # Static loader for BlockTypes.json
-    │   ├── BlockFaceHelper.cs       # Face ↔ vector conversions and rotations
-    │   ├── BlockTypeBase.cs         # Abstract base for all block behaviors
-    │   ├── BlockTypeRegistry.cs     # ID → implementation mapping
-    │   ├── BlockProperties/
-    │   │   ├── IBlockProperty.cs           # Interface: bit length + serializer factory
-    │   │   ├── IBlockPropertySerializer.cs # Interface: pack/unpack ushort bits
-    │   │   ├── SerializationHelper.cs      # Bit mask/extract utilities
-    │   │   ├── PlacementFaceProperty.cs    # 3-bit: which face block was placed on
-    │   │   └── DoorStateProperty.cs        # 2-bit: IsTopPart + IsOpen flags
-    │   └── Types/
-    │       ├── DoorBlockType.cs            # Two-block door with open/close
-    │       ├── LadderBlockType.cs          # Climbable; placement-face mesh rotation
-    │       ├── TorchBlockType.cs           # Light-emitting GameObject
-    │       └── WedgeBlockType.cs           # Half-block wedge geometry
-    ├── Diagnostics/
-    │   ├── GizmosDispatcher.cs
-    │   └── WorldDbg.cs
-    ├── Items/
-    │   ├── ItemData.cs
-    │   ├── ItemDataRepository.cs
-    │   └── Torch.cs                 # Holdable torch item
-    ├── Misc/
-    │   ├── DebugHelper.cs
-    │   ├── GitHelper.cs
-    │   ├── JsonConverters.cs        # Custom Newtonsoft converters (enums, colors)
-    │   ├── PriorityQueue.cs
-    │   ├── Profiler.cs              # Named timer wrappers
-    │   ├── ReadOnly3DArray.cs
-    │   └── SceneLayers.cs
-    ├── Player/
-    │   ├── IPlayerHoldable.cs
-    │   ├── PlayerActionBarController.cs
-    │   ├── PlayerController.cs
-    │   └── PlayerHoldingController.cs
-    ├── Scheduling/
-    │   ├── BackloggedVoxelCreationJob.cs
-    │   ├── BlockLightUpdateJob.cs
-    │   ├── ChunkGenerationJob.cs
-    │   ├── ChunkLightFillUpdateJob.cs
-    │   ├── ChunkLightMappingUpdateJob.cs
-    │   ├── ChunkMeshRebuildJob.cs
-    │   ├── ChunkVoxelCreationJob.cs
-    │   ├── IWorldUpdateJob.cs
-    │   ├── JobPriority.cs
-    │   ├── SunlightUpdateJob.cs
-    │   └── WorldUpdateScheduler.cs
-    ├── Voxels/
-    │   ├── Chunk.cs
-    │   ├── ChunkBuilder.cs
-    │   ├── ChunkMesh.cs
-    │   ├── ChunkSerializer.cs
-    │   ├── LightMap.cs
-    │   ├── VoxelBuildHelper.cs
-    │   ├── VoxelCollider.cs
-    │   ├── VoxelInfo.cs
-    │   ├── VoxelMesh.cs
-    │   ├── VoxelPosHelper.cs
-    │   └── VoxelWorld.cs
-    ├── WorldGen/
-    │   ├── ChunkGenerator.cs
-    │   ├── ChunkUpdateBuilder.cs
-    │   ├── VoxelCreationAction.cs
-    │   └── WorldGenerator.cs
-    └── DayNightController.cs
-```
+TBD
 
 ## Architecture
 
@@ -105,7 +21,7 @@ Assets/
 Three coordinate spaces are used throughout:
 - **World space**: Unity float positions
 - **Global voxel**: integer grid, no chunk boundaries (converted via `VoxelPosHelper`)
-- **Chunk-local**: 0–15 per axis within a chunk
+- **Local voxel (chunk-local)**: 0–15 per axis within a chunk
 
 `VoxelPosHelper` converts between these using bit shifts (`>> 4` for chunk pos, `& 0xF` for local) since chunks are 16³. Negative coordinates require special handling — use `VoxelPosHelper`, never raw division.
 
@@ -234,3 +150,17 @@ Each chunk produces two meshes: solid and transparent. Smooth lighting samples l
 - **Block IDs**: `0` is always air. Block type `ushort` IDs match indices in `BlockTypes.json`.
 - **Light packing**: `SSSS RRRR GGGG BBBB` — sunlight in the high nibble of the high byte, RGB in low nibbles.
 - **Profiling**: `Assets/Scripts/Misc/Profiler.cs` wraps named timers; active profiling calls are present in scheduler and light code — keep them when modifying those paths.
+
+## Code Style
+
+- Do NOT align assignment operators, field declarations, properties unless its for some hardcoded data structure or in unique cases where it really makes sense.
+- Prefer expression-bodied members (`=>`) for short single-line methods and properties
+- Priva fields are to be prefixed with `'`, camelCase, defined at the bottom of the class
+- In general, public properties/methods (i.e. its public interface) are listed first in the class, then all the private methods/properties
+- Constants: PascalCase, no prefix
+- No trailing whitespace; blank line between logical sections in long methods
+- `using` directives: alphabetical, System namespaces first
+- Never write explanatory comments — only non-obvious WHY comments
+- Place method arguments on separate lines if a method has more than 1 arguments
+- Prefer var for local variables
+- Avoid block statements like if, for etc. without braces, only in special cases where it improves readability, e.g. multiple simple if-conditions with one short instruction after.

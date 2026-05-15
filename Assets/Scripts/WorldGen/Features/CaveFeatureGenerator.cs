@@ -1,25 +1,25 @@
-public class CaveFeatureGenerator : IWorldGenFeatureGenerator
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Reflection;
+
+public class CaveFeatureGenerator : WorldFeatureGeneratorBase
 {
-    private const float CaveChance = 0.0003f;
+    private WormCaveGenerator _caveGenerator;
 
-    public FeatureContext Context => FeatureContext.OnSurface;
-    
-    public int? ExclusionGroup => null;
-    
-    public int Priority       => 0;
-
-    public CaveFeatureGenerator(int seed, WormCaveParams caveParams)
+    protected override void OnConfigure(Dictionary<string, string> properties)
     {
-        _seed = seed;
-        _caveGenerator = new WormCaveGenerator(seed, caveParams);
+        object caveParams = WormCaveParams.Default;
+        foreach (var kvp in properties)
+        {
+            var field = typeof(WormCaveParams).GetField(kvp.Key, BindingFlags.Public | BindingFlags.Instance);
+            if (field == null) continue;
+            var value = Convert.ChangeType(kvp.Value, field.FieldType, CultureInfo.InvariantCulture);
+            field.SetValue(caveParams, value);
+        }
+        _caveGenerator = new WormCaveGenerator(Seed, (WormCaveParams)caveParams);
     }
 
-    public bool ShouldPlace(int globalX, int globalZ, int terrainHeight)
-        => new System.Random(WorldGenHash.Pos(_seed, globalX ^ 0xC0DE, globalZ ^ 0xC0DE)).NextDouble() < CaveChance;
-
-    public void Place(FeaturePlacementContext ctx)
+    public override void Place(FeaturePlacementContext ctx)
         => _caveGenerator.GenerateCave(ctx.Builder, ctx.LocalPlacementVoxelPos, ctx.Rng);
-
-    private readonly int              _seed;
-    private readonly WormCaveGenerator _caveGenerator;
 }

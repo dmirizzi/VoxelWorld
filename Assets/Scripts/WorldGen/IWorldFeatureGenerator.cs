@@ -1,9 +1,9 @@
 using UnityEngine;
 
-public enum FeatureContext
+public enum FeatureContext 
 { 
-    OnSurface,
-    Underground, 
+    OnSurface, 
+    Underground,
     Underwater, 
     Anywhere 
 }
@@ -15,15 +15,13 @@ public struct FeaturePlacementContext
     public System.Random Rng;
 }
 
-public interface IWorldGenFeatureGenerator
+public interface IWorldFeatureGenerator
 {
     FeatureContext Context { get; }
-    
     int? ExclusionGroup { get; }
-    
     int Priority { get; }
-    
+    float PlacementChance { get; }
     bool ShouldPlace(int globalX, int globalZ, int terrainHeight);
-
     void Place(FeaturePlacementContext ctx);
+    System.Random GetPlacementRng(int globalX, int globalZ);
 }

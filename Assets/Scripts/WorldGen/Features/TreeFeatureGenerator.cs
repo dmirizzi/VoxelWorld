@@ -1,27 +1,29 @@
+using System.Collections.Generic;
+using System.Globalization;
 using UnityEngine;
 
-public class TreeFeatureGenerator : IWorldGenFeatureGenerator
+public class TreeFeatureGenerator : WorldFeatureGeneratorBase
 {
-    private const float ForestTreeDensity = 0.35f;
+    private const float DefaultForestTreeDensity = 0.35f;
 
-    public FeatureContext Context  => FeatureContext.OnSurface;
-    public int? ExclusionGroup => 0;
-    public int  Priority       => 0;
 
-    public TreeFeatureGenerator(int seed)
+    protected override void OnConfigure(Dictionary<string, string> properties)
     {
-        _seed = seed;
-        var rng = new System.Random(seed);
+        _forestTreeDensity = properties.TryGetValue("ForestTreeDensity", out var v)
+            ? float.Parse(v, CultureInfo.InvariantCulture)
+            : DefaultForestTreeDensity;
+
+        var rng = new System.Random(Seed);
         _noiseOffsetX = (float)(rng.NextDouble() * 10000.0);
         _noiseOffsetZ = (float)(rng.NextDouble() * 10000.0);
         _logType    = BlockDataRepository.GetBlockTypeId("Log");
         _leavesType = BlockDataRepository.GetBlockTypeId("Leaves");
     }
 
-    public bool ShouldPlace(int globalX, int globalZ, int terrainHeight)
-        => new System.Random(WorldGenHash.Pos(_seed, globalX, globalZ)).NextDouble() < GetTreeChance(globalX, globalZ);
+    public override bool ShouldPlace(int globalX, int globalZ, int terrainHeight)
+        => new System.Random(WorldGenHash.Pos(Seed, globalX, globalZ)).NextDouble() < GetTreeChance(globalX, globalZ);
 
-    public void Place(FeaturePlacementContext ctx)
+    public override void Place(FeaturePlacementContext ctx)
         => PlaceTree(ctx.Builder, ctx.LocalPlacementVoxelPos, ctx.Rng);
 
     private float GetTreeChance(int globalX, int globalZ)
@@ -35,7 +37,7 @@ public class TreeFeatureGenerator : IWorldGenFeatureGenerator
         float regionFactor  = Mathf.Max(0f, region  - 0.44f) * (1f / 0.56f);
         float clusterFactor = Mathf.Max(0f, cluster - 0.38f) * (1f / 0.62f);
 
-        return 0.003f + regionFactor * clusterFactor * ForestTreeDensity;
+        return PlacementChance + regionFactor * clusterFactor * _forestTreeDensity;
     }
 
     private void PlaceTree(ChunkUpdateBuilder builder, Vector3Int localRootPos, System.Random rng)
@@ -62,10 +64,9 @@ public class TreeFeatureGenerator : IWorldGenFeatureGenerator
                 builder.QueueVoxel(crownCenter + new Vector3Int(tx, ty, tz), _leavesType);
         }
     }
-
-    private readonly int    _seed;
-    private readonly float  _noiseOffsetX;
-    private readonly float  _noiseOffsetZ;
-    private readonly ushort _logType;
-    private readonly ushort _leavesType;
+    private float  _forestTreeDensity;
+    private float  _noiseOffsetX;
+    private float  _noiseOffsetZ;
+    private ushort _logType;
+    private ushort _leavesType;
 }

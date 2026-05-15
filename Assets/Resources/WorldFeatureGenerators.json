@@ -1,0 +1,25 @@
+[
+  {
+    "Type": "TreeFeatureGenerator",
+    "Context": "OnSurface",
+    "ExclusionGroup": 0,
+    "Priority": 0,
+    "PlacementChance": 0.003,
+    "Properties": {
+      "ForestTreeDensity": "0.35"
+    }
+  },
+  {
+    "Type": "TorchFeatureGenerator",
+    "Context": "OnSurface",
+    "ExclusionGroup": 0,
+    "Priority": 1,
+    "PlacementChance": 0.005
+  },
+  {
+    "Type": "CaveFeatureGenerator",
+    "Context": "OnSurface",
+    "Priority": 0,
+    "PlacementChance": 0.0003
+  }
+]
