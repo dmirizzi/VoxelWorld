@@ -12,7 +12,36 @@ Open in Unity Hub with Unity 6000.2.6f2. There are no CLI build scripts — all 
 
 ## File Structure
 
-TBD
+All scripts live under `Assets/Scripts/`, split into three top-level groups:
+
+```
+Assets/Scripts/
+├── Core/               # Engine infrastructure — no game content
+│   ├── Voxels/         # Chunk data, mesh building, flood-fill lighting, world API
+│   ├── Scheduling/     # Job pipeline: all IWorldUpdateJob implementations + WorldUpdateScheduler
+│   ├── BlockTypes/     # Block data model, repository, BlockTypeBase, face helpers
+│   │   └── Properties/ # Block property serialization system (bit-field packing)
+│   │       └── Serialization/
+│   ├── WorldGen/       # World/chunk generation framework: WorldGenerator, ChunkGenerator, feature registry
+│   │   └── Features/   # IWorldFeatureGenerator interface
+│   ├── Items/          # Item data model and repository
+│   ├── Diagnostics/    # Debug visualization infrastructure (GizmosDispatcher, WorldDbg)
+│   └── Utils/          # Generic utilities: PriorityQueue, Profiler, helpers, JSON converters
+│
+├── Game/               # Concrete game content and logic built on Core
+│   ├── Player/         # PlayerController, action bar, held-item system, IPlayerHoldable
+│   ├── Blocks/         # Concrete BlockTypeBase subclasses (Door, Torch, Wedge, Ladder, Light)
+│   │                   # and game-specific block properties (DoorStateProperty)
+│   ├── WorldGen/       # Concrete world generation content: WormCaveGenerator + params
+│   │   └── Features/   # Concrete IWorldFeatureGenerator implementations (cave, tree, torch)
+│   ├── Items/          # Concrete item MonoBehaviours (Torch)
+│   └── World/          # Game-level world controllers (DayNightController)
+│
+└── Dev/                # Prototyping and editor tooling — not part of the shipped game
+                        # OrbitCamera, FlyCamera, WorldGen/CaveGen prototyping controllers
+```
+
+The Core/Game split is the key boundary: Core provides pure infrastructure with no knowledge of specific game content; Game depends on Core but not vice versa. Dev contains tools used only during development.
 
 ## Architecture
 
