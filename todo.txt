@@ -6,7 +6,7 @@
 [ ] Logged batch processing time is wrong when manually placing voxels -> no StartBatch/FinishBatch called
     so timer is not handled correctly
 
-[ ] Separate Engine/Core and Game logic
+[x] Separate Engine/Core and Game logic
     - e.g. World Generator (which handles chunk loading/unloading, backlogged voxels etc.) and Chunk Gen Logic (biomes, block types, trees etc.)
 
 [x] Refactor Chunk GameObject life cycle handling 
@@ -14,8 +14,6 @@
     -> Do we even need to delete it on reset/clear? Or just when it is unloaded from world?
 
 [ ] Use TryGet-Pattern instead of nullable return values
-[ ] Simplify IBlockType?
-    [ ] Should we even provide access to Chunk? Or just go always through World?
 
 [ ] Consistent naming for localPos, globalPos etc!!
     -> Convention should be: localChunkPos, globalChunkPos, localVoxelPos, globalVoxelPos
@@ -26,7 +24,7 @@
     and have a mesh view object that can track translations, rotations etc. and once we actually read it out,
     tracked transformations are applied on source data. Kind of similar to LINQ execution
 
-[ ] Refactor Voxel Mesh Building (e.g. DoorBlockType, WedgeBlockType)
+[x] Refactor Voxel Mesh Building (e.g. DoorBlockType, WedgeBlockType)
     -> VoxelMeshBuilder Class
     -> Add vertices, uvs
     -> Add triangles, quads

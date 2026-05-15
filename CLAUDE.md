@@ -17,9 +17,9 @@ All scripts live under `Assets/Scripts/`, split into three top-level groups:
 ```
 Assets/Scripts/
 ├── Core/               # Engine infrastructure — no game content
-│   ├── Voxels/         # Chunk data, mesh building, flood-fill lighting, world API
+│   ├── World/          # Chunk data, mesh building, flood-fill lighting, world API
 │   ├── Scheduling/     # Job pipeline: all IWorldUpdateJob implementations + WorldUpdateScheduler
-│   ├── BlockTypes/     # Block data model, repository, BlockTypeBase, face helpers
+│   ├── Blocks/         # Block data model, repository, BlockTypeBase, face helpers
 │   │   └── Properties/ # Block property serialization system (bit-field packing)
 │   │       └── Serialization/
 │   ├── WorldGen/       # World/chunk generation framework: WorldGenerator, ChunkGenerator, feature registry
