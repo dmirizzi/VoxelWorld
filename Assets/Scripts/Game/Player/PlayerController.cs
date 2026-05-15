@@ -107,18 +107,6 @@ public class PlayerController : MonoBehaviour
 
     public void SetGravityActive(bool gravityActive) => _gravityActive = gravityActive;
 
-    private void PlaceInWorld()
-    {
-        var highestY = _voxelWorld.GetHighestVoxelPos(0, 0).Value;
-        var spawnVoxelPos = new Vector3Int(0, highestY, 0);
-        var worldPos = VoxelPosHelper.GetVoxelTopCenterSurfaceWorldPos(spawnVoxelPos) + Vector3.up * 2;
-        _controller.enabled = false;
-        transform.position = worldPos;
-        _controller.enabled = true;
-        SetGravityActive(true);
-        UnityEngine.Debug.Log($"Placing player @ {transform.position}");
-    }
-
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Voxel-player interactions
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -263,6 +251,17 @@ public class PlayerController : MonoBehaviour
                 }
             }
         }        
+    }
+
+    private void PlaceInWorld()
+    {
+        var highestY = _voxelWorld.GetHighestVoxelPos(0, 0).Value;
+        var spawnVoxelPos = new Vector3Int(0, highestY, 0);
+        var worldPos = VoxelPosHelper.GetVoxelTopCenterSurfaceWorldPos(spawnVoxelPos) + Vector3.up * 2;
+        _controller.enabled = false;
+        transform.position = worldPos;
+        _controller.enabled = true;
+        SetGravityActive(true);
     }
 
     private void PlaceBlock(string blockType)
