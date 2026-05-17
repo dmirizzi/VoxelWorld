@@ -113,6 +113,12 @@ public class ChunkUpdateBuilder
         QueueVoxel(globalPos - chunkBase, type, auxData);
     }
 
+    public void QueueGlobalVoxel(Vector3Int globalPos, ushort type, params object[] properties)
+        => QueueGlobalVoxel(globalPos, type, BlockDataRepository.PackAuxData(type, properties));
+
+    public void QueueVoxel(Vector3Int localVoxelPos, ushort type, params object[] properties)
+        => QueueVoxel(localVoxelPos, type, BlockDataRepository.PackAuxData(type, properties));
+
     public ChunkUpdate GetChunkUpdate() => _chunkUpdate;
 
     private ChunkUpdate _chunkUpdate;

@@ -158,10 +158,16 @@ public class DungeonGenerator
         // Entry gate: door or broken opening
         if (rng.NextDouble() >= _p.BrokenEntryChance)
         {
-            builder.QueueGlobalVoxel(new Vector3Int(entryX, surfaceY + 1, zMin),
-                _doorType, DoorAuxData(BlockFace.Front, false));
-            builder.QueueGlobalVoxel(new Vector3Int(entryX, surfaceY + 2, zMin),
-                _doorType, DoorAuxData(BlockFace.Front, true));
+            builder.QueueGlobalVoxel(
+                new Vector3Int(entryX, surfaceY + 1, zMin),
+                _doorType,
+                BlockProperties.PlacementFace(BlockFace.Front),
+                GameBlockProperties.DoorState(isTopPart: false, isOpen: false));
+            builder.QueueGlobalVoxel(
+                new Vector3Int(entryX, surfaceY + 2, zMin),
+                _doorType,
+                BlockProperties.PlacementFace(BlockFace.Front),
+                GameBlockProperties.DoorState(isTopPart: true, isOpen: false));
         }
 
         // Protect entry opening from decay so it is never overwritten with air
@@ -188,7 +194,7 @@ public class DungeonGenerator
         foreach (var pos in survivingTop)
         {
             if (rng.NextDouble() < _p.RuinTorchChance)
-                builder.QueueGlobalVoxel(pos + Vector3Int.up, _torchType, FaceAuxData(BlockFace.Bottom));
+                builder.QueueGlobalVoxel(pos + Vector3Int.up, _torchType, BlockProperties.PlacementFace(BlockFace.Bottom));
         }
     }
 
@@ -208,8 +214,7 @@ public class DungeonGenerator
                 _p.TunnelWidth,
                 _cobblestoneType,
                 _ladderType,
-                BlockFace.Back,
-                FaceAuxData(BlockFace.Back));
+                BlockFace.Back);
         }
         else
         {
@@ -386,8 +391,7 @@ public class DungeonGenerator
                     _corridorWidth,
                     _cobblestoneType,
                     _ladderType,
-                    BlockFace.Back,
-                    FaceAuxData(BlockFace.Back));
+                    BlockFace.Back);
             }
         }
 
@@ -416,7 +420,7 @@ public class DungeonGenerator
                 int wallX   = room.Center.x + (onLeft ? -room.HalfW - 1 : room.HalfW + 1);
                 int torchZ  = room.Center.z + rng.Next(room.HalfD * 2 + 1) - room.HalfD;
                 var face    = onLeft ? BlockFace.Right : BlockFace.Left;
-                builder.QueueGlobalVoxel(new Vector3Int(wallX, torchY, torchZ), _torchType, FaceAuxData(face));
+                builder.QueueGlobalVoxel(new Vector3Int(wallX, torchY, torchZ), _torchType, BlockProperties.PlacementFace(face));
             }
             else
             {
@@ -424,7 +428,7 @@ public class DungeonGenerator
                 int wallZ    = room.Center.z + (onFront ? -room.HalfD - 1 : room.HalfD + 1);
                 int torchX   = room.Center.x + rng.Next(room.HalfW * 2 + 1) - room.HalfW;
                 var face     = onFront ? BlockFace.Front : BlockFace.Back;
-                builder.QueueGlobalVoxel(new Vector3Int(torchX, torchY, wallZ), _torchType, FaceAuxData(face));
+                builder.QueueGlobalVoxel(new Vector3Int(torchX, torchY, wallZ), _torchType, BlockProperties.PlacementFace(face));
             }
         }
     }
@@ -440,7 +444,7 @@ public class DungeonGenerator
             if (rng.NextDouble() < _p.TorchChancePerCorridorSegment)
             {
                 var pos = start + fwd * step + Vector3Int.up * (_p.CorridorHeight - 1);
-                builder.QueueGlobalVoxel(pos, _torchType, FaceAuxData(BlockFace.Bottom));
+                builder.QueueGlobalVoxel(pos, _torchType, BlockProperties.PlacementFace(BlockFace.Bottom));
             }
         }
     }
@@ -484,18 +488,6 @@ public class DungeonGenerator
     }
 
     private void RegisterVolume(DungeonBounds bounds) => _placedVolumes.Add(bounds);
-
-    private static ushort FaceAuxData(BlockFace face) =>
-        PropertySerializer.Serialize(new PlacementFaceProperty(face), (ushort)0, 0);
-
-    private static ushort DoorAuxData(BlockFace face, bool isTopPart)
-    {
-        ushort data = PropertySerializer.Serialize(new PlacementFaceProperty(face), (ushort)0, 0);
-        return PropertySerializer.Serialize(
-            new DoorStateProperty { IsTopPart = isTopPart, IsOpen = false },
-            data,
-            PropertySerializer.GetTotalBitsForType(typeof(PlacementFaceProperty)));
-    }
 
     private void WriteDebugFile(Vector3Int entry, int surfaceY, int ruinHalf, int tunnelBottomY, bool isShaft)
     {

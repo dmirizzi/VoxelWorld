@@ -63,8 +63,7 @@ public static class StructureCarver
         ChunkUpdateBuilder builder,
         Vector3Int top, int depth, int width,
         ushort wallType,
-        ushort ladderType = 0, BlockFace ladderWall = BlockFace.Back,
-        ushort ladderAuxData = 0)
+        ushort ladderType = 0, BlockFace ladderWall = BlockFace.Back)
     {
         int xMin = top.x - width / 2;
         int xMax = xMin + width - 1;
@@ -87,7 +86,7 @@ public static class StructureCarver
                 BlockFace.Left  => new Vector3Int(xMin, y, (zMin + zMax) / 2),
                 _               => new Vector3Int((xMin + xMax) / 2, y, zMin)
             };
-            builder.QueueGlobalVoxel(ladderPos, ladderType, ladderAuxData);
+            builder.QueueGlobalVoxel(ladderPos, ladderType, BlockProperties.PlacementFace(ladderWall));
         }
     }
 
@@ -103,7 +102,7 @@ public static class StructureCarver
         int wMax  = wMin + width - 1;
         int steps = Math.Abs(levelDelta);
         int ySign = Math.Sign(levelDelta);
-        var stepAuxData = PropertySerializer.Serialize(new PlacementFaceProperty(BlockFaceHelper.GetOppositeFace(dir)), (ushort)0, 0);
+        var stepPlacementProperty = BlockProperties.PlacementFace(BlockFaceHelper.GetOppositeFace(dir));
 
         for (int step = 0; step < steps; step++)
         {
@@ -120,7 +119,7 @@ public static class StructureCarver
             {
                 builder.QueueGlobalVoxel(
                     start + forward * step + right * w + Vector3Int.up * (yOffset - 1),
-                    stepType, stepAuxData);
+                    stepType, stepPlacementProperty);
                 builder.QueueGlobalVoxel(
                     start + forward * step + right * w + Vector3Int.up * (yOffset + 3),
                     wallType);

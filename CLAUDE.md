@@ -182,7 +182,7 @@ Each chunk produces two meshes: solid and transparent. Smooth lighting samples l
 
 ## Code Style
 
-- Do NOT align assignment operators, field declarations, properties unless its for some hardcoded data structure or in unique cases where it really makes sense.
+- Do NOT add padding spaces to align tokens across lines — this applies to assignment operators, field declarations, properties, method return types, and similar. The two exceptions are: (1) switch/match expressions, where aligning `=>` arms is fine; (2) true hardcoded data tables where column alignment directly conveys structure (e.g. a coordinate vector lookup table mapping enum values to `(x, y, z)` triples).
 - Prefer expression-bodied members (`=>`) for short single-line methods and properties
 - Priva fields are to be prefixed with `'`, camelCase, defined at the bottom of the class
 - In general, public properties/methods (i.e. its public interface) are listed first in the class, then all the private methods/properties

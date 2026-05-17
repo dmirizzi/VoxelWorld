@@ -44,14 +44,24 @@ public static class PropertySerializer
         foreach (var meta in metadataList)
         {
             int finalOffset = offsetInBits + meta.Offset;
-
-            // Get the property value
             var value = meta.Getter(obj);
-
-            // Convert to bits
             ushort bitsToWrite = ConvertTypeToBits(value, meta.BitLength);
+            newData = SerializationHelper.OverwriteBits(newData, bitsToWrite, finalOffset, meta.BitLength);
+        }
 
-            // Overwrite in the finalOffset
+        return newData;
+    }
+
+    public static ushort Serialize(object obj, ushort oldData, int offsetInBits = 0)
+    {
+        var metadataList = EnsureTypeIsCached(obj.GetType());
+        ushort newData = oldData;
+
+        foreach (var meta in metadataList)
+        {
+            int finalOffset = offsetInBits + meta.Offset;
+            var value = meta.Getter(obj);
+            ushort bitsToWrite = ConvertTypeToBits(value, meta.BitLength);
             newData = SerializationHelper.OverwriteBits(newData, bitsToWrite, finalOffset, meta.BitLength);
         }
 

@@ -1,6 +1,13 @@
 public class DoorStateProperty
 {
-    // Whether this block is the top or bottom part of the door
+    public DoorStateProperty() {}
+
+    public DoorStateProperty(bool isTopPart, bool isOpen)
+    {
+        IsTopPart = isTopPart;
+        IsOpen = isOpen;
+    }
+
     [BitField(1)]
     public bool IsTopPart { get; set; }
 

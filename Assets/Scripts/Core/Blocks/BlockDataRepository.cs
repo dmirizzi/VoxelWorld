@@ -93,7 +93,10 @@ public static class BlockDataRepository
         }
 
         return _blockTypeMap[type];
-    }    
+    }
+
+    public static ushort PackAuxData(ushort blockTypeId, params object[] properties)
+        => GetBlockType(blockTypeId)?.PackAuxData(properties) ?? 0;
 
     public static IReadOnlyList<BlockData> GetAllBlockData() => _blockDataList.BlockData;
 

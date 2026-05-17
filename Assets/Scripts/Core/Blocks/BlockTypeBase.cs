@@ -50,6 +50,15 @@ public abstract class BlockTypeBase
     // This is important for hidden face removal during chunk mesh building.
     public abstract BlockFace GetForwardFace(VoxelWorld world, Vector3Int globalPosition);
 
+    public ushort PackAuxData(params object[] properties)
+    {
+        ushort data = 0;
+        foreach (var prop in properties)
+            if (_propertyTypeOffset.TryGetValue(prop.GetType(), out var offset))
+                data = PropertySerializer.Serialize(prop, data, offset);
+        return data;
+    }
+
     protected T GetProperty<T>(VoxelWorld world, Vector3Int globalPos) where T : new()
     {
         var auxData = world.GetVoxelAuxiliaryData(globalPos);
