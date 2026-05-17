@@ -46,6 +46,7 @@ public static class StructureCarver
 
     public static void CarveCorridor(
         ChunkUpdateBuilder builder,
+        ushort type,
         Vector3Int origin, BlockFace dir,
         int length, int width, int height)
     {
@@ -53,10 +54,11 @@ public static class StructureCarver
         int wMin = -(width / 2);
         var a = origin + right * wMin;
         var b = origin + forward * (length - 1) + right * (wMin + width - 1);
-        FillBox(
+        CarveHollowBox(
             builder,
             new Vector3Int(Math.Min(a.x, b.x), origin.y,            Math.Min(a.z, b.z)),
-            new Vector3Int(Math.Max(a.x, b.x), origin.y + height - 1, Math.Max(a.z, b.z)));
+            new Vector3Int(Math.Max(a.x, b.x), origin.y + height - 1, Math.Max(a.z, b.z)),
+            type);
     }
 
     public static void CarveVerticalShaft(

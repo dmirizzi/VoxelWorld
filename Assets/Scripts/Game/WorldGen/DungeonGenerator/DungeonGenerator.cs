@@ -253,35 +253,38 @@ public class DungeonGenerator
 
         while (roomsPlaced < roomBudget && attemptsLeft-- > 0)
         {
-            var fromRoom    = _rooms[rng.Next(_rooms.Count)];
-            var dir         = CardinalFaces[rng.Next(4)];
+            var fromRoom = _rooms[rng.Next(_rooms.Count)];
+
+            var nextRoomDir = CardinalFaces[rng.Next(4)];
             int corridorLen = _p.CorridorLengthMin + rng.Next(_p.CorridorLengthRange + 1);
 
             bool levelChange = fromRoom.Level < maxLevels - 1
                             && rng.NextDouble() < _p.LevelChangeChance;
-            int levelDelta = levelChange
+
+            int yDeltaToNextLevel = levelChange
                 ? -(_p.LevelStepYMin + rng.Next(_p.LevelStepYRange + 1))
                 : 0;
 
-            var exitPos        = ExitPoint(fromRoom, dir);
-            var corridorBounds = ComputeCorridorBounds(exitPos, dir, corridorLen, _corridorWidth, _p.CorridorHeight);
+            var exitPos = ExitPoint(fromRoom, nextRoomDir);
+            var corridorBounds = ComputeCorridorBounds(exitPos, nextRoomDir, corridorLen, _corridorWidth, _p.CorridorHeight);            
             if (!IsPlaceable(corridorBounds, surfaceY)) continue;
 
-            BlockFaceHelper.ToDirectionVectors(dir, out var fwd, out _);
+            BlockFaceHelper.ToDirectionVectors(nextRoomDir, out var fwd, out _);
+
             var destCenter = new Vector3Int(
                 exitPos.x + fwd.x * corridorLen,
-                fromRoom.Center.y + levelDelta,
+                fromRoom.Center.y + yDeltaToNextLevel,
                 exitPos.z + fwd.z * corridorLen);
 
             int destLevel = fromRoom.Level + (levelChange ? 1 : 0);
-            var newRoom   = TryPlaceRoom(
+            var newRoom = TryPlaceRoom(
                 builder,
                 destCenter.x, destCenter.z,
                 floorY: destCenter.y, surfaceY, rng, level: destLevel);
 
             if (!newRoom.HasValue) continue;
 
-            CarveCorridor(builder, exitPos, dir, corridorLen, levelDelta, fromRoom.Level, rng);
+            CarveCorridor(builder, exitPos, nextRoomDir, corridorLen, yDeltaToNextLevel, fromRoom.Level, rng);
             RegisterVolume(corridorBounds);
             _rooms.Add(newRoom.Value);
             roomsPlaced++;
@@ -355,14 +358,14 @@ public class DungeonGenerator
     private void CarveCorridor(
         ChunkUpdateBuilder builder,
         Vector3Int start, BlockFace dir,
-        int length, int levelDelta,
+        int length, int yDeltaToNextLevel,
         int fromLevel, System.Random rng)
     {
         bool isStaircase = false;
 
-        if (levelDelta == 0)
+        if (yDeltaToNextLevel == 0)
         {
-            StructureCarver.CarveCorridor(builder, start, dir, length, _corridorWidth, _p.CorridorHeight);
+            StructureCarver.CarveCorridor(builder, _cobblestoneType, start, dir, length, _corridorWidth, _p.CorridorHeight);
             PlaceCorridorTorches(builder, start, dir, length, rng);
         }
         else
@@ -377,13 +380,13 @@ public class DungeonGenerator
                 StructureCarver.CarveDiagonalRamp(
                     builder,
                     start, dir,
-                    levelDelta, _corridorWidth,
+                    yDeltaToNextLevel, _corridorWidth,
                     _cobblestoneType,
                     _wedgeType);
             }
             else
             {
-                int shaftDepth = Math.Abs(levelDelta) + _p.CorridorHeight;
+                int shaftDepth = Math.Abs(yDeltaToNextLevel) + _p.CorridorHeight;
                 StructureCarver.CarveVerticalShaft(
                     builder,
                     new Vector3Int(start.x, start.y + _p.CorridorHeight - 1, start.z),
@@ -401,7 +404,7 @@ public class DungeonGenerator
             Dir         = dir,
             Length      = length,
             Width       = _corridorWidth,
-            LevelDelta  = levelDelta,
+            LevelDelta  = yDeltaToNextLevel,
             IsStaircase = isStaircase
         });
     }
@@ -453,7 +456,7 @@ public class DungeonGenerator
     private Vector3Int ExitPoint(DungeonRoom room, BlockFace dir)
     {
         BlockFaceHelper.ToDirectionVectors(dir, out var fwd, out _);
-        int halfExtent = (dir == BlockFace.Front || dir == BlockFace.Back) ? room.HalfD + 2 : room.HalfW + 2;
+        int halfExtent = (dir == BlockFace.Front || dir == BlockFace.Back) ? room.HalfD + 1 : room.HalfW + 1;
         return room.Center + fwd * halfExtent;
     }
 
