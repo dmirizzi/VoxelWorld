@@ -4,7 +4,7 @@ using UnityEngine;
 // Drop onto an empty GameObject in the WorldGenPrototyping scene.
 // Assign VoxelCullerShader and VoxelInstancedShader in the Inspector (same assets as WorldGenPrototypingController).
 // Press R in Play mode or use right-click → Regenerate to rebuild.
-public class CaveGenPrototypingController : MonoBehaviour
+public class CaveGenPrototypingController : PrototypingControllerBase
 {
     [Header("Cave Entry Point")]
     public int Seed          = 42;
@@ -31,11 +31,7 @@ public class CaveGenPrototypingController : MonoBehaviour
         new(0.15f, 0.40f, 0.95f), // 4 blue crystal
     };
 
-    private ComputeBuffer _gridBuffer;
-    private ComputeBuffer _surfaceBuffer;
-    private ComputeBuffer _argsBuffer;
-    private Material      _material;
-    private Mesh          _cubeMesh;
+    private readonly VoxelPrototypingRenderer _renderer = new();
 
     private float _regenCountdown = -1f;
     private const float RegenDelay = 0.4f; // seconds after last change before regenerating
@@ -46,7 +42,7 @@ public class CaveGenPrototypingController : MonoBehaviour
             Regenerate();
     }
 
-    void OnDisable() => ReleaseBuffers();
+    void OnDisable() => _renderer.Release();
 
     // Called by Unity whenever any serialized field is changed in the Inspector.
     void OnValidate()
@@ -57,11 +53,7 @@ public class CaveGenPrototypingController : MonoBehaviour
 
     void Update()
     {
-        if (_argsBuffer != null)
-            Graphics.DrawMeshInstancedIndirect(
-                _cubeMesh, 0, _material,
-                new Bounds(Vector3.zero, Vector3.one * 100000f),
-                _argsBuffer);
+        _renderer.Draw();
 
         if (Input.GetKeyDown(KeyCode.R))
             Regenerate();
@@ -77,7 +69,7 @@ public class CaveGenPrototypingController : MonoBehaviour
     [ContextMenu("Regenerate")]
     public void Regenerate()
     {
-        ReleaseBuffers();
+        _renderer.Release();
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
 
@@ -216,100 +208,15 @@ public class CaveGenPrototypingController : MonoBehaviour
             grid[idx] = displayType;
         }
 
-        // Upload flat grid and dispatch surface-culling shader.
-        _gridBuffer = new ComputeBuffer(total, sizeof(uint));
-        _gridBuffer.SetData(grid);
-
-        int maxSurface = Mathf.Max(total / 4, 1);
-        _surfaceBuffer = new ComputeBuffer(maxSurface, 16, ComputeBufferType.Append);
-        _surfaceBuffer.SetCounterValue(0);
-
-        int kernel = VoxelCullerShader.FindKernel("CullSurface");
-        VoxelCullerShader.SetBuffer(kernel, "VoxelGrid",     _gridBuffer);
-        VoxelCullerShader.SetBuffer(kernel, "SurfaceVoxels", _surfaceBuffer);
-        VoxelCullerShader.SetInts("GridSize",   sideX, sideY, sideZ);
-        VoxelCullerShader.SetInts("GridOffset", gridMin.x, gridMin.y, gridMin.z);
-
-        int gx = Mathf.CeilToInt(sideX / 8f);
-        int gy = Mathf.CeilToInt(sideY / 8f);
-        int gz = Mathf.CeilToInt(sideZ / 8f);
-        VoxelCullerShader.Dispatch(kernel, gx, gy, gz);
-
-        SetupRendering();
-        Debug.Log($"[CavePrototyping] Grid {sideX}×{sideY}×{sideZ}  WorldMin=({gridMin.x},{gridMin.y},{gridMin.z})  Seed={Seed}");
+        _renderer.Dispatch(VoxelCullerShader, grid, sideX, sideY, sideZ, gridMin);
+        uint instances = _renderer.SetupRendering(VoxelInstancedShader, DisplayColors);
+        Debug.Log($"[CavePrototyping] Grid {sideX}×{sideY}×{sideZ}  WorldMin=({gridMin.x},{gridMin.y},{gridMin.z})  Seed={Seed}  Surface={instances:N0}");
 
         var worldCenter = new Vector3(gridMin.x + sideX * 0.5f, gridMin.y + sideY * 0.5f, gridMin.z + sideZ * 0.5f);
         var worldSize   = new Vector3(sideX, sideY, sideZ);
         return new Bounds(worldCenter, worldSize);
     }
 
-    private void SetupRendering()
-    {
-        using var countBuf = new ComputeBuffer(1, sizeof(uint), ComputeBufferType.Raw);
-        ComputeBuffer.CopyCount(_surfaceBuffer, countBuf, 0);
-        var countArr = new uint[1];
-        countBuf.GetData(countArr);
-        uint instanceCount = countArr[0];
-        Debug.Log($"[CavePrototyping] Surface instances: {instanceCount:N0}");
-
-        _cubeMesh = BuildUnitCube();
-
-        _material = new Material(VoxelInstancedShader);
-        _material.SetBuffer("_VoxelBuffer", _surfaceBuffer);
-
-        var colors = new Vector4[16];
-        for (int i = 0; i < Mathf.Min(DisplayColors.Length, 16); ++i)
-            colors[i] = DisplayColors[i];
-        _material.SetVectorArray("_BlockColors", colors);
-
-        _argsBuffer = new ComputeBuffer(5, sizeof(uint), ComputeBufferType.IndirectArguments);
-        _argsBuffer.SetData(new uint[]
-        {
-            (uint)_cubeMesh.GetIndexCount(0),
-            instanceCount,
-            (uint)_cubeMesh.GetIndexStart(0),
-            (uint)_cubeMesh.GetBaseVertex(0),
-            0u
-        });
-    }
-
-    private void ReleaseBuffers()
-    {
-        _gridBuffer?.Release();    _gridBuffer    = null;
-        _surfaceBuffer?.Release(); _surfaceBuffer = null;
-        _argsBuffer?.Release();    _argsBuffer    = null;
-        if (_material != null) { Destroy(_material); _material = null; }
-        _cubeMesh = null;
-    }
-
     [ContextMenu("Reset Params to Default")]
     public void ResetParamsToDefault() => Params = WormCaveParams.Default;
-
-    private static Mesh BuildUnitCube()
-    {
-        var v = new Vector3[]
-        {
-            new(0,0,0), new(1,0,0), new(1,0,1), new(0,0,1),
-            new(0,1,1), new(1,1,1), new(1,1,0), new(0,1,0),
-            new(0,0,0), new(0,1,0), new(1,1,0), new(1,0,0),
-            new(1,0,1), new(1,1,1), new(0,1,1), new(0,0,1),
-            new(0,0,1), new(0,1,1), new(0,1,0), new(0,0,0),
-            new(1,0,0), new(1,1,0), new(1,1,1), new(1,0,1),
-        };
-        var tris = new int[]
-        {
-            0,2,1,  0,3,2,
-            4,6,5,  4,7,6,
-            8,10,9, 8,11,10,
-            12,14,13,12,15,14,
-            16,18,17,16,19,18,
-            20,22,21,20,23,22,
-        };
-        var mesh = new Mesh { name = "CaveProtoCube" };
-        mesh.vertices  = v;
-        mesh.triangles = tris;
-        mesh.RecalculateNormals();
-        mesh.RecalculateBounds();
-        return mesh;
-    }
 }

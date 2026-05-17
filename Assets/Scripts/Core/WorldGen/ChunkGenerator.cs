@@ -67,7 +67,7 @@ public class ChunkGenerator
                                           terrainHeight <  chunkBasePos.y + VoxelInfo.ChunkSize;
                 if (!underwater && surfaceInThisChunk)
                 {
-                    int localY     = terrainHeight - chunkBasePos.y;
+                    int localY = terrainHeight - chunkBasePos.y;
                     var surfacePos = new Vector3Int(x, localY, z);
 
                     foreach (var group in _exclusiveSurfaceGroups)
