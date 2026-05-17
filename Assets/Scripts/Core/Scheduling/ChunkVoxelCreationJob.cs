@@ -11,15 +11,14 @@ class ChunkVoxelCreationJob : IWorldUpdateJob
 
     public HashSet<Vector3Int> AffectedChunks { get; private set; }
 
-    public ChunkVoxelCreationJob(Vector3Int chunkPos, ushort[,,] voxelData, bool hasVoxelData)
+    public ChunkVoxelCreationJob(Vector3Int chunkPos, ushort[,,] voxelData, bool hasVoxelData,
+                                 Dictionary<Vector3Int, ushort> localAuxData)
     {
         ChunkPos = chunkPos;
-        AffectedChunks = new HashSet<Vector3Int>
-        {
-            chunkPos
-        };
-        _voxelData = voxelData;
+        AffectedChunks = new HashSet<Vector3Int> { chunkPos };
+        _voxelData    = voxelData;
         _hasVoxelData = hasVoxelData;
+        _localAuxData = localAuxData;
     }
 
     public bool PreExecuteSync(VoxelWorld world, WorldGenerator worldGenerator) => true;
@@ -37,6 +36,12 @@ class ChunkVoxelCreationJob : IWorldUpdateJob
             if (_hasVoxelData)
             {
                 chunk.PopulateFromBuffer(_voxelData);
+
+                foreach (var kvp in _localAuxData)
+                {
+                    var globalPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(kvp.Key, ChunkPos);
+                    world.SetVoxelAuxiliaryData(globalPos, kvp.Value);
+                }
             }
 
             if (backloggedVoxels != null)
@@ -44,6 +49,11 @@ class ChunkVoxelCreationJob : IWorldUpdateJob
                 foreach (var voxel in backloggedVoxels)
                 {
                     chunk.SetVoxel(voxel.LocalVoxelPos, voxel.Type);
+                    if (voxel.AuxData.HasValue)
+                    {
+                        var globalPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(voxel.LocalVoxelPos, ChunkPos);
+                        world.SetVoxelAuxiliaryData(globalPos, voxel.AuxData.Value);
+                    }
                 }
             }
 
@@ -57,6 +67,7 @@ class ChunkVoxelCreationJob : IWorldUpdateJob
 
     public override string ToString() => $"ChunkVoxelCreationJob(ChunkPos={ChunkPos})";
 
-    private readonly ushort[,,] _voxelData;
-    private readonly bool _hasVoxelData;
+    private readonly ushort[,,]                   _voxelData;
+    private readonly bool                          _hasVoxelData;
+    private readonly Dictionary<Vector3Int, ushort> _localAuxData;
 }

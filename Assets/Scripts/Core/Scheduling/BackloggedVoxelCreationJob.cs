@@ -16,12 +16,14 @@ class BackloggedVoxelCreationJob : IWorldUpdateJob
 
     public void PostExecuteSync(VoxelWorld world, WorldGenerator worldGenerator, WorldUpdateScheduler worldUpdateScheduler)
     {
-        foreach(var chunk in worldGenerator.PopAllBackloggedChunksWithinGenerationRadius())
+        foreach (var chunk in worldGenerator.PopAllBackloggedChunksWithinGenerationRadius())
         {
-            foreach(var voxel in chunk.Voxels)
+            foreach (var voxel in chunk.Voxels)
             {
                 var globalVoxelPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(voxel.LocalVoxelPos, chunk.ChunkPos);
                 world.SetVoxel(globalVoxelPos, voxel.Type);
+                if (voxel.AuxData.HasValue)
+                    world.SetVoxelAuxiliaryData(globalVoxelPos, voxel.AuxData.Value);
             }
         }
     }

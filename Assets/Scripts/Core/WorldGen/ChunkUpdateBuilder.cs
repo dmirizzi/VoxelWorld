@@ -7,6 +7,7 @@ public struct ChunkUpdate
     public ushort[,,] VoxelData;
     public bool HasVoxelData;
     public Dictionary<Vector3Int, List<VoxelCreationAction>> Backlog;
+    public Dictionary<Vector3Int, ushort> LocalAuxData;
 }
 
 public class ChunkUpdateBuilder
@@ -15,10 +16,11 @@ public class ChunkUpdateBuilder
     {
         _chunkUpdate = new ChunkUpdate
         {
-            ChunkPos = chunkPos,
-            VoxelData = new ushort[VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize],
+            ChunkPos     = chunkPos,
+            VoxelData    = new ushort[VoxelInfo.ChunkSize, VoxelInfo.ChunkSize, VoxelInfo.ChunkSize],
             HasVoxelData = false,
-            Backlog = new Dictionary<Vector3Int, List<VoxelCreationAction>>()
+            Backlog      = new Dictionary<Vector3Int, List<VoxelCreationAction>>(),
+            LocalAuxData = new Dictionary<Vector3Int, ushort>()
         };
     }
 
@@ -29,11 +31,17 @@ public class ChunkUpdateBuilder
         _chunkUpdate.HasVoxelData = true;
     }
 
+    public void QueueVoxelInChunk(int x, int y, int z, ushort type, ushort auxData)
+    {
+        QueueVoxelInChunk(x, y, z, type);
+        _chunkUpdate.LocalAuxData[new Vector3Int(x, y, z)] = auxData;
+    }
+
     // Use when the position may fall outside the chunk (e.g. structures spanning chunk boundaries).
     public void QueueVoxel(Vector3Int localVoxelPos, ushort type)
     {
-        // Fast check if local voxel position is inside the chunk using bitwise operations. 
-        // This is equivalent to checking if any of the local voxel position's components are greater than or equal 
+        // Fast check if local voxel position is inside the chunk using bitwise operations.
+        // This is equivalent to checking if any of the local voxel position's components are greater than or equal
         // to the chunk size, but without branching.
         const int mask = ~(VoxelInfo.ChunkSize - 1);
         bool voxelInsideChunk = ((localVoxelPos.x | localVoxelPos.y | localVoxelPos.z) & mask) == 0;
@@ -45,20 +53,64 @@ public class ChunkUpdateBuilder
         }
         else
         {
-            var globalPos = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(localVoxelPos, _chunkUpdate.ChunkPos);
+            var globalPos    = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(localVoxelPos, _chunkUpdate.ChunkPos);
             var destChunkPos = VoxelPosHelper.GlobalVoxelPosToChunkPos(globalPos);
             var destLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(globalPos);
 
             if (!_chunkUpdate.Backlog.ContainsKey(destChunkPos))
-            {
                 _chunkUpdate.Backlog[destChunkPos] = new List<VoxelCreationAction>();
-            }
+
             _chunkUpdate.Backlog[destChunkPos].Add(new VoxelCreationAction
             {
                 LocalVoxelPos = destLocalPos,
-                Type = type
+                Type          = type
             });
         }
+    }
+
+    public void QueueVoxel(Vector3Int localVoxelPos, ushort type, ushort auxData)
+    {
+        const int mask = ~(VoxelInfo.ChunkSize - 1);
+        bool voxelInsideChunk = ((localVoxelPos.x | localVoxelPos.y | localVoxelPos.z) & mask) == 0;
+
+        if (voxelInsideChunk)
+        {
+            _chunkUpdate.VoxelData[localVoxelPos.x, localVoxelPos.y, localVoxelPos.z] = type;
+            _chunkUpdate.HasVoxelData = true;
+            _chunkUpdate.LocalAuxData[localVoxelPos] = auxData;
+        }
+        else
+        {
+            var globalPos    = VoxelPosHelper.ChunkLocalVoxelPosToGlobal(localVoxelPos, _chunkUpdate.ChunkPos);
+            var destChunkPos = VoxelPosHelper.GlobalVoxelPosToChunkPos(globalPos);
+            var destLocalPos = VoxelPosHelper.GlobalToChunkLocalVoxelPos(globalPos);
+
+            if (!_chunkUpdate.Backlog.ContainsKey(destChunkPos))
+                _chunkUpdate.Backlog[destChunkPos] = new List<VoxelCreationAction>();
+
+            _chunkUpdate.Backlog[destChunkPos].Add(new VoxelCreationAction
+            {
+                LocalVoxelPos = destLocalPos,
+                Type          = type,
+                AuxData       = auxData
+            });
+        }
+    }
+
+    public Vector3Int ChunkPos => _chunkUpdate.ChunkPos;
+
+    // Convenience overloads for generators that work in global voxel coordinates.
+    // Converts to chunk-relative before routing, so cross-chunk writes are handled correctly.
+    public void QueueGlobalVoxel(Vector3Int globalPos, ushort type)
+    {
+        var chunkBase    = VoxelPosHelper.ChunkPosToGlobalChunkBaseVoxelPos(_chunkUpdate.ChunkPos);
+        QueueVoxel(globalPos - chunkBase, type);
+    }
+
+    public void QueueGlobalVoxel(Vector3Int globalPos, ushort type, ushort auxData)
+    {
+        var chunkBase = VoxelPosHelper.ChunkPosToGlobalChunkBaseVoxelPos(_chunkUpdate.ChunkPos);
+        QueueVoxel(globalPos - chunkBase, type, auxData);
     }
 
     public ChunkUpdate GetChunkUpdate() => _chunkUpdate;

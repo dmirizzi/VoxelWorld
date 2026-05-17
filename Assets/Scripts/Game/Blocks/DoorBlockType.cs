@@ -62,11 +62,15 @@ public class DoorBlockType : BlockTypeBase
     }
 
     public override bool OnPlace(
-        VoxelWorld world, 
-        Vector3Int globalPosition, 
-        BlockFace? placementFace, 
+        VoxelWorld world,
+        Vector3Int globalPosition,
+        BlockFace? placementFace,
         BlockFace? lookDir)
     {
+        // World gen places doors with aux data set externally — no placement context needed.
+        if (!placementFace.HasValue && !lookDir.HasValue)
+            return true;
+
         var isSecondaryDoorBlock = GetProperty<DoorStateProperty>(world, globalPosition) != null;
 
         if(lookDir.HasValue)

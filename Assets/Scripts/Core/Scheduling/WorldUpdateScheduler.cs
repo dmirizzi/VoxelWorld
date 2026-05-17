@@ -103,9 +103,10 @@ public class WorldUpdateScheduler : MonoBehaviour
         AddJob(new ChunkGenerationJob(chunkPos));
     }
 
-    public void AddChunkVoxelCreationJob(Vector3Int chunkPos, ushort[,,] voxelData, bool hasVoxelData)
+    public void AddChunkVoxelCreationJob(Vector3Int chunkPos, ushort[,,] voxelData, bool hasVoxelData,
+                                          Dictionary<Vector3Int, ushort> localAuxData)
     {
-        AddJob(new ChunkVoxelCreationJob(chunkPos, voxelData, hasVoxelData));
+        AddJob(new ChunkVoxelCreationJob(chunkPos, voxelData, hasVoxelData, localAuxData));
     }
 
     public void AddBackloggedVoxelCreationJob() => AddJob(new BackloggedVoxelCreationJob());

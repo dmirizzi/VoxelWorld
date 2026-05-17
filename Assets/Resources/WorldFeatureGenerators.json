@@ -20,6 +20,12 @@
     "Type": "CaveFeatureGenerator",
     "Context": "OnSurface",
     "Priority": 0,
-    "PlacementChance": 0.0003
+    "PlacementChance": 0.0000
+  },
+  {
+    "Type": "DungeonFeatureGenerator",
+    "Context": "OnSurface",
+    "Priority": 0,
+    "PlacementChance": 0.0001
   }
 ]

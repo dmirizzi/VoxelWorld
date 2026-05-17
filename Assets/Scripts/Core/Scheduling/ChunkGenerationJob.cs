@@ -46,7 +46,7 @@ class ChunkGenerationJob : IWorldUpdateJob
             worldGenerator.AddBackloggedVoxels(chunkBacklog.Key, chunkBacklog.Value);
         }
 
-        worldUpdateScheduler.AddChunkVoxelCreationJob(ChunkPos, _chunkUpdate.VoxelData, _chunkUpdate.HasVoxelData);
+        worldUpdateScheduler.AddChunkVoxelCreationJob(ChunkPos, _chunkUpdate.VoxelData, _chunkUpdate.HasVoxelData, _chunkUpdate.LocalAuxData);
     }
 
     public override bool Equals(object rhs) =>
