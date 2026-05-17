@@ -151,4 +151,34 @@ public static class BlockFaceHelper
         }
         return (BlockFace)faceInt;
     }
+
+    public static BlockFace LeftOf(BlockFace face) => face switch
+    {
+        BlockFace.Front => BlockFace.Left,
+        BlockFace.Back  => BlockFace.Right,
+        BlockFace.Left  => BlockFace.Back,
+        BlockFace.Right => BlockFace.Front,
+        _               => face
+    };
+
+    public static BlockFace RightOf(BlockFace face) => face switch
+    {
+        BlockFace.Front => BlockFace.Right,
+        BlockFace.Back  => BlockFace.Left,
+        BlockFace.Left  => BlockFace.Front,
+        BlockFace.Right => BlockFace.Back,
+        _               => face
+    };
+
+    public static void ToDirectionVectors(BlockFace face, out Vector3Int forward, out Vector3Int right)
+    {
+        switch (face)
+        {
+            case BlockFace.Front:  forward = new Vector3Int( 0, 0,  1); right = new Vector3Int( 1, 0,  0); break;
+            case BlockFace.Back:   forward = new Vector3Int( 0, 0, -1); right = new Vector3Int(-1, 0,  0); break;
+            case BlockFace.Right:  forward = new Vector3Int( 1, 0,  0); right = new Vector3Int( 0, 0, -1); break;
+            case BlockFace.Left:   forward = new Vector3Int(-1, 0,  0); right = new Vector3Int( 0, 0,  1); break;
+            default:               forward = new Vector3Int( 0, 0,  1); right = new Vector3Int( 1, 0,  0); break;
+        }
+    }
 }

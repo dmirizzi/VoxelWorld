@@ -217,8 +217,9 @@ public class DungeonGenerator
                 builder,
                 new Vector3Int(globalEntry.x, topY, globalEntry.z),
                 CardinalFaces[rng.Next(4)],
-                depth,
+                -depth,
                 _p.TunnelWidth,
+                _cobblestoneType,
                 _cobblestoneType);
         }
 
@@ -261,7 +262,7 @@ public class DungeonGenerator
             var corridorBounds = ComputeCorridorBounds(exitPos, dir, corridorLen, _corridorWidth, _p.CorridorHeight);
             if (!IsPlaceable(corridorBounds, surfaceY)) continue;
 
-            StructureCarver.ToDirectionVectors(dir, out var fwd, out _);
+            BlockFaceHelper.ToDirectionVectors(dir, out var fwd, out _);
             var destCenter = new Vector3Int(
                 exitPos.x + fwd.x * corridorLen,
                 fromRoom.Center.y + levelDelta,
@@ -323,16 +324,14 @@ public class DungeonGenerator
 
         if (!IsPlaceable(bounds, surfaceY)) return null;
 
-        // Carve interior air
-        StructureCarver.CarveBox(
+        StructureCarver.FillBox(
             builder,
             new Vector3Int(cx - halfW, floorY,              cz - halfD),
             new Vector3Int(cx + halfW, floorY + height - 1, cz + halfD));
 
-        // Shell: floor, ceiling, walls
-        StructureCarver.LineBox(
+        StructureCarver.CarveHollowBox(
             builder,
-            new Vector3Int(cx - halfW - 1, floorY - 1,         cz - halfD - 1),
+            new Vector3Int(cx - halfW - 1, floorY - 1,     cz - halfD - 1),
             new Vector3Int(cx + halfW + 1, floorY + height, cz + halfD + 1),
             _cobblestoneType);
 
@@ -370,13 +369,12 @@ public class DungeonGenerator
             isStaircase = rng.NextDouble() < staircaseChance;
             if (isStaircase)
             {
-                StructureCarver.CarveStaircase(
+                StructureCarver.CarveDiagonalRamp(
                     builder,
                     start, dir,
                     levelDelta, _corridorWidth,
                     _cobblestoneType,
-                    _wedgeType,
-                    FaceAuxData(StructureCarver.OppositeOf(dir)));
+                    _wedgeType);
             }
             else
             {
@@ -436,7 +434,7 @@ public class DungeonGenerator
         Vector3Int start, BlockFace dir,
         int length, System.Random rng)
     {
-        StructureCarver.ToDirectionVectors(dir, out var fwd, out _);
+        BlockFaceHelper.ToDirectionVectors(dir, out var fwd, out _);
         for (int step = 0; step < length; step += 4)
         {
             if (rng.NextDouble() < _p.TorchChancePerCorridorSegment)
@@ -450,7 +448,7 @@ public class DungeonGenerator
     // Returns the first voxel position outside the room shell in the given direction.
     private Vector3Int ExitPoint(DungeonRoom room, BlockFace dir)
     {
-        StructureCarver.ToDirectionVectors(dir, out var fwd, out _);
+        BlockFaceHelper.ToDirectionVectors(dir, out var fwd, out _);
         int halfExtent = (dir == BlockFace.Front || dir == BlockFace.Back) ? room.HalfD + 2 : room.HalfW + 2;
         return room.Center + fwd * halfExtent;
     }
@@ -459,7 +457,7 @@ public class DungeonGenerator
         Vector3Int origin, BlockFace dir,
         int length, int width, int height)
     {
-        StructureCarver.ToDirectionVectors(dir, out var fwd, out _);
+        BlockFaceHelper.ToDirectionVectors(dir, out var fwd, out _);
         var end  = origin + fwd * (length - 1);
         int half = width / 2 + 1;
 
@@ -543,7 +541,7 @@ public class DungeonGenerator
         }
         foreach (var c in _corridorLog)
         {
-            StructureCarver.ToDirectionVectors(c.Dir, out var fwd, out _);
+            BlockFaceHelper.ToDirectionVectors(c.Dir, out var fwd, out _);
             var end = c.Start + fwd * (c.Length - 1);
             minX = Math.Min(minX, Math.Min(c.Start.x, end.x) - 2);
             maxX = Math.Max(maxX, Math.Max(c.Start.x, end.x) + 2);
@@ -569,7 +567,7 @@ public class DungeonGenerator
         // Corridors (drawn before rooms so rooms overwrite where they overlap)
         foreach (var c in _corridorLog)
         {
-            StructureCarver.ToDirectionVectors(c.Dir, out var fwd, out var right);
+            BlockFaceHelper.ToDirectionVectors(c.Dir, out var fwd, out var right);
             char ch = c.LevelDelta == 0 ? '.' : (c.IsStaircase ? '/' : '|');
             int wMin = -(c.Width / 2), wMax = wMin + c.Width - 1;
             for (int step = 0; step < c.Length; step++)
